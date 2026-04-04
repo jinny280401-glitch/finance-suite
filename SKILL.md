@@ -2,9 +2,9 @@
 name: finance-suite
 version: 1.0.0
 description: >
-  AI金融分析套件。6大技能：看票分析、宏观内参、麦肯锡报告、视频拆解、行业报告、集合竞价。
+  AI金融分析套件。6大技能：看票分析、宏观内参、麦肯锡报告、视频拆解、深度研究(行业+公司)、集合竞价。
   集成东方财富实时数据(AkShare) + Tavily/Brave双搜索引擎 + YouTube/B站字幕提取(Supadata)。
-  触发条件：用户提到"看票"、"分析股票"、"宏观"、"内参"、"咨询报告"、"麦肯锡"、"拆解视频"、"行业分析"、"行业报告"、"集合竞价"、"涨停"等。
+  触发条件：用户提到"看票"、"分析股票"、"宏观"、"内参"、"咨询报告"、"麦肯锡"、"拆解视频"、"研究XX"、"调研XX"、"XX行业"、"行业分析"、"公司调研"、"集合竞价"、"涨停"等。
 author: OpenClaw
 license: MIT
 
@@ -50,12 +50,14 @@ metadata:
 
 | 触发关键词 | 技能 | Prompt文件 | 数据脚本 |
 |-----------|------|-----------|---------|
-| 看票、分析XX股票、个股、股票代码 | 看票分析 | [prompts/stock-analyst.md](prompts/stock-analyst.md) | scripts/stock_data.py |
+| 看票、分析XX股票、个股、XX能买吗 | 看票分析 | [prompts/stock-analyst.md](prompts/stock-analyst.md) | scripts/stock_data.py |
 | 宏观、内参、经济形势、GDP、CPI | 宏观内参 | [prompts/macro-advisor.md](prompts/macro-advisor.md) | scripts/macro_data.py |
 | 咨询报告、麦肯锡、会议纪要 | 麦肯锡报告 | [prompts/mckinsey-report.md](prompts/mckinsey-report.md) | 无（用户提供资料） |
 | 拆解视频、视频总结、逐字稿 | 视频拆解 | [prompts/video-breakdown.md](prompts/video-breakdown.md) | scripts/video_data.py |
-| 行业分析、行业报告、XX行业 | 行业报告 | [prompts/industry-report.md](prompts/industry-report.md) | scripts/search.py |
-| 集合竞价、涨停、选股信号 | 集合竞价 | [prompts/auction-analysis.md](prompts/auction-analysis.md) | scripts/auction_data.py |
+| 研究XX、调研XX、XX行业、行业分析、公司调研 | 深度研究 | [prompts/deep-research.md](prompts/deep-research.md) | scripts/search.py |
+| 集合竞价、涨停、选股信号、因子扫描 | 集合竞价 | [prompts/auction-analysis.md](prompts/auction-analysis.md) | scripts/auction_data.py + scripts/factor_scan.py |
+
+> **看票 vs 深度研究**：「看票」= 短平快交易视角（财报+资金+技术面），「深度研究」= 长篇认知构建（行业全景/企业深度）。"看看茅台"走看票，"研究茅台"走深度研究。
 
 ## 工作流程
 
@@ -92,8 +94,11 @@ python3 scripts/search.py --type macro --query "中国经济最新政策"
 ### 集合竞价流程
 
 ```bash
-# 获取涨停池、强势股、异动、人气排行、飙升榜（6路并发）
+# 1. 获取涨停池、强势股、异动、人气排行、飙升榜（6路并发）
 python3 scripts/auction_data.py
+
+# 2. 获取因子选股信号（量化扫描，可选，耗时1-3分钟）
+python3 scripts/factor_scan.py
 ```
 
 ### 视频拆解流程
