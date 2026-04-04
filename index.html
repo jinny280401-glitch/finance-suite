@@ -28,6 +28,7 @@
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
+      padding-top: 52px; /* reserve space for sticky header */
     }
 
     /* ---- Scroll Reveal ---- */
@@ -85,6 +86,114 @@
       text-transform: uppercase;
     }
     .t-secondary { color: var(--text-secondary); }
+
+    /* ============================================
+       0. STICKY HEADER — login-aware
+       ============================================ */
+    .site-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+    }
+    .site-header__inner {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .site-header__brand {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+    .site-header__actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hdr-btn {
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: 980px;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s, transform 0.15s var(--ease), color 0.2s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .hdr-btn--ghost {
+      color: var(--text);
+      background: transparent;
+    }
+    .hdr-btn--ghost:hover { background: rgba(0,0,0,0.05); }
+    .hdr-btn--primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .hdr-btn--primary:hover { background: var(--accent-hover); transform: scale(1.03); }
+    .hdr-user {
+      font-size: 13px;
+      color: var(--text-secondary);
+      padding: 7px 4px 7px 8px;
+      cursor: pointer;
+      position: relative;
+    }
+    .hdr-user__menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      background: var(--white);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 12px;
+      min-width: 140px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      padding: 6px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px);
+      transition: opacity 0.18s, transform 0.18s var(--ease);
+    }
+    .hdr-user:hover .hdr-user__menu,
+    .hdr-user:focus-within .hdr-user__menu {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .hdr-user__item {
+      display: block;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--text);
+      border-radius: 8px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+    }
+    .hdr-user__item:hover { background: var(--surface); }
+    @media (max-width: 640px) {
+      .site-header { padding: 0 16px; }
+      .hdr-btn { font-size: 12px; padding: 6px 12px; }
+      .hdr-user { display: none; }
+    }
 
     /* ============================================
        1. HERO — Show, don't tell
@@ -644,6 +753,16 @@
 </head>
 <body>
 
+  <!-- ====== STICKY HEADER ====== -->
+  <header class="site-header" id="siteHeader">
+    <div class="site-header__inner">
+      <a href="/" class="site-header__brand">Finance Suite</a>
+      <div class="site-header__actions" id="headerActions">
+        <!-- injected by JS based on login state -->
+      </div>
+    </div>
+  </header>
+
   <!-- ====== LOGIN GATE ====== -->
   <div id="loginGate" style="
     position:fixed; inset:0; z-index:9999;
@@ -696,12 +815,48 @@
       if (_accounts[u] && _accounts[u] === p) {
         localStorage.setItem('fs_auth', 'ok');
         localStorage.setItem('fs_user', u);
+        // honor ?redirect= param (from /app/ guard)
+        var params = new URLSearchParams(location.search);
+        var redirect = params.get('redirect');
+        if (redirect && /^\/[\w\-\/]*$/.test(redirect)) {
+          location.href = redirect;
+          return;
+        }
         document.getElementById('loginGate').style.display = 'none';
+        showUserBadge(u);
       } else {
         document.getElementById('loginErr').textContent = '账号或密码不正确';
         document.getElementById('loginPass').value = '';
       }
     }
+    function renderHeader() {
+      var actions = document.getElementById('headerActions');
+      if (!actions) return;
+      var logged = localStorage.getItem('fs_auth') === 'ok';
+      var user = localStorage.getItem('fs_user') || '';
+      if (logged) {
+        actions.innerHTML =
+          '<a href="/app/" class="hdr-btn hdr-btn--primary">进入工作台 →</a>' +
+          '<div class="hdr-user" tabindex="0">' + user +
+            ' <span style="opacity:0.5">▾</span>' +
+            '<div class="hdr-user__menu">' +
+              '<button class="hdr-user__item" onclick="doLogout()">退出登录</button>' +
+            '</div>' +
+          '</div>';
+      } else {
+        actions.innerHTML =
+          '<button class="hdr-btn hdr-btn--ghost" onclick="document.getElementById(\'loginGate\').style.display=\'flex\'">登录</button>' +
+          '<button class="hdr-btn hdr-btn--primary" onclick="document.getElementById(\'loginGate\').style.display=\'flex\'">免费试用</button>';
+      }
+    }
+    // alias for backward-compat (called from doLogin)
+    function showUserBadge() { renderHeader(); }
+    function doLogout() {
+      localStorage.removeItem('fs_auth');
+      localStorage.removeItem('fs_user');
+      location.reload();
+    }
+    document.addEventListener('DOMContentLoaded', renderHeader);
   </script>
 
   <!-- ====== 1. HERO ====== -->
