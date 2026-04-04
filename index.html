@@ -269,7 +269,7 @@
     .mode:hover {
       background: rgba(255,255,255,0.09);
       border-color: rgba(255,255,255,0.15);
-      transform: translateY(-4px);
+      transform: translateY(-6px) scale(1.01);
     }
     .mode__label {
       color: var(--accent);
@@ -350,7 +350,7 @@
       transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
     }
     .cap-card:hover {
-      transform: translateY(-6px);
+      transform: translateY(-6px) scale(1.01);
       box-shadow: 0 20px 48px rgba(0,0,0,0.06);
     }
     .cap-card__icon {
@@ -543,6 +543,32 @@
     .cta__btn:hover { background: var(--accent-hover); transform: scale(1.04); }
     .cta__btn:active { transform: scale(0.98); }
 
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--dark-bg);
+      color: var(--dark-text);
+      padding: 16px 28px;
+      border-radius: 14px;
+      font-size: 15px;
+      line-height: 1.5;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+      z-index: 1000;
+      text-align: center;
+      max-width: 400px;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
     /* ---- Footer ---- */
     .footer {
       text-align: center;
@@ -569,6 +595,63 @@
   </style>
 </head>
 <body>
+
+  <!-- ====== LOGIN GATE ====== -->
+  <div id="loginGate" style="
+    position:fixed; inset:0; z-index:9999;
+    background:var(--white);
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column;
+  ">
+    <div style="text-align:center; max-width:360px; padding:24px;">
+      <p style="font-size:13px; font-weight:600; color:var(--text-secondary); letter-spacing:0.5px; margin-bottom:24px;">Finance Suite</p>
+      <h2 style="font-size:28px; font-weight:700; margin-bottom:8px;">欢迎回来</h2>
+      <p style="font-size:15px; color:var(--text-secondary); margin-bottom:36px;">请输入你的专属账号</p>
+      <input id="loginUser" type="text" placeholder="账号" style="
+        width:100%; padding:14px 18px; margin-bottom:12px;
+        border:1px solid rgba(0,0,0,0.12); border-radius:12px;
+        font-size:16px; font-family:inherit; outline:none;
+        transition:border-color 0.2s;
+      " onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='rgba(0,0,0,0.12)'">
+      <input id="loginPass" type="password" placeholder="密码" style="
+        width:100%; padding:14px 18px; margin-bottom:8px;
+        border:1px solid rgba(0,0,0,0.12); border-radius:12px;
+        font-size:16px; font-family:inherit; outline:none;
+        transition:border-color 0.2s;
+      " onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='rgba(0,0,0,0.12)'"
+      onkeydown="if(event.key==='Enter')doLogin()">
+      <p id="loginErr" style="font-size:13px; color:#ff3b30; min-height:20px; margin-bottom:16px;"></p>
+      <button onclick="doLogin()" style="
+        width:100%; padding:14px; background:var(--accent); color:#fff;
+        border:none; border-radius:980px; font-size:17px; font-weight:500;
+        cursor:pointer; font-family:inherit;
+        transition:background 0.2s, transform 0.2s;
+      " onmouseover="this.style.background='var(--accent-hover)'" onmouseout="this.style.background='var(--accent)'">登录</button>
+    </div>
+  </div>
+  <script>
+    var _accounts = {
+      'linzuxi': 'lzx123456',
+      'danny': 'danny123456',
+      'ivan': 'ivan123456'
+    };
+    // 记住登录状态
+    if (localStorage.getItem('fs_auth') === 'ok') {
+      document.getElementById('loginGate').style.display = 'none';
+    }
+    function doLogin() {
+      var u = document.getElementById('loginUser').value.trim().toLowerCase();
+      var p = document.getElementById('loginPass').value;
+      if (_accounts[u] && _accounts[u] === p) {
+        localStorage.setItem('fs_auth', 'ok');
+        localStorage.setItem('fs_user', u);
+        document.getElementById('loginGate').style.display = 'none';
+      } else {
+        document.getElementById('loginErr').textContent = '账号或密码不正确';
+        document.getElementById('loginPass').value = '';
+      }
+    }
+  </script>
 
   <!-- ====== 1. HERO ====== -->
   <section class="hero">
@@ -769,10 +852,14 @@
     <p class="t-body cta__desc reveal reveal-d1">
       在 Finance Suite 中输入一个公司名或行业名，剩下的交给 AI。
     </p>
-    <button class="cta__btn reveal reveal-d2" onclick="alert('在 Finance Suite 中直接输入：研究 + 公司名\n例如：研究宁德时代')">
+    <button class="cta__btn reveal reveal-d2" onclick="showToast()">
       免费开始使用
     </button>
   </section>
+
+  <div class="toast" id="toast">
+    在 Finance Suite 中直接输入：<br><strong>研究 + 公司名</strong><br>例如：研究宁德时代
+  </div>
 
   <footer class="footer">
     Finance Suite by OpenClaw &mdash; 基于公开数据的 AI 分析，不构成投资建议
@@ -807,11 +894,18 @@
     }, { threshold: 0.5 });
     document.querySelectorAll('[data-count]').forEach(el => counterObserver.observe(el));
 
+    // Toast notification
+    function showToast() {
+      const t = document.getElementById('toast');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
     // Scroll indicator fade
     const scrollLine = document.querySelector('.hero__scroll');
     if (scrollLine) {
       window.addEventListener('scroll', () => {
-        scrollLine.style.opacity = window.scrollY > 100 ? '0' : '';
+        scrollLine.style.opacity = window.scrollY > 80 ? '0' : '';
       }, { passive: true });
     }
   </script>

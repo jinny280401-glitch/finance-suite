@@ -2,9 +2,9 @@
 name: finance-suite
 version: 1.0.0
 description: >
-  AI金融分析套件。6大技能：看票分析、宏观内参、麦肯锡报告、视频拆解、深度研究(行业+公司)、集合竞价。
+  AI金融分析套件。7大技能：看票分析、宏观内参、麦肯锡报告、视频拆解、深度研究(行业+公司)、集合竞价、自选股管理。
   集成东方财富实时数据(AkShare) + Tavily/Brave双搜索引擎 + YouTube/B站字幕提取(Supadata)。
-  触发条件：用户提到"看票"、"分析股票"、"宏观"、"内参"、"咨询报告"、"麦肯锡"、"拆解视频"、"研究XX"、"调研XX"、"XX行业"、"行业分析"、"公司调研"、"集合竞价"、"涨停"等。
+  触发条件：用户提到"看票"、"分析股票"、"宏观"、"内参"、"咨询报告"、"麦肯锡"、"拆解视频"、"研究XX"、"调研XX"、"XX行业"、"行业分析"、"公司调研"、"集合竞价"、"涨停"、"自选"、"我的股票"、"关注列表"等。
 author: OpenClaw
 license: MIT
 
@@ -56,8 +56,10 @@ metadata:
 | 拆解视频、视频总结、逐字稿 | 视频拆解 | [prompts/video-breakdown.md](prompts/video-breakdown.md) | scripts/video_data.py |
 | 研究XX、调研XX、XX行业、行业分析、公司调研 | 深度研究 | [prompts/deep-research.md](prompts/deep-research.md) | scripts/search.py |
 | 集合竞价、涨停、选股信号、因子扫描 | 集合竞价 | [prompts/auction-analysis.md](prompts/auction-analysis.md) | scripts/auction_data.py + scripts/factor_scan.py |
+| 自选、我的股票、持仓、关注列表、加入自选 | 自选股管理 | [prompts/stock-watcher.md](prompts/stock-watcher.md) | scripts/watchlist.py |
 
 > **看票 vs 深度研究**：「看票」= 短平快交易视角（财报+资金+技术面），「深度研究」= 长篇认知构建（行业全景/企业深度）。"看看茅台"走看票，"研究茅台"走深度研究。
+> **自选股管理**：跨技能的用户状态层。看票/深度研究完成后可加入自选，集合竞价自动交叉比对自选命中。
 
 ## 工作流程
 
