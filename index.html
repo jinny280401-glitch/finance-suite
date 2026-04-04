@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance Suite — AI 金融分析套件</title>
+  <style>
+    :root {
+      --white: #ffffff;
+      --surface: #f5f5f7;
+      --text: #1d1d1f;
+      --text-secondary: #86868b;
+      --accent: #0071e3;
+      --accent-hover: #0077ed;
+      --dark-bg: #000000;
+      --dark-text: #f5f5f7;
+      --dark-secondary: #86868b;
+      --radius: 20px;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
+      background: var(--white);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ---- Scroll Reveal ---- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(36px);
+      transition: opacity 1s var(--ease), transform 1s var(--ease);
+      will-change: transform, opacity;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-d1 { transition-delay: 0.08s; }
+    .reveal-d2 { transition-delay: 0.18s; }
+    .reveal-d3 { transition-delay: 0.3s; }
+    .reveal-d4 { transition-delay: 0.45s; }
+
+    /* Deep section reveals float up from further */
+    .dark-section .reveal {
+      transform: translateY(50px) scale(0.98);
+    }
+    .dark-section .reveal.visible {
+      transform: translateY(0) scale(1);
+    }
+
+    /* ---- Typography ---- */
+    .t-hero {
+      font-size: clamp(36px, 6.5vw, 72px);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+    }
+    .t-section {
+      font-size: clamp(28px, 4.5vw, 48px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.12;
+    }
+    .t-label {
+      font-size: clamp(20px, 2.5vw, 32px);
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+    .t-body {
+      font-size: clamp(16px, 1.8vw, 19px);
+      line-height: 1.6;
+    }
+    .t-small {
+      font-size: clamp(13px, 1.3vw, 15px);
+      line-height: 1.6;
+    }
+    .t-overline {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+    .t-secondary { color: var(--text-secondary); }
+
+    /* ============================================
+       1. HERO — Show, don't tell
+       ============================================ */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 24px 60px;
+      position: relative;
+    }
+    .hero__brand {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.5px;
+      margin-bottom: 24px;
+    }
+    .hero__title {
+      max-width: 760px;
+      margin-bottom: 20px;
+    }
+    .hero__subtitle {
+      max-width: 520px;
+      margin: 0 auto 40px;
+    }
+    .hero__cta {
+      display: inline-block;
+      padding: 14px 32px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 980px;
+      font-size: 17px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.2s var(--ease);
+      margin-bottom: 64px;
+    }
+    .hero__cta:hover { background: var(--accent-hover); transform: scale(1.04); }
+    .hero__cta:active { transform: scale(0.98); }
+
+    /* Hero inline demo */
+    .hero-demo {
+      width: 100%;
+      max-width: 780px;
+      background: var(--dark-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.18);
+      text-align: left;
+    }
+    .hero-demo__bar {
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: #1c1c1e;
+    }
+    .hero-demo__dot { width: 11px; height: 11px; border-radius: 50%; }
+    .hero-demo__dot--r { background: #ff5f57; }
+    .hero-demo__dot--y { background: #febc2e; }
+    .hero-demo__dot--g { background: #28c840; }
+    .hero-demo__bar-title {
+      flex: 1; text-align: center; font-size: 12px; color: #555; margin-right: 36px;
+    }
+    .hero-demo__body {
+      padding: 24px 24px 28px;
+      font-family: "SF Mono", "Fira Code", "Menlo", monospace;
+      font-size: 13px;
+      line-height: 1.9;
+      color: var(--dark-text);
+    }
+    .hero-demo__line {
+      opacity: 0;
+      animation: lineIn 0.3s var(--ease) forwards;
+    }
+    .hero-demo__line:nth-child(1) { animation-delay: 0.3s; }
+    .hero-demo__line:nth-child(2) { animation-delay: 0.6s; }
+    .hero-demo__line:nth-child(3) { animation-delay: 0.9s; }
+    .hero-demo__line:nth-child(4) { animation-delay: 1.2s; }
+    .hero-demo__line:nth-child(5) { animation-delay: 1.6s; }
+    .hero-demo__line:nth-child(6) { animation-delay: 1.9s; }
+    .hero-demo__line:nth-child(7) { animation-delay: 2.2s; }
+    .hero-demo__line:nth-child(8) { animation-delay: 2.5s; }
+    .hero-demo__line:nth-child(9) { animation-delay: 2.8s; }
+    .hero-demo__line:nth-child(10) { animation-delay: 3.1s; }
+
+    @keyframes lineIn {
+      to { opacity: 1; }
+    }
+
+    .c-blue { color: #0a84ff; }
+    .c-dim { color: #555; }
+    .c-green { color: #30d158; font-weight: 600; }
+    .c-purple { color: #bf5af2; }
+    .c-orange { color: #ff9f0a; font-size: 11px; }
+    .c-head { color: #64d2ff; font-weight: 500; }
+
+    .hero__scroll {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      height: 28px;
+      background: linear-gradient(to bottom, var(--text-secondary), transparent);
+      animation: pulse 2s ease-in-out infinite;
+      opacity: 0.5;
+      transition: opacity 0.4s;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: translateX(-50%) scaleY(0.5); opacity: 0.3; }
+      50% { transform: translateX(-50%) scaleY(1); opacity: 0.6; }
+    }
+
+    /* ============================================
+       2. DEEP RESEARCH (DARK) — The hero moment
+       ============================================ */
+    .transition-to-dark {
+      height: 160px;
+      background: linear-gradient(to bottom, var(--white), var(--dark-bg));
+    }
+    .dark-section {
+      background: var(--dark-bg);
+      color: var(--dark-text);
+      padding: 120px 0 200px;
+    }
+    .transition-to-light {
+      height: 160px;
+      background: linear-gradient(to bottom, var(--dark-bg), var(--surface));
+    }
+
+    .flagship__header {
+      text-align: center;
+      margin-bottom: 100px;
+      padding: 0 24px;
+    }
+    .flagship__overline {
+      color: var(--dark-secondary);
+      margin-bottom: 20px;
+    }
+    .flagship__title {
+      margin-bottom: 16px;
+    }
+    .flagship__subtitle {
+      color: var(--dark-secondary);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .modes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 1080px;
+      margin: 0 auto 80px;
+      padding: 0 24px;
+    }
+    .mode {
+      position: relative;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius);
+      padding: 36px 28px;
+      transition: background 0.4s var(--ease), border-color 0.4s var(--ease), transform 0.4s var(--ease);
+    }
+    .mode::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 20%;
+      right: 20%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+    }
+    .mode:hover {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.15);
+      transform: translateY(-4px);
+    }
+    .mode__label {
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: block;
+    }
+    .mode__title {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--dark-text);
+    }
+    .mode__desc {
+      font-size: 14px;
+      color: var(--dark-secondary);
+      line-height: 1.65;
+      margin-bottom: 20px;
+    }
+    .mode__example {
+      font-size: 13px;
+      color: rgba(255,255,255,0.3);
+      font-style: italic;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* Mid-dark CTA */
+    .dark-cta {
+      text-align: center;
+      padding: 0 24px;
+    }
+    .dark-cta__btn {
+      display: inline-block;
+      padding: 12px 28px;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: var(--dark-text);
+      background: none;
+      border-radius: 980px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .dark-cta__btn:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.5);
+    }
+
+    /* ============================================
+       3. CAPABILITIES (Skills + Features merged)
+       ============================================ */
+    .capabilities {
+      background: var(--surface);
+      padding: 200px 0;
+    }
+    .cap-header {
+      text-align: center;
+      margin-bottom: 80px;
+      padding: 0 24px;
+    }
+    .cap-header p { color: var(--text-secondary); margin-top: 12px; }
+
+    .cap-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .cap-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 40px 32px;
+      border: 1px solid rgba(255,255,255,0.8);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
+    }
+    .cap-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 48px rgba(0,0,0,0.06);
+    }
+    .cap-card__icon {
+      width: 40px;
+      height: 40px;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+    .cap-card__title {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .cap-card__desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .cap-card__tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cap-tag {
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: var(--surface);
+      color: var(--text-secondary);
+    }
+    .cap-tag--accent {
+      background: rgba(0,113,227,0.08);
+      color: var(--accent);
+    }
+
+    /* ============================================
+       4. REPORT PREVIEW — Show the output
+       ============================================ */
+    .preview-section {
+      background: var(--white);
+      padding: 200px 0;
+    }
+    .preview-header {
+      text-align: center;
+      margin-bottom: 80px;
+      padding: 0 24px;
+    }
+    .preview-header p { color: var(--text-secondary); margin-top: 12px; }
+
+    .report-preview {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .report {
+      background: var(--white);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+    }
+    .report__header {
+      padding: 32px 36px 24px;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    .report__title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .report__meta {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .report__body {
+      padding: 28px 36px 36px;
+    }
+    .report__toc {
+      list-style: none;
+      margin-bottom: 28px;
+    }
+    .report__toc li {
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+      font-size: 15px;
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+    .report__toc li:last-child { border-bottom: none; }
+    .report__toc-num {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      min-width: 20px;
+    }
+    .report__toc-text {
+      color: var(--text);
+      font-weight: 500;
+    }
+    .report__toc-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-left: auto;
+    }
+    .report__excerpt {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 4px;
+    }
+    .report__excerpt-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    .report__excerpt-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.7;
+    }
+    .report__excerpt-source {
+      font-size: 12px;
+      color: var(--accent);
+      margin-top: 10px;
+      display: block;
+    }
+
+    /* ============================================
+       5. TRUST — Social proof placeholder
+       ============================================ */
+    .trust-section {
+      background: var(--surface);
+      padding: 120px 0;
+    }
+    .trust-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 40px;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px;
+      text-align: center;
+    }
+    .trust-item__number {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .trust-item__label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* ============================================
+       6. CTA
+       ============================================ */
+    .cta {
+      background: var(--white);
+      text-align: center;
+      padding: 160px 24px;
+    }
+    .cta__title { margin-bottom: 12px; }
+    .cta__desc {
+      color: var(--text-secondary);
+      margin-bottom: 36px;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .cta__btn {
+      display: inline-block;
+      padding: 16px 36px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 980px;
+      font-size: 17px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s, transform 0.2s var(--ease);
+    }
+    .cta__btn:hover { background: var(--accent-hover); transform: scale(1.04); }
+    .cta__btn:active { transform: scale(0.98); }
+
+    /* ---- Footer ---- */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      border-top: 1px solid rgba(0,0,0,0.04);
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 1024px) {
+      .modes { grid-template-columns: 1fr; max-width: 480px; }
+      .cap-grid { grid-template-columns: 1fr; max-width: 520px; }
+      .trust-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .hero { min-height: auto; padding: 80px 20px 40px; }
+      .dark-section { padding: 80px 0 120px; }
+      .capabilities, .preview-section { padding: 120px 0; }
+      .transition-to-dark, .transition-to-light { height: 80px; }
+      .trust-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+      .cta { padding: 100px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ====== 1. HERO ====== -->
+  <section class="hero">
+    <p class="hero__brand reveal">Finance Suite</p>
+    <h1 class="t-hero hero__title reveal reveal-d1">
+      说一个公司名<br>出一份万字研报
+    </h1>
+    <p class="t-body t-secondary hero__subtitle reveal reveal-d2">
+      AI 自动搜索财报、电话会议、年报和行业数据，<br>
+      生成每条数据都可溯源的专业研究报告。
+    </p>
+    <a href="#preview" class="hero__cta reveal reveal-d3">看一份示例报告</a>
+
+    <div class="hero-demo reveal reveal-d4">
+      <div class="hero-demo__bar">
+        <div class="hero-demo__dot hero-demo__dot--r"></div>
+        <div class="hero-demo__dot hero-demo__dot--y"></div>
+        <div class="hero-demo__dot hero-demo__dot--g"></div>
+        <div class="hero-demo__bar-title">Finance Suite</div>
+      </div>
+      <div class="hero-demo__body">
+        <div class="hero-demo__line"><span class="c-blue">&gt;</span> 帮我研究宁德时代</div>
+        <div class="hero-demo__line"><span class="c-dim">  识别模式：公司研究</span></div>
+        <div class="hero-demo__line"><span class="c-dim">  搜索锂电池/储能行业数据...</span></div>
+        <div class="hero-demo__line"><span class="c-dim">  搜索 Q1-Q4 电话会议记录...</span></div>
+        <div class="hero-demo__line"><span class="c-dim">  提取公司官网与年报...</span></div>
+        <div class="hero-demo__line">&nbsp;</div>
+        <div class="hero-demo__line"><span class="c-green">宁德时代 - 企业研究报告</span></div>
+        <div class="hero-demo__line"><span class="c-purple">含行业速览 + 10节企业深度调研 | 12,847字</span></div>
+        <div class="hero-demo__line"><span class="c-head">1. 公司从事的业务</span> &nbsp;<span class="c-dim">2. 业务板块</span> &nbsp;<span class="c-dim">3. 产品详情</span> &nbsp;<span class="c-dim">...</span></div>
+        <div class="hero-demo__line"><span class="c-head">9. 言行一致</span> &nbsp;<span class="c-dim">10. 情景设定</span> &nbsp;<span class="c-orange">全部数据附来源URL</span></div>
+      </div>
+    </div>
+    <div class="hero__scroll"></div>
+  </section>
+
+  <!-- ====== 2. DARK: DEEP RESEARCH ====== -->
+  <div class="transition-to-dark"></div>
+  <section class="dark-section">
+    <div class="flagship__header">
+      <p class="t-overline flagship__overline reveal">Flagship</p>
+      <h2 class="t-hero flagship__title reveal reveal-d1">深度研究</h2>
+      <p class="t-body flagship__subtitle reveal reveal-d2">
+        一个入口，三种模式。行业和企业，不再分开研究。
+      </p>
+    </div>
+    <div class="modes">
+      <div class="mode reveal">
+        <span class="t-overline mode__label">Mode A</span>
+        <h3 class="mode__title">行业研究</h3>
+        <p class="mode__desc">6 维度框架：概览、规模、供需、竞争、技术、趋势</p>
+        <p class="mode__example">"分析新能源汽车行业"</p>
+      </div>
+      <div class="mode reveal reveal-d1">
+        <span class="t-overline mode__label">Mode B</span>
+        <h3 class="mode__title">公司研究</h3>
+        <p class="mode__desc">4 大来源、10 节完整报告，含管理层言行一致性追踪</p>
+        <p class="mode__example">"研究宁德时代"</p>
+      </div>
+      <div class="mode reveal reveal-d2">
+        <span class="t-overline mode__label">Mode A+B</span>
+        <h3 class="mode__title">联合模式</h3>
+        <p class="mode__desc">行业深度 + 企业深度 + 匹配度分析，三位一体</p>
+        <p class="mode__example">"比亚迪在新能源行业的位置"</p>
+      </div>
+    </div>
+    <div class="dark-cta reveal">
+      <button class="dark-cta__btn" onclick="document.getElementById('preview').scrollIntoView({behavior:'smooth'})">查看完整报告结构</button>
+    </div>
+  </section>
+  <div class="transition-to-light"></div>
+
+  <!-- ====== 3. CAPABILITIES (Skills + Features) ====== -->
+  <section class="capabilities">
+    <div class="cap-header">
+      <h2 class="t-section reveal">四项专业技能</h2>
+      <p class="t-body reveal reveal-d1">每一条数据可溯源，搜不到就标注，绝不编造</p>
+    </div>
+    <div class="cap-grid">
+      <div class="cap-card reveal">
+        <div class="cap-card__icon">
+          <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="32 18 27 18 23 30 13 6 9 18 4 18"></polyline></svg>
+        </div>
+        <h3 class="cap-card__title">看票分析</h3>
+        <p class="cap-card__desc">短平快的交易视角。输入股票名称，自动搜索财报、资金流向和新闻，生成带情景推演的分析报告。</p>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">"帮我看看比亚迪"</span>
+          <span class="cap-tag">实时财报</span>
+          <span class="cap-tag">资金流向</span>
+        </div>
+      </div>
+      <div class="cap-card reveal reveal-d1">
+        <div class="cap-card__icon">
+          <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="18" cy="18" r="14"></circle><line x1="4" y1="18" x2="32" y2="18"></line><path d="M18 4a22 22 0 0 1 5.5 14 22 22 0 0 1-5.5 14 22 22 0 0 1-5.5-14A22 22 0 0 1 18 4z"></path></svg>
+        </div>
+        <h3 class="cap-card__title">宏观内参</h3>
+        <p class="cap-card__desc">用通俗语言解读宏观经济。自动获取 GDP、CPI、货币政策，分析对投资和生活的影响。</p>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">"最近经济形势怎么样"</span>
+          <span class="cap-tag">政策解读</span>
+        </div>
+      </div>
+      <div class="cap-card reveal reveal-d2">
+        <div class="cap-card__icon">
+          <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 4H9a3 3 0 0 0-3 3v22a3 3 0 0 0 3 3h18a3 3 0 0 0 3-3V13z"></path><polyline points="21 4 21 13 30 13"></polyline><line x1="24" y1="19 " x2="12" y2="19"></line><line x1="24" y1="25" x2="12" y2="25"></line></svg>
+        </div>
+        <h3 class="cap-card__title">麦肯锡报告</h3>
+        <p class="cap-card__desc">基于会议纪要或调研数据，生成结构严谨的战略咨询报告，直接用于高层决策汇报。</p>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">"帮我出一份咨询报告"</span>
+          <span class="cap-tag">战略分析</span>
+        </div>
+      </div>
+      <div class="cap-card reveal reveal-d3">
+        <div class="cap-card__icon">
+          <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="33 11 24 18 33 25 33 11"></polygon><rect x="3" y="8" width="21" height="20" rx="3"></rect></svg>
+        </div>
+        <h3 class="cap-card__title">视频拆解</h3>
+        <p class="cap-card__desc">提供视频逐字稿或链接，拆解为知识点、思维导图和行动清单。</p>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">"帮我拆解这个视频"</span>
+          <span class="cap-tag">结构化输出</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 4. REPORT PREVIEW ====== -->
+  <section class="preview-section" id="preview">
+    <div class="preview-header">
+      <h2 class="t-section reveal">这就是你会拿到的报告</h2>
+      <p class="t-body reveal reveal-d1">以下是"深度研究 - 公司模式"的真实输出结构</p>
+    </div>
+    <div class="report-preview">
+      <div class="report reveal reveal-d2">
+        <div class="report__header">
+          <h3 class="report__title">宁德时代 - 企业研究报告</h3>
+          <p class="report__meta">
+            报告日期：2026-04-04<br>
+            数据来源：4份季度电话会议 / 2025年度报告 / 公司官网 / Tavily + Brave 搜索<br>
+            含行业速览 + 10节企业深度调研 | 约 12,800 字
+          </p>
+        </div>
+        <div class="report__body">
+          <ul class="report__toc">
+            <li><span class="report__toc-num">00</span><span class="report__toc-text">行业速览：锂电池与储能</span><span class="report__toc-sub">~800字</span></li>
+            <li><span class="report__toc-num">01</span><span class="report__toc-text">公司从事的业务</span><span class="report__toc-sub">创始故事 / 价值主张 / 技术壁垒</span></li>
+            <li><span class="report__toc-num">02</span><span class="report__toc-text">业务板块</span><span class="report__toc-sub">动力电池 / 储能 / 电池材料</span></li>
+            <li><span class="report__toc-num">03</span><span class="report__toc-text">产品与业务详情</span><span class="report__toc-sub">麒麟电池 / 钠离子 / CTP 3.0</span></li>
+            <li><span class="report__toc-num">04</span><span class="report__toc-text">客户</span><span class="report__toc-sub">特斯拉 / 宝马 / 转换成本</span></li>
+            <li><span class="report__toc-num">05</span><span class="report__toc-text">竞争格局</span><span class="report__toc-sub">比亚迪 / LG / 松下 / 对比表</span></li>
+            <li><span class="report__toc-num">06</span><span class="report__toc-text">行业</span><span class="report__toc-sub">需求驱动 / 周期性 / 监管</span></li>
+            <li><span class="report__toc-num">07</span><span class="report__toc-text">增长触发因素</span><span class="report__toc-sub">直接摘自4次电话会议</span></li>
+            <li><span class="report__toc-num">08</span><span class="report__toc-text">关键风险</span><span class="report__toc-sub">技术替代 / 客户集中 / 产能过剩</span></li>
+            <li><span class="report__toc-num">09</span><span class="report__toc-text">言行一致</span><span class="report__toc-sub">管理层承诺 vs 实际兑现</span></li>
+            <li><span class="report__toc-num">10</span><span class="report__toc-text">情景设定</span><span class="report__toc-sub">看涨 / 基准 / 看跌</span></li>
+          </ul>
+          <div class="report__excerpt">
+            <div class="report__excerpt-label">摘录 - 第1节：公司从事的业务</div>
+            <p class="report__excerpt-text">
+              宁德时代做的事情，简单说就是给电动车和储能电站造电池。但这句话远远不能概括它的真实壁垒。
+              一块动力电池需要经过3000多道工序，从正极材料的配比到电芯的叠片封装，
+              再到BMS（电池管理系统）的算法调优，每一个环节都是十年级别的工艺积累。
+              一家新公司即使拿到同样的化学配方，也需要至少5年时间来跑通量产良率...
+            </p>
+            <span class="report__excerpt-source">来源: 宁德时代2025年度报告, 检索日期: 2026-04-04</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 5. TRUST NUMBERS ====== -->
+  <section class="trust-section">
+    <div class="trust-grid">
+      <div class="reveal">
+        <div class="trust-item__number" data-count="100" data-suffix="%">0%</div>
+        <div class="trust-item__label">数据可溯源</div>
+      </div>
+      <div class="reveal reveal-d1">
+        <div class="trust-item__number" data-count="10" data-suffix="节">0节</div>
+        <div class="trust-item__label">完整报告结构</div>
+      </div>
+      <div class="reveal reveal-d2">
+        <div class="trust-item__number" data-count="4" data-suffix="份">0份</div>
+        <div class="trust-item__label">电话会议交叉验证</div>
+      </div>
+      <div class="reveal reveal-d3">
+        <div class="trust-item__number" data-count="0" data-suffix="">零编造</div>
+        <div class="trust-item__label">搜不到就标注，绝不伪造</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 6. CTA ====== -->
+  <section class="cta">
+    <h2 class="t-section cta__title reveal">开始你的第一份研究</h2>
+    <p class="t-body cta__desc reveal reveal-d1">
+      在 Finance Suite 中输入一个公司名或行业名，剩下的交给 AI。
+    </p>
+    <button class="cta__btn reveal reveal-d2" onclick="alert('在 Finance Suite 中直接输入：研究 + 公司名\n例如：研究宁德时代')">
+      免费开始使用
+    </button>
+  </section>
+
+  <footer class="footer">
+    Finance Suite by OpenClaw &mdash; 基于公开数据的 AI 分析，不构成投资建议
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Counter animation for trust numbers
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        const target = parseInt(el.dataset.count);
+        const suffix = el.dataset.suffix || '';
+        if (target === 0) { el.textContent = '零编造'; counterObserver.unobserve(el); return; }
+        const duration = 1200;
+        const start = performance.now();
+        function tick(now) {
+          const t = Math.min((now - start) / duration, 1);
+          const ease = 1 - Math.pow(1 - t, 3);
+          el.textContent = Math.round(target * ease) + suffix;
+          if (t < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+        counterObserver.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('[data-count]').forEach(el => counterObserver.observe(el));
+
+    // Scroll indicator fade
+    const scrollLine = document.querySelector('.hero__scroll');
+    if (scrollLine) {
+      window.addEventListener('scroll', () => {
+        scrollLine.style.opacity = window.scrollY > 100 ? '0' : '';
+      }, { passive: true });
+    }
+  </script>
+
+</body>
+</html>
