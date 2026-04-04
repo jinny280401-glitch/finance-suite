@@ -1,20 +1,54 @@
 """
-AkShare 数据获取模块
-通过东方财富/同花顺/乐咕等数据源获取A股结构化数据
-所有函数经过实测验证，参数与AkShare 1.18.48一致
+股票数据获取模块（Wind 优先 + AkShare 降级）
+优先使用 Wind（数据质量最高），Wind 不可用时自动降级到 AkShare（免费）
+Wind 需要本机运行 Wind API 终端且已登录，否则静默降级
 
 独立CLI脚本，无内部依赖
 用法: python3 stock_data.py --query "比亚迪"
 """
+from __future__ import annotations
 
 import asyncio
+import os
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
 import akshare as ak
 
+# ---- 数据源选择 ----
+# 环境变量 FS_DATA_SOURCE 可强制指定：wind/akshare/auto（默认auto）
+_DATA_SOURCE = os.environ.get("FS_DATA_SOURCE", "auto").lower()
+_wind_available = None  # None=未检测, True/False=检测结果
+
+
+def _check_wind_available():
+    """懒加载检测 Wind 是否可用，只检测一次"""
+    global _wind_available
+    if _wind_available is not None:
+        return _wind_available
+    if _DATA_SOURCE == "akshare":
+        _wind_available = False
+        return False
+    try:
+        import sys
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import wind_data
+        status = wind_data.check_connection()
+        _wind_available = status.get("connected", False)
+    except Exception:
+        _wind_available = False
+    return _wind_available
+
 # 线程池（AkShare是同步库）
 _executor = ThreadPoolExecutor(max_workers=6)
+
+# ---- 数据源标识 ----
+def get_active_source() -> str:
+    """返回当前活跃的数据源：wind 或 akshare"""
+    if _check_wind_available():
+        return "wind"
+    return "akshare"
+
 
 # ---- 股票名称缓存 ----
 _stock_cache: dict | None = None
@@ -116,7 +150,17 @@ def _get_market(code: str) -> str:
 # ---- 数据获取函数（同步，在线程池中执行）----
 
 def _fetch_financials(code: str) -> list[dict] | None:
-    """财报主要指标（限制2024年起，1-2秒）"""
+    """财报主要指标（Wind 优先，失败降级 AkShare）"""
+    # Wind 优先：完整三大报表
+    if _check_wind_available():
+        try:
+            import wind_data
+            result = wind_data.get_financials(code)
+            if result:
+                return result
+        except Exception:
+            pass
+    # 降级：AkShare 主要指标
     try:
         df = ak.stock_financial_analysis_indicator(symbol=code, start_year="2024")
         if df is not None and len(df) > 0:
@@ -162,14 +206,17 @@ def _fetch_fund_flow(code: str) -> list[dict] | None:
 
 
 def _fetch_valuation(code: str) -> dict | None:
-    """估值指标+PE历史分位"""
-    try:
-        df = ak.stock_a_gxl_lg(symbol="上证A股")
-        # 这个接口返回全市场，无法筛选个股
-        # 改用缓存中的PE/PB
-        return None
-    except Exception:
-        return None
+    """估值指标 + PE/PB 10年历史分位（Wind 独有能力）"""
+    if _check_wind_available():
+        try:
+            import wind_data
+            result = wind_data.get_valuation_history(code)
+            if result:
+                return result
+        except Exception:
+            pass
+    # AkShare 无法提供个股历史估值分位，返回 None 由 LLM 从缓存取当前 PE/PB
+    return None
 
 
 def _fetch_news(code: str) -> list[dict] | None:

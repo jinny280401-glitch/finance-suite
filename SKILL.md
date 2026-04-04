@@ -3,7 +3,7 @@ name: finance-suite
 version: 1.0.0
 description: >
   AI金融分析套件。7大技能：看票分析、宏观内参、麦肯锡报告、视频拆解、深度研究(行业+公司)、集合竞价、自选股管理。
-  集成东方财富实时数据(AkShare) + Tavily/Brave双搜索引擎 + YouTube/B站字幕提取(Supadata)。
+  数据层：Wind API (优先) + 东方财富实时数据(AkShare降级) + Tavily/Brave双搜索引擎 + YouTube/B站字幕提取(Supadata)。
   触发条件：用户提到"看票"、"分析股票"、"宏观"、"内参"、"咨询报告"、"麦肯锡"、"拆解视频"、"研究XX"、"调研XX"、"XX行业"、"行业分析"、"公司调研"、"集合竞价"、"涨停"、"自选"、"我的股票"、"关注列表"等。
 author: OpenClaw
 license: MIT
@@ -117,9 +117,15 @@ python3 scripts/video_data.py --url "https://www.bilibili.com/video/BVXXXXXXXX"
 
 | 数据源 | 用途 | 配置 |
 |--------|------|------|
-| **AkShare (东方财富)** | A股财报、行情、资金流向、K线、涨停、龙虎榜 | 免费，无需Key |
+| **Wind API** (优先) | 完整三大报表、一致预期、估值分位、同行对比、电话会议 | 需要 Wind 终端登录；`scripts/wind_data.py` |
+| **AkShare (东方财富)** (降级) | A股财报、行情、资金流向、K线、涨停、龙虎榜 | 免费，无需Key |
 | **Tavily** | 深度搜索（研报、行业分析、政策解读） | 需要API Key |
 | **Brave Search** | 新闻搜索（备用引擎） | 需要API Key |
+
+**数据源切换策略**：
+- `stock_data.py` 自动检测 Wind 连接状态，可用则优先用 Wind，失败静默降级 AkShare
+- 可用环境变量 `FS_DATA_SOURCE=akshare` 强制禁用 Wind（比如在服务器上）
+- 深度研究（deep-research）在 Wind 可用时使用"五大信息来源"，否则降级为"四大来源"
 | **Supadata** | YouTube字幕提取 | 需要API Key（免费100次/月） |
 | **B站API** | B站视频字幕和信息 | 免费，无需Key |
 
