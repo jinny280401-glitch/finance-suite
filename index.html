@@ -763,14 +763,22 @@
     </div>
   </header>
 
-  <!-- ====== LOGIN GATE ====== -->
+  <!-- ====== LOGIN MODAL (hidden by default; opens on /login trigger or ?redirect=) ====== -->
   <div id="loginGate" style="
     position:fixed; inset:0; z-index:9999;
-    background:var(--white);
-    display:flex; align-items:center; justify-content:center;
+    background:rgba(255,255,255,0.96); backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    display:none; align-items:center; justify-content:center;
     flex-direction:column;
   ">
-    <div style="text-align:center; max-width:360px; padding:24px;">
+    <div style="text-align:center; max-width:360px; padding:24px; position:relative;">
+      <button onclick="document.getElementById('loginGate').style.display='none'" style="
+        position:absolute; top:-8px; right:-8px; width:32px; height:32px;
+        border-radius:50%; border:none; background:rgba(0,0,0,0.05);
+        color:var(--text-secondary); font-size:18px; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        transition:background 0.2s;
+      " onmouseover="this.style.background='rgba(0,0,0,0.1)'" onmouseout="this.style.background='rgba(0,0,0,0.05)'" aria-label="关闭">×</button>
       <p style="font-size:13px; font-weight:600; color:var(--text-secondary); letter-spacing:0.5px; margin-bottom:24px;">Finance Suite</p>
       <h2 style="font-size:28px; font-weight:700; margin-bottom:8px;">欢迎回来</h2>
       <p style="font-size:15px; color:var(--text-secondary); margin-bottom:36px;">请输入你的专属账号</p>
@@ -803,12 +811,16 @@
       'ivan': 'ivan123456',
       'shengwei': '86869945',
       'demo': 'demo2026',
-      'zhuanz': 'zhuanz0405'
+      'zhuanz': 'zhuanz0405',
+      'vanilla': 'lemon123456'
     };
-    // 记住登录状态
-    if (localStorage.getItem('fs_auth') === 'ok') {
-      document.getElementById('loginGate').style.display = 'none';
-    }
+    // 仅在有 ?redirect= 且未登录时弹出登录框（从 /app/ 守卫回跳而来）
+    (function(){
+      var params = new URLSearchParams(location.search);
+      if (params.get('redirect') && localStorage.getItem('fs_auth') !== 'ok') {
+        document.getElementById('loginGate').style.display = 'flex';
+      }
+    })();
     function doLogin() {
       var u = document.getElementById('loginUser').value.trim().toLowerCase();
       var p = document.getElementById('loginPass').value;
@@ -845,8 +857,7 @@
           '</div>';
       } else {
         actions.innerHTML =
-          '<button class="hdr-btn hdr-btn--ghost" onclick="document.getElementById(\'loginGate\').style.display=\'flex\'">登录</button>' +
-          '<button class="hdr-btn hdr-btn--primary" onclick="document.getElementById(\'loginGate\').style.display=\'flex\'">免费试用</button>';
+          '<button class="hdr-btn hdr-btn--primary" onclick="document.getElementById(\'loginGate\').style.display=\'flex\'">进入工作台 →</button>';
       }
     }
     // alias for backward-compat (called from doLogin)
@@ -863,11 +874,11 @@
   <section class="hero">
     <p class="hero__brand reveal">Finance Suite</p>
     <h1 class="t-hero hero__title reveal reveal-d1">
-      说一个公司名<br>出一份万字研报
+      全天候在线的<br>AI 研究员
     </h1>
     <p class="t-body t-secondary hero__subtitle reveal reveal-d2">
-      AI 自动搜索财报、电话会议、年报和行业数据，<br>
-      生成每条数据都可溯源的专业研究报告。
+      金融研究 · 会议纪要 · 视频拆解，一个入口全搞定。<br>
+      每条数据都附来源。
     </p>
     <a href="#preview" class="hero__cta reveal reveal-d3">看一份示例报告</a>
 
@@ -964,11 +975,11 @@
         <div class="cap-card__icon">
           <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 4H9a3 3 0 0 0-3 3v22a3 3 0 0 0 3 3h18a3 3 0 0 0 3-3V13z"></path><polyline points="21 4 21 13 30 13"></polyline><line x1="24" y1="19 " x2="12" y2="19"></line><line x1="24" y1="25" x2="12" y2="25"></line></svg>
         </div>
-        <h3 class="cap-card__title">麦肯锡报告</h3>
-        <p class="cap-card__desc">基于会议纪要或调研数据，生成结构严谨的战略咨询报告，直接用于高层决策汇报。</p>
+        <h3 class="cap-card__title">会议纪要</h3>
+        <p class="cap-card__desc">把会议录音、调研记录、访谈文字转成结构清晰的战略报告，可直接用于汇报。</p>
         <div class="cap-card__tags">
-          <span class="cap-tag cap-tag--accent">"帮我出一份咨询报告"</span>
-          <span class="cap-tag">战略分析</span>
+          <span class="cap-tag cap-tag--accent">"整理这份会议纪要"</span>
+          <span class="cap-tag">结构化输出</span>
         </div>
       </div>
       <div class="cap-card reveal reveal-d3">
@@ -1030,45 +1041,19 @@
     </div>
   </section>
 
-  <!-- ====== 5. TRUST NUMBERS ====== -->
-  <section class="trust-section">
-    <div class="trust-grid">
-      <div class="reveal">
-        <div class="trust-item__number" data-count="100" data-suffix="%">0%</div>
-        <div class="trust-item__label">数据可溯源</div>
-      </div>
-      <div class="reveal reveal-d1">
-        <div class="trust-item__number" data-count="10" data-suffix="节">0节</div>
-        <div class="trust-item__label">完整报告结构</div>
-      </div>
-      <div class="reveal reveal-d2">
-        <div class="trust-item__number" data-count="4" data-suffix="份">0份</div>
-        <div class="trust-item__label">电话会议交叉验证</div>
-      </div>
-      <div class="reveal reveal-d3">
-        <div class="trust-item__number" data-count="0" data-suffix="">零编造</div>
-        <div class="trust-item__label">搜不到就标注，绝不伪造</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ====== 6. CTA ====== -->
+  <!-- ====== 5. CTA ====== -->
   <section class="cta">
     <h2 class="t-section cta__title reveal">开始你的第一份研究</h2>
     <p class="t-body cta__desc reveal reveal-d1">
-      在 Finance Suite 中输入一个公司名或行业名，剩下的交给 AI。
+      输入一个公司名、行业名，或上传会议纪要、视频链接，剩下的交给 AI。
     </p>
-    <button class="cta__btn reveal reveal-d2" onclick="showToast()">
-      免费开始使用
-    </button>
+    <a href="/app/" class="cta__btn reveal reveal-d2">
+      进入工作台
+    </a>
   </section>
 
-  <div class="toast" id="toast">
-    在 Finance Suite 中直接输入：<br><strong>研究 + 公司名</strong><br>例如：研究宁德时代
-  </div>
-
   <footer class="footer">
-    Finance Suite by OpenClaw &mdash; 基于公开数据的 AI 分析，不构成投资建议
+    Finance Suite &mdash; 基于公开数据的 AI 分析，仅供内部研究使用，不构成投资建议
   </footer>
 
   <script>
