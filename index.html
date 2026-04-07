@@ -29,7 +29,7 @@
 
     body {
       font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
-      background: var(--white);
+      background: var(--dark-bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
@@ -50,14 +50,18 @@
     .reveal-d4 { transition-delay: 0.45s; }
     .reveal-d5 { transition-delay: 0.6s; }
 
-    .dark-section .reveal {
+    .dark-reveal {
+      opacity: 0;
       transform: translateY(50px) scale(0.98);
+      transition: opacity 1s var(--ease), transform 1s var(--ease);
+      will-change: transform, opacity;
     }
-    .dark-section .reveal.visible {
+    .dark-reveal.visible {
+      opacity: 1;
       transform: translateY(0) scale(1);
     }
 
-    /* ---- Typography (Apple precision + Linear tracking) ---- */
+    /* ---- Typography ---- */
     .t-hero {
       font-size: clamp(36px, 6.5vw, 72px);
       font-weight: 600;
@@ -101,15 +105,21 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       height: 52px;
-      background: rgba(255,255,255,0.72);
+      background: rgba(0,0,0,0.72);
       backdrop-filter: saturate(180%) blur(20px);
       -webkit-backdrop-filter: saturate(180%) blur(20px);
-      border-bottom: 1px solid rgba(0,0,0,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
       z-index: 100;
       display: flex;
       align-items: center;
       padding: 0 22px;
+      transition: background 0.4s, border-color 0.4s;
     }
+    .site-header.light-mode {
+      background: rgba(255,255,255,0.72);
+      border-bottom-color: rgba(0,0,0,0.06);
+    }
+    .site-header.light-mode .site-header__brand { color: var(--text); }
     .site-header__inner {
       width: 100%;
       max-width: 1200px;
@@ -121,9 +131,10 @@
     .site-header__brand {
       font-size: 14px;
       font-weight: 600;
-      color: var(--text);
+      color: var(--dark-text);
       text-decoration: none;
       letter-spacing: -0.016em;
+      transition: color 0.4s;
     }
     .site-header__actions {
       display: flex;
@@ -145,10 +156,10 @@
       gap: 4px;
     }
     .hdr-btn--ghost {
-      color: var(--text);
+      color: var(--dark-text);
       background: transparent;
     }
-    .hdr-btn--ghost:hover { background: rgba(0,0,0,0.05); }
+    .hdr-btn--ghost:hover { background: rgba(255,255,255,0.08); }
     .hdr-btn--primary {
       background: var(--accent);
       color: #fff;
@@ -156,7 +167,7 @@
     .hdr-btn--primary:hover { background: var(--accent-hover); transform: scale(1.03); }
     .hdr-user {
       font-size: 13px;
-      color: var(--text-secondary);
+      color: var(--dark-secondary);
       padding: 7px 4px 7px 8px;
       cursor: pointer;
       position: relative;
@@ -196,14 +207,9 @@
       font-family: inherit;
     }
     .hdr-user__item:hover { background: var(--surface); }
-    @media (max-width: 640px) {
-      .site-header { padding: 0 16px; }
-      .hdr-btn { font-size: 12px; padding: 6px 12px; }
-      .hdr-user { display: none; }
-    }
 
     /* ============================================
-       1. HERO
+       ACT 1 — HERO (DARK)
        ============================================ */
     .hero {
       min-height: 100vh;
@@ -214,21 +220,50 @@
       text-align: center;
       padding: 80px 24px 60px;
       position: relative;
+      background: var(--dark-bg);
+      color: var(--dark-text);
+      overflow: hidden;
     }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 20%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 20%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      height: 500px;
+      background: radial-gradient(ellipse at center, rgba(0,113,227,0.10), transparent 65%);
+      pointer-events: none;
+    }
+    .hero > * { position: relative; z-index: 1; }
     .hero__brand {
       font-size: 13px;
       font-weight: 600;
-      color: var(--text-secondary);
+      color: var(--dark-secondary);
       letter-spacing: 0.5px;
       margin-bottom: 24px;
     }
     .hero__title {
       max-width: 760px;
       margin-bottom: 20px;
+      color: var(--dark-text);
     }
     .hero__subtitle {
-      max-width: 560px;
+      max-width: 600px;
       margin: 0 auto 40px;
+      color: var(--dark-secondary);
     }
     .hero__cta {
       display: inline-block;
@@ -252,10 +287,10 @@
     .hero-demo {
       width: 100%;
       max-width: 780px;
-      background: var(--dark-bg);
+      background: #0a0a0b;
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: rgba(0,0,0,0.22) 3px 5px 30px 0px, 0 0 0 1px rgba(0,0,0,0.04);
+      box-shadow: 0 0 80px rgba(0,113,227,0.08), 0 0 0 1px rgba(255,255,255,0.06);
       text-align: left;
     }
     .hero-demo__bar {
@@ -286,13 +321,13 @@
     .hero-demo__line:nth-child(1) { animation-delay: 0.3s; }
     .hero-demo__line:nth-child(2) { animation-delay: 0.6s; }
     .hero-demo__line:nth-child(3) { animation-delay: 0.9s; }
-    .hero-demo__line:nth-child(4) { animation-delay: 1.2s; }
-    .hero-demo__line:nth-child(5) { animation-delay: 1.6s; }
-    .hero-demo__line:nth-child(6) { animation-delay: 1.9s; }
-    .hero-demo__line:nth-child(7) { animation-delay: 2.2s; }
-    .hero-demo__line:nth-child(8) { animation-delay: 2.5s; }
-    .hero-demo__line:nth-child(9) { animation-delay: 2.8s; }
-    .hero-demo__line:nth-child(10) { animation-delay: 3.1s; }
+    .hero-demo__line:nth-child(4) { animation-delay: 1.3s; }
+    .hero-demo__line:nth-child(5) { animation-delay: 1.7s; }
+    .hero-demo__line:nth-child(6) { animation-delay: 2.1s; }
+    .hero-demo__line:nth-child(7) { animation-delay: 2.5s; }
+    .hero-demo__line:nth-child(8) { animation-delay: 2.9s; }
+    .hero-demo__line:nth-child(9) { animation-delay: 3.2s; }
+    .hero-demo__line:nth-child(10) { animation-delay: 3.5s; }
 
     @keyframes lineIn { to { opacity: 1; } }
 
@@ -304,7 +339,7 @@
       vertical-align: middle;
       margin-left: 2px;
       opacity: 0;
-      animation: cursorShow 0.3s var(--ease) 3.4s forwards, cursorBlink 1s 3.7s infinite;
+      animation: cursorShow 0.3s var(--ease) 3.8s forwards, cursorBlink 1s 4.1s infinite;
     }
     @keyframes cursorShow { to { opacity: 1; } }
     @keyframes cursorBlink {
@@ -318,6 +353,7 @@
     .c-purple { color: #bf5af2; }
     .c-orange { color: #ff9f0a; font-size: 11px; }
     .c-head { color: #64d2ff; font-weight: 500; }
+    .c-accent { color: var(--accent); }
 
     .hero__scroll {
       position: absolute;
@@ -326,10 +362,11 @@
       transform: translateX(-50%);
       width: 1px;
       height: 28px;
-      background: linear-gradient(to bottom, var(--text-secondary), transparent);
+      background: linear-gradient(to bottom, var(--dark-secondary), transparent);
       animation: pulse 2s ease-in-out infinite;
       opacity: 0.5;
       transition: opacity 0.4s;
+      z-index: 1;
     }
     @keyframes pulse {
       0%, 100% { transform: translateX(-50%) scaleY(0.5); opacity: 0.3; }
@@ -337,393 +374,187 @@
     }
 
     /* ============================================
-       2. DEEP RESEARCH (DARK)
+       ACT 2 — AGENT DISPATCH (LIGHT, STICKY SCROLL)
        ============================================ */
-    .transition-to-dark {
-      height: 280px;
-      background: linear-gradient(to bottom in oklab,
-        var(--white) 0%,
-        #f0f0f2 22%,
-        #c4c4ca 42%,
-        #6a6a72 60%,
-        #2a2a2e 78%,
-        #0a0a0b 92%,
-        var(--dark-bg) 100%);
-    }
-    @supports not (background: linear-gradient(in oklab, #fff, #000)) {
-      .transition-to-dark {
-        background: linear-gradient(to bottom,
-          var(--white) 0%, #e8e8ec 25%, #8a8a92 50%, #2a2a2e 75%, var(--dark-bg) 100%);
-      }
-    }
-    .dark-section {
-      background: var(--dark-bg);
-      color: var(--dark-text);
-      padding: 120px 0 200px;
+    .dispatch {
+      background: var(--white);
+      color: var(--text);
       position: relative;
       overflow: hidden;
     }
-    /* Subtle grid background for tech feel */
-    .dark-section::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 20%, transparent 70%);
-      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 20%, transparent 70%);
-      pointer-events: none;
-    }
-    /* Blue glow at top */
-    .dark-section::after {
-      content: '';
-      position: absolute;
-      top: -100px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 800px;
-      height: 500px;
-      background: radial-gradient(ellipse at center, rgba(0,113,227,0.12), transparent 65%);
-      pointer-events: none;
-    }
-    /* Mouse-tracking glow (positioned by JS) */
-    .dark-glow {
-      position: absolute;
-      width: 600px;
-      height: 600px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(0,113,227,0.06), transparent 60%);
-      pointer-events: none;
-      transform: translate(-50%, -50%);
-      transition: left 0.3s ease-out, top 0.3s ease-out;
-      z-index: 0;
-    }
-    .dark-section > *:not(.dark-glow) {
+    .dispatch__header {
+      text-align: center;
+      padding: 120px 24px 80px;
       position: relative;
       z-index: 1;
     }
+    .dispatch__header .t-overline {
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+      display: block;
+    }
+    .dispatch__header .t-section { color: var(--text); }
+    .dispatch__header .t-body {
+      color: var(--text-secondary);
+      margin-top: 12px;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .dispatch__steps {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .dispatch__step-inner {
+      background: var(--white);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 16px;
+      padding: 48px 56px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .dispatch__step-overline {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+    .dispatch__step-title {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 24px;
+    }
+    .dispatch__data {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 20px 0 24px;
+    }
+    .dispatch__datum {
+      background: var(--surface);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 10px;
+      padding: 20px 22px;
+    }
+    .dispatch__datum-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .dispatch__datum-value {
+      font-family: "SF Mono", "Fira Code", "Menlo", monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .dispatch__datum-value.accent { color: var(--accent); }
+    .dispatch__step-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-top: 14px;
+      line-height: 1.6;
+    }
+    .dispatch__step-meta {
+      font-size: 14px;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    .dispatch__step-meta span { color: var(--accent); }
+
+    .dispatch__anchor {
+      text-align: center;
+      padding: 80px 24px 140px;
+      position: relative;
+      z-index: 1;
+    }
+    .dispatch__anchor-text {
+      font-size: clamp(16px, 1.8vw, 20px);
+      color: var(--text-secondary);
+      max-width: 620px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    .dispatch__anchor-text strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* ============================================
+       TRANSITIONS
+       ============================================ */
     .transition-to-light {
-      height: 280px;
+      height: 400px;
       background: linear-gradient(to bottom in oklab,
         var(--dark-bg) 0%,
-        #0a0a0b 8%,
-        #2a2a2e 22%,
-        #6a6a72 40%,
-        #c4c4ca 58%,
-        #ececf0 78%,
-        var(--surface) 100%);
+        #0a0a0b 12%,
+        #18181b 26%,
+        #2a2a2e 38%,
+        #4a4a52 50%,
+        #7a7a82 60%,
+        #a8a8ae 70%,
+        #d0d0d4 80%,
+        #e8e8ec 88%,
+        #f2f2f4 94%,
+        var(--white) 100%);
+      position: relative;
+    }
+    .transition-to-light::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 120% 50% at 50% 40%, rgba(255,255,255,0.06), transparent 70%);
+      pointer-events: none;
     }
     @supports not (background: linear-gradient(in oklab, #fff, #000)) {
       .transition-to-light {
         background: linear-gradient(to bottom,
-          var(--dark-bg) 0%, #2a2a2e 25%, #8a8a92 50%, #e8e8ec 75%, var(--surface) 100%);
+          var(--dark-bg) 0%, #18181b 20%, #4a4a52 40%, #8a8a92 55%, #c8c8cc 70%, #e8e8ec 85%, var(--white) 100%);
       }
     }
 
-    .flagship__header {
-      text-align: center;
-      margin-bottom: 100px;
-      padding: 0 24px;
-    }
-    .flagship__overline {
-      color: var(--dark-secondary);
-      margin-bottom: 20px;
-    }
-    .flagship__title { margin-bottom: 16px; }
-    .flagship__subtitle {
-      color: var(--dark-secondary);
-      max-width: 480px;
-      margin: 0 auto;
-    }
-
-    .modes {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      max-width: 1080px;
-      margin: 0 auto 80px;
-      padding: 0 24px;
-    }
-    .mode {
-      position: relative;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--dark-border-subtle);
-      border-radius: 16px;
-      padding: 36px 28px;
-      transition: background 0.4s var(--ease), border-color 0.4s var(--ease), transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
-    }
-    .mode::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 15%;
-      right: 15%;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
-    }
-    .mode:hover {
-      background: rgba(255,255,255,0.06);
-      border-color: rgba(0,113,227,0.25);
-      transform: translateY(-4px);
-      box-shadow: 0 20px 60px rgba(0,113,227,0.06), 0 0 0 1px rgba(0,113,227,0.1);
-    }
-    .mode__label {
-      color: var(--accent);
-      margin-bottom: 16px;
-      display: block;
-    }
-    .mode__title {
-      font-size: 22px;
-      font-weight: 600;
-      margin-bottom: 12px;
-      color: var(--dark-text);
-    }
-    .mode__desc {
-      font-size: 14px;
-      color: var(--dark-secondary);
-      line-height: 1.65;
-      letter-spacing: -0.01em;
-      margin-bottom: 20px;
-    }
-    .mode__example {
-      font-size: 13px;
-      color: var(--dark-tertiary);
-      font-style: italic;
-      padding-top: 16px;
-      border-top: 1px solid var(--dark-border-subtle);
-    }
-
-    .dark-cta {
-      text-align: center;
-      padding: 0 24px;
-    }
-    .dark-cta__btn {
-      display: inline-block;
-      padding: 12px 28px;
-      border: 1px solid rgba(255,255,255,0.3);
-      color: var(--dark-text);
-      background: none;
-      border-radius: 980px;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      font-family: inherit;
-      text-decoration: none;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    .dark-cta__btn:hover {
-      background: rgba(255,255,255,0.08);
-      border-color: rgba(255,255,255,0.5);
-    }
-
-    /* ============================================
-       3. SIX SKILLS (unified 3x2 grid)
-       ============================================ */
-    .capabilities {
-      background: var(--surface);
-      padding: 200px 0;
-    }
-    .cap-header {
-      text-align: center;
-      margin-bottom: 80px;
-      padding: 0 24px;
-    }
-    .cap-header p { color: var(--text-secondary); margin-top: 12px; }
-
-    .cap-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-    .cap-card {
-      background: var(--white);
-      border-radius: 16px;
-      padding: 36px 28px;
-      border: 1px solid rgba(0,0,0,0.06);
-      box-shadow: none;
-      transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease), border-color 0.3s;
-      position: relative;
-      overflow: hidden;
-    }
-    .cap-card:hover {
-      transform: translateY(-4px);
-      box-shadow: rgba(0,0,0,0.12) 3px 5px 30px 0px;
-      border-color: rgba(0,113,227,0.12);
-    }
-    .cap-card__icon {
-      width: 44px;
-      height: 44px;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--surface);
-      border-radius: 12px;
-      color: var(--accent);
-    }
-    .cap-card__title {
-      font-size: 20px;
-      font-weight: 600;
-      letter-spacing: -0.015em;
-      margin-bottom: 8px;
-    }
-    .cap-card__desc {
-      font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.65;
-      letter-spacing: -0.01em;
-      margin-bottom: 16px;
-    }
-    .cap-card__tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .cap-tag {
-      font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      background: var(--surface);
-      color: var(--text-secondary);
-    }
-    .cap-tag--accent {
-      background: rgba(0,113,227,0.08);
-      color: var(--accent);
-    }
-
-    /* ============================================
-       4. DATA SOURCES (dark)
-       ============================================ */
-    .transition-to-dark-2 {
-      height: 280px;
+    .transition-to-dark {
+      height: 400px;
       background: linear-gradient(to bottom in oklab,
         var(--surface) 0%,
-        #dddde0 22%,
-        #a0a0a6 42%,
-        #5a5a62 60%,
-        #2a2a2e 78%,
+        #ececf0 8%,
+        #d0d0d4 20%,
+        #a8a8ae 34%,
+        #7a7a82 46%,
+        #4a4a52 58%,
+        #2a2a2e 70%,
+        #18181b 82%,
         #0a0a0b 92%,
         var(--dark-bg) 100%);
-    }
-    @supports not (background: linear-gradient(in oklab, #fff, #000)) {
-      .transition-to-dark-2 {
-        background: linear-gradient(to bottom,
-          var(--surface) 0%, #c8c8cc 25%, #7a7a82 50%, #2a2a2e 75%, var(--dark-bg) 100%);
-      }
-    }
-    .sources-section {
-      background: var(--dark-bg);
-      color: var(--dark-text);
-      padding: 120px 0 160px;
       position: relative;
-      overflow: hidden;
     }
-    .sources-section::before {
+    .transition-to-dark::after {
       content: '';
       position: absolute;
       inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 10%, transparent 70%);
-      -webkit-mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 10%, transparent 70%);
+      background: radial-gradient(ellipse 120% 50% at 50% 60%, rgba(0,0,0,0.06), transparent 70%);
       pointer-events: none;
     }
-    .sources-header {
-      text-align: center;
-      margin-bottom: 80px;
-      padding: 0 24px;
-      position: relative;
-      z-index: 1;
-    }
-    .sources-header p {
-      color: var(--dark-secondary);
-      margin-top: 12px;
-    }
-    .sources-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 16px;
-      max-width: 1080px;
-      margin: 0 auto;
-      padding: 0 24px;
-      position: relative;
-      z-index: 1;
-    }
-    .source-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--dark-border-subtle);
-      border-radius: 12px;
-      padding: 28px 20px;
-      text-align: center;
-      transition: background 0.3s, border-color 0.3s, transform 0.4s var(--ease), box-shadow 0.3s;
-    }
-    .source-card:hover {
-      background: rgba(255,255,255,0.06);
-      border-color: var(--dark-border);
-      transform: translateY(-3px);
-      box-shadow: 0 0 0 1px rgba(0,113,227,0.08);
-    }
-    .source-card__name {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      color: var(--dark-text);
-    }
-    .source-card__type {
-      font-size: 11px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--accent);
-      margin-bottom: 12px;
-    }
-    .source-card__desc {
-      font-size: 12px;
-      color: var(--dark-secondary);
-      line-height: 1.5;
-    }
-    .sources-note {
-      text-align: center;
-      margin-top: 48px;
-      padding: 0 24px;
-      position: relative;
-      z-index: 1;
-    }
-    .sources-note p {
-      font-size: 14px;
-      color: var(--dark-secondary);
-    }
-    .sources-note span {
-      color: var(--accent);
-      font-weight: 500;
-    }
-    .transition-to-light-2 {
-      height: 280px;
-      background: linear-gradient(to bottom in oklab,
-        var(--dark-bg) 0%,
-        #0a0a0b 8%,
-        #2a2a2e 22%,
-        #6a6a72 40%,
-        #c4c4ca 58%,
-        #ececf0 78%,
-        var(--white) 100%);
-    }
     @supports not (background: linear-gradient(in oklab, #fff, #000)) {
-      .transition-to-light-2 {
+      .transition-to-dark {
         background: linear-gradient(to bottom,
-          var(--dark-bg) 0%, #2a2a2e 25%, #8a8a92 50%, #e8e8ec 75%, var(--white) 100%);
+          var(--surface) 0%, #c8c8cc 20%, #8a8a92 40%, #4a4a52 60%, #18181b 80%, var(--dark-bg) 100%);
       }
     }
 
     /* ============================================
-       5. REPORT PREVIEW
+       ACT 3 — REPORT PREVIEW (LIGHT)
        ============================================ */
     .preview-section {
       background: var(--white);
@@ -827,49 +658,230 @@
     }
 
     /* ============================================
-       6. TRUST
+       ACT 4 — SIX SKILLS (LIGHT)
        ============================================ */
-    .trust-section {
+    .capabilities {
       background: var(--surface);
-      padding: 120px 0;
+      padding: 200px 0;
     }
-    .trust-grid {
+    .cap-header {
+      text-align: center;
+      margin-bottom: 80px;
+      padding: 0 24px;
+    }
+    .cap-header p { color: var(--text-secondary); margin-top: 12px; }
+
+    .cap-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 40px;
-      max-width: 960px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 1080px;
       margin: 0 auto;
       padding: 0 24px;
-      text-align: center;
     }
-    .trust-item__number {
-      font-size: 36px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 4px;
+    .cap-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 36px 28px;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: none;
+      transition: transform 0.5s var(--ease), box-shadow 0.5s var(--ease), border-color 0.3s;
+      position: relative;
+      overflow: hidden;
     }
-    .trust-item__label {
-      font-size: 13px;
+    .cap-card:hover {
+      transform: translateY(-4px);
+      box-shadow: rgba(0,0,0,0.12) 3px 5px 30px 0px;
+      border-color: rgba(0,113,227,0.12);
+    }
+    .cap-card__icon {
+      width: 44px;
+      height: 44px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      border-radius: 12px;
+      color: var(--accent);
+    }
+    .cap-card__title {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      margin-bottom: 8px;
+    }
+    .cap-card__desc {
+      font-size: 14px;
       color: var(--text-secondary);
+      line-height: 1.65;
+      letter-spacing: -0.01em;
+      margin-bottom: 16px;
+    }
+    .cap-card__chain {
+      font-family: "SF Mono", "Fira Code", "Menlo", monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      padding: 12px 14px;
+      background: var(--surface);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cap-card__chain .chain-arrow { color: var(--accent); }
+    .cap-card__chain-line {
+      opacity: 0.5;
+      transition: opacity 0.3s;
+    }
+    .cap-card:hover .cap-card__chain-line { opacity: 1; }
+    /* hover chain flow animation */
+    .cap-card:hover .cap-card__chain-line:nth-child(1) { transition-delay: 0s; }
+    .cap-card:hover .cap-card__chain-line:nth-child(2) { transition-delay: 0.08s; }
+    .cap-card:hover .cap-card__chain-line:nth-child(3) { transition-delay: 0.16s; }
+    .cap-card:hover .cap-card__chain-line:nth-child(4) { transition-delay: 0.24s; }
+
+    .cap-card__tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .cap-tag {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--surface);
+      color: var(--text-secondary);
+    }
+    .cap-tag--accent {
+      background: rgba(0,113,227,0.08);
+      color: var(--accent);
     }
 
     /* ============================================
-       7. CTA
+       ACT 5 — TRUST & CTA (DARK)
        ============================================ */
-    .cta {
-      background: var(--white);
-      text-align: center;
-      padding: 160px 24px;
+    .finale {
+      background: var(--dark-bg);
+      color: var(--dark-text);
+      position: relative;
+      overflow: hidden;
     }
-    .cta__title { margin-bottom: 12px; }
-    .cta__desc {
-      color: var(--text-secondary);
+    .finale::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 10%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse 70% 50% at 50% 50%, black 10%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .sources-header {
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+      z-index: 1;
+    }
+    .sources-header .t-overline {
+      color: var(--dark-secondary);
+      margin-bottom: 20px;
+      display: block;
+    }
+    .sources-header .t-section { color: var(--dark-text); }
+    .sources-header .t-body {
+      color: var(--dark-secondary);
+      margin-top: 12px;
+    }
+
+    .sources-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+    .source-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--dark-border-subtle);
+      border-radius: 12px;
+      padding: 28px 20px;
+      text-align: center;
+      transition: background 0.3s, border-color 0.3s, transform 0.4s var(--ease), box-shadow 0.3s;
+    }
+    .source-card:hover {
+      background: rgba(255,255,255,0.06);
+      border-color: var(--dark-border);
+      transform: translateY(-3px);
+      box-shadow: 0 0 0 1px rgba(0,113,227,0.08);
+    }
+    .source-card__name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--dark-text);
+    }
+    .source-card__type {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .source-card__desc {
+      font-size: 12px;
+      color: var(--dark-secondary);
+      line-height: 1.5;
+    }
+
+    .trust-strip {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      padding: 80px 24px;
+      position: relative;
+      z-index: 1;
+    }
+    .trust-strip__item {
+      text-align: center;
+    }
+    .trust-strip__number {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--dark-text);
+      margin-bottom: 4px;
+    }
+    .trust-strip__label {
+      font-size: 12px;
+      color: var(--dark-secondary);
+    }
+
+    .finale__cta {
+      text-align: center;
+      padding: 60px 24px 140px;
+      position: relative;
+      z-index: 1;
+    }
+    .finale__cta-title {
+      margin-bottom: 12px;
+      color: var(--dark-text);
+    }
+    .finale__cta-desc {
+      color: var(--dark-secondary);
       margin-bottom: 36px;
       max-width: 420px;
       margin-left: auto;
       margin-right: auto;
     }
-    .cta__btn {
+    .finale__cta-btn {
       display: inline-block;
       padding: 16px 36px;
       background: var(--accent);
@@ -883,8 +895,8 @@
       text-decoration: none;
       transition: background 0.2s, transform 0.2s var(--ease);
     }
-    .cta__btn:hover { background: var(--accent-hover); transform: scale(1.04); }
-    .cta__btn:active { transform: scale(0.98); }
+    .finale__cta-btn:hover { background: var(--accent-hover); transform: scale(1.04); }
+    .finale__cta-btn:active { transform: scale(0.98); }
 
     /* ---- Toast ---- */
     .toast {
@@ -917,31 +929,37 @@
       text-align: center;
       padding: 24px;
       font-size: 12px;
-      color: var(--text-secondary);
-      border-top: 1px solid rgba(0,0,0,0.04);
+      color: var(--dark-secondary);
+      background: var(--dark-bg);
+      border-top: 1px solid var(--dark-border-subtle);
     }
 
     /* ---- Responsive ---- */
     @media (max-width: 1024px) {
-      .modes { grid-template-columns: 1fr; max-width: 480px; }
       .cap-grid { grid-template-columns: repeat(2, 1fr); max-width: 640px; }
       .sources-grid { grid-template-columns: repeat(3, 1fr); }
-      .trust-grid { grid-template-columns: repeat(2, 1fr); }
+      .trust-strip { gap: 32px; flex-wrap: wrap; }
     }
     @media (max-width: 768px) {
       .hero { min-height: auto; padding: 80px 20px 40px; }
-      .dark-section { padding: 80px 0 120px; }
+      .dispatch__header { padding: 80px 24px 40px; }
+      .dispatch__step-inner { padding: 28px 24px; }
+      .dispatch__data { grid-template-columns: repeat(2, 1fr); }
       .capabilities, .preview-section { padding: 120px 0; }
-      .sources-section { padding: 80px 0 100px; }
-      .transition-to-dark, .transition-to-light,
-      .transition-to-dark-2, .transition-to-light-2 { height: 180px; }
-      .trust-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
-      .cta { padding: 100px 20px; }
+      .transition-to-light, .transition-to-dark { height: 260px; }
       .cap-grid { grid-template-columns: 1fr; max-width: 420px; }
       .sources-grid { grid-template-columns: repeat(2, 1fr); }
+      .trust-strip { gap: 24px; }
+      .trust-strip__number { font-size: 22px; }
     }
     @media (max-width: 480px) {
       .sources-grid { grid-template-columns: 1fr; max-width: 320px; }
+      .dispatch__data { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .site-header { padding: 0 16px; }
+      .hdr-btn { font-size: 12px; padding: 6px 12px; }
+      .hdr-user { display: none; }
     }
   </style>
 </head>
@@ -1004,7 +1022,8 @@
       'shengwei': '86869945',
       'demo': 'demo2026',
       'zhuanz': 'zhuanz0405',
-      'vanilla': 'lemon123456'
+      'vanilla': 'lemon123456',
+      'nanjian': 'nj123456'
     };
     (function(){
       var params = new URLSearchParams(location.search);
@@ -1059,15 +1078,17 @@
     document.addEventListener('DOMContentLoaded', renderHeader);
   </script>
 
-  <!-- ====== 1. HERO ====== -->
+  <!-- ============================================================
+       ACT 1 — HERO: "你提问，它调度。"
+       ============================================================ -->
   <section class="hero">
     <p class="hero__brand reveal">Finance Suite &mdash; AI 金融分析套件</p>
     <h1 class="t-hero hero__title reveal reveal-d1">
-      从提问到报告，<br>1 分钟。
+      你提问，它调度。
     </h1>
-    <p class="t-body t-secondary hero__subtitle reveal reveal-d2">
-      机构级 AI 研究系统，覆盖 A 股 5,000+ 标的。<br>
-      每条数据都附来源。
+    <p class="t-body hero__subtitle reveal reveal-d2">
+      自主规划研究路径，调度 5 大数据源，<br>
+      交叉验证后结构化输出。覆盖 A 股 5,000+ 标的。
     </p>
     <a href="#preview" class="hero__cta reveal reveal-d3">看一份示例报告</a>
 
@@ -1080,176 +1101,232 @@
       </div>
       <div class="hero-demo__body">
         <div class="hero-demo__line"><span class="c-blue">&gt;</span> 帮我研究宁德时代</div>
-        <div class="hero-demo__line"><span class="c-dim">  识别模式：公司研究</span></div>
-        <div class="hero-demo__line"><span class="c-dim">  搜索锂电池/储能行业数据...</span></div>
-        <div class="hero-demo__line"><span class="c-dim">  搜索 Q1-Q4 电话会议记录...</span></div>
-        <div class="hero-demo__line"><span class="c-dim">  提取公司官网与年报...</span></div>
+        <div class="hero-demo__line"><span class="c-dim">  识别意图 &rarr; 公司研究 &rarr; 规划 5 步调度链</span></div>
+        <div class="hero-demo__line"><span class="c-accent">  [1/5]</span><span class="c-dim"> Wind &rarr; 拉取财务三表 + 估值历史...</span></div>
+        <div class="hero-demo__line"><span class="c-accent">  [2/5]</span><span class="c-dim"> AkShare &rarr; 获取实时行情 + 技术指标...</span></div>
+        <div class="hero-demo__line"><span class="c-accent">  [3/5]</span><span class="c-dim"> 卖方一致预期 &rarr; 34 家覆盖，目标价 &uarr;12%</span></div>
+        <div class="hero-demo__line"><span class="c-accent">  [4/5]</span><span class="c-dim"> Tavily + Brave &rarr; 搜索行业政策 + 竞对动态...</span></div>
+        <div class="hero-demo__line"><span class="c-accent">  [5/5]</span><span class="c-dim"> 电话会议 &rarr; 提取管理层最新表态...</span></div>
         <div class="hero-demo__line">&nbsp;</div>
-        <div class="hero-demo__line"><span class="c-green">宁德时代 - 企业研究报告</span></div>
-        <div class="hero-demo__line"><span class="c-purple">含行业速览 + 10节企业深度调研 | 12,847字</span></div>
-        <div class="hero-demo__line"><span class="c-head">1. 公司从事的业务</span> &nbsp;<span class="c-dim">2. 业务板块</span> &nbsp;<span class="c-dim">3. 产品详情</span> &nbsp;<span class="c-dim">...</span></div>
-        <div class="hero-demo__line"><span class="c-head">9. 言行一致</span> &nbsp;<span class="c-dim">10. 情景设定</span> &nbsp;<span class="c-orange">全部数据附来源URL</span><span class="hero-demo__cursor"></span></div>
+        <div class="hero-demo__line"><span class="c-green">&#10003; 调度完成</span> <span class="c-dim">5 数据源 &middot; 847 数据点 &middot; 交叉验证通过</span></div>
+        <div class="hero-demo__line"><span class="c-purple">宁德时代 - 企业研究报告</span> <span class="c-dim">| 行业速览 + 10 节 | 12,847 字</span><span class="hero-demo__cursor"></span></div>
       </div>
     </div>
     <div class="hero__scroll"></div>
   </section>
 
-  <!-- ====== 2. DARK: DEEP RESEARCH ====== -->
-  <div class="transition-to-dark"></div>
-  <section class="dark-section" id="darkSection">
-    <div class="dark-glow" id="darkGlow"></div>
-    <div class="flagship__header">
-      <p class="t-overline flagship__overline reveal">Flagship</p>
-      <h2 class="t-hero flagship__title reveal reveal-d1">深度研究</h2>
-      <p class="t-body flagship__subtitle reveal reveal-d2">
-        一个入口，三种模式。行业和企业，不再分开研究。
-      </p>
-    </div>
-    <div class="modes">
-      <div class="mode reveal">
-        <span class="t-overline mode__label">Mode A</span>
-        <h3 class="mode__title">行业研究</h3>
-        <p class="mode__desc">6 维度框架：概览、规模、供需、竞争、技术、趋势</p>
-        <p class="mode__example">"分析新能源汽车行业"</p>
-      </div>
-      <div class="mode reveal reveal-d1">
-        <span class="t-overline mode__label">Mode B</span>
-        <h3 class="mode__title">公司研究</h3>
-        <p class="mode__desc">5 大来源、10 节完整报告，含管理层言行一致性追踪</p>
-        <p class="mode__example">"研究宁德时代"</p>
-      </div>
-      <div class="mode reveal reveal-d2">
-        <span class="t-overline mode__label">Mode A+B</span>
-        <h3 class="mode__title">联合模式</h3>
-        <p class="mode__desc">行业深度 + 企业深度 + 匹配度分析，三位一体</p>
-        <p class="mode__example">"比亚迪在新能源行业的位置"</p>
-      </div>
-    </div>
-    <div class="dark-cta reveal">
-      <button class="dark-cta__btn" onclick="document.getElementById('preview').scrollIntoView({behavior:'smooth'})">查看完整报告结构</button>
-    </div>
-  </section>
   <div class="transition-to-light"></div>
 
-  <!-- ====== 3. SIX SKILLS ====== -->
-  <section class="capabilities">
-    <div class="cap-header">
-      <h2 class="t-section reveal">六项专业技能</h2>
-      <p class="t-body reveal reveal-d1">每一条数据可溯源，搜不到就标注，绝不编造。</p>
+  <!-- ============================================================
+       ACT 2 — AGENT DISPATCH (STICKY SCROLL)
+       ============================================================ -->
+  <section class="dispatch" id="dispatchSection">
+    <div class="dispatch__header">
+      <span class="t-overline reveal">调度过程</span>
+      <h2 class="t-section reveal reveal-d1">一次研究的内部视角</h2>
+      <p class="t-body reveal reveal-d2">你说了一句"研究宁德时代"。接下来的 60 秒里，Agent 做了这些事。</p>
     </div>
-    <div class="cap-grid">
-      <div class="cap-card reveal">
-        <div class="cap-card__icon">
-          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="22 12 18 12 15 20 9 4 6 12 2 12"></polyline></svg>
+
+    <div class="dispatch__steps">
+
+        <div class="dispatch__step" data-index="0">
+          <div class="dispatch__step-inner">
+            <div class="dispatch__step-overline">Step 1 / 5 &mdash; Wind 金融终端</div>
+            <h3 class="dispatch__step-title">调取 3 年财务三表 + 估值历史</h3>
+            <div class="dispatch__data">
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">营收 2025</div>
+                <div class="dispatch__datum-value">4,280亿</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">净利润 YoY</div>
+                <div class="dispatch__datum-value accent">+18.3%</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">ROE</div>
+                <div class="dispatch__datum-value">21.7%</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">PE (TTM)</div>
+                <div class="dispatch__datum-value">22.4x</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">PB</div>
+                <div class="dispatch__datum-value">4.8x</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">EV/EBITDA</div>
+                <div class="dispatch__datum-value">15.2x</div>
+              </div>
+            </div>
+            <div class="dispatch__step-desc">+ 前十大股东变动、近 5 年分红记录</div>
+            <div class="dispatch__step-meta">
+              <span>&#9201; 2.3s</span> &middot; 返回 <span>847</span> 个数据点
+            </div>
+          </div>
         </div>
-        <h3 class="cap-card__title">看票分析</h3>
-        <p class="cap-card__desc">短平快的交易视角。输入股票名称，自动搜索财报、资金流向和新闻，生成带情景推演的分析报告。</p>
-        <div class="cap-card__tags">
-          <span class="cap-tag cap-tag--accent">"帮我看看比亚迪"</span>
-          <span class="cap-tag">实时财报</span>
-          <span class="cap-tag">资金流向</span>
+
+        <div class="dispatch__step" data-index="1">
+          <div class="dispatch__step-inner">
+            <div class="dispatch__step-overline">Step 2 / 5 &mdash; AkShare 实时行情</div>
+            <h3 class="dispatch__step-title">获取实时报价 + 技术指标</h3>
+            <div class="dispatch__data">
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">最新价</div>
+                <div class="dispatch__datum-value">¥261.80</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">涨跌幅</div>
+                <div class="dispatch__datum-value accent">+2.15%</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">换手率</div>
+                <div class="dispatch__datum-value">1.83%</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">MA20</div>
+                <div class="dispatch__datum-value">¥254.60</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">MACD</div>
+                <div class="dispatch__datum-value accent">金叉</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">主力净流入</div>
+                <div class="dispatch__datum-value">+3.2亿</div>
+              </div>
+            </div>
+            <div class="dispatch__step-desc">+ 板块联动：锂电池指数 / 储能指数走势</div>
+            <div class="dispatch__step-meta">
+              <span>&#9201; 1.8s</span> &middot; 返回 <span>312</span> 个数据点
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="cap-card reveal reveal-d1">
-        <div class="cap-card__icon">
-          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a16 16 0 0 1 4 10 16 16 0 0 1-4 10 16 16 0 0 1-4-10A16 16 0 0 1 12 2z"></path></svg>
+
+        <div class="dispatch__step" data-index="2">
+          <div class="dispatch__step-inner">
+            <div class="dispatch__step-overline">Step 3 / 5 &mdash; 卖方一致预期</div>
+            <h3 class="dispatch__step-title">汇总分析师覆盖与目标价</h3>
+            <div class="dispatch__data">
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">覆盖券商</div>
+                <div class="dispatch__datum-value">34家</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">分析师</div>
+                <div class="dispatch__datum-value">52位</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">EPS 2026E</div>
+                <div class="dispatch__datum-value">¥8.52</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">目标价均值</div>
+                <div class="dispatch__datum-value accent">¥298.5</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">目标价最高</div>
+                <div class="dispatch__datum-value">¥350.0</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">评级</div>
+                <div class="dispatch__datum-value accent">买入 28</div>
+              </div>
+            </div>
+            <div class="dispatch__step-desc">+ 增持 5 / 中性 1，净利润一致预期 ¥520亿</div>
+            <div class="dispatch__step-meta">
+              <span>&#9201; 3.1s</span> &middot; 返回 <span>156</span> 条预测记录
+            </div>
+          </div>
         </div>
-        <h3 class="cap-card__title">宏观内参</h3>
-        <p class="cap-card__desc">用通俗语言解读宏观经济。自动获取 GDP、CPI、货币政策，分析对投资和生活的影响。</p>
-        <div class="cap-card__tags">
-          <span class="cap-tag cap-tag--accent">"最近经济形势怎么样"</span>
-          <span class="cap-tag">政策解读</span>
+
+        <div class="dispatch__step" data-index="3">
+          <div class="dispatch__step-inner">
+            <div class="dispatch__step-overline">Step 4 / 5 &mdash; Tavily + Brave 双引擎搜索</div>
+            <h3 class="dispatch__step-title">交叉验证行业政策与竞对动态</h3>
+            <div class="dispatch__data">
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">Tavily 研报</div>
+                <div class="dispatch__datum-value">12篇</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">政策文件</div>
+                <div class="dispatch__datum-value">5份</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">Brave 新闻</div>
+                <div class="dispatch__datum-value">23条</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">竞对分析</div>
+                <div class="dispatch__datum-value">6篇</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">有效信源</div>
+                <div class="dispatch__datum-value accent">31个</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">去重率</div>
+                <div class="dispatch__datum-value">36%</div>
+              </div>
+            </div>
+            <div class="dispatch__step-desc">关键发现：欧盟电池新规、北美产能扩张计划</div>
+            <div class="dispatch__step-meta">
+              <span>&#9201; 4.7s</span> &middot; 双引擎交叉验证
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="cap-card reveal reveal-d2">
-        <div class="cap-card__icon">
-          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><path d="M14 17h7M17.5 14v7"></path></svg>
+
+        <div class="dispatch__step" data-index="4">
+          <div class="dispatch__step-inner">
+            <div class="dispatch__step-overline">Step 5 / 5 &mdash; 电话会议 + 视频纪要</div>
+            <h3 class="dispatch__step-title">提取管理层最新表态</h3>
+            <div class="dispatch__data">
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">季度业绩会</div>
+                <div class="dispatch__datum-value">Q1-Q4</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">管理层表态</div>
+                <div class="dispatch__datum-value accent">47条</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">承诺兑现率</div>
+                <div class="dispatch__datum-value accent">82%</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">产能目标</div>
+                <div class="dispatch__datum-value">800GWh</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">毛利率指引</div>
+                <div class="dispatch__datum-value">22-25%</div>
+              </div>
+              <div class="dispatch__datum">
+                <div class="dispatch__datum-label">储能占比目标</div>
+                <div class="dispatch__datum-value accent">&gt;40%</div>
+              </div>
+            </div>
+            <div class="dispatch__step-desc">管理层最新表态："2026年储能业务占比将超过40%"</div>
+            <div class="dispatch__step-meta">
+              <span>&#9201; 5.2s</span> &middot; <span>4</span> 份会议纪要结构化摘要
+            </div>
+          </div>
         </div>
-        <h3 class="cap-card__title">集合竞价</h3>
-        <p class="cap-card__desc">盘前集合竞价分析。涨停板排行、量能异动、多因子量化信号扫描。</p>
-        <div class="cap-card__tags">
-          <span class="cap-tag cap-tag--accent">每日 09:15 扫描</span>
-          <span class="cap-tag">量化信号</span>
-        </div>
-      </div>
-      <div class="cap-card reveal reveal-d3">
-        <div class="cap-card__icon">
-          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
-        </div>
-        <h3 class="cap-card__title">自选股管理</h3>
-        <p class="cap-card__desc">管理你的持仓组合。价格预警、盈亏监控、跨技能研究历史追踪。</p>
-        <div class="cap-card__tags">
-          <span class="cap-tag cap-tag--accent">组合追踪</span>
-          <span class="cap-tag">价格预警</span>
-        </div>
-      </div>
-      <div class="cap-card reveal reveal-d4">
-        <div class="cap-card__icon">
-          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-        </div>
-        <h3 class="cap-card__title">会议纪要</h3>
-        <p class="cap-card__desc">把会议录音、调研记录、访谈文字转成结构清晰的战略报告，可直接用于汇报。</p>
-        <div class="cap-card__tags">
-          <span class="cap-tag cap-tag--accent">"整理这份会议纪要"</span>
-          <span class="cap-tag">结构化输出</span>
-        </div>
-      </div>
-      <div class="cap-card reveal reveal-d5">
-        <div class="cap-card__icon">
-          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg>
-        </div>
-        <h3 class="cap-card__title">视频拆解</h3>
-        <p class="cap-card__desc">提供视频逐字稿或链接，拆解为知识点、思维导图和行动清单。</p>
-        <div class="cap-card__tags">
-          <span class="cap-tag cap-tag--accent">"帮我拆解这个视频"</span>
-          <span class="cap-tag">知识图谱</span>
-        </div>
-      </div>
+
+    </div>
+
+    <div class="dispatch__anchor">
+      <p class="dispatch__anchor-text reveal">
+        <strong>不是对话，是调度。</strong><br>
+        Finance Suite 不猜答案 &mdash; 它规划研究路径，调用真实 API 获取一手数据，交叉验证后才写入报告。每条结论都附数据来源。
+      </p>
     </div>
   </section>
 
-  <!-- ====== 4. DATA SOURCES (DARK) ====== -->
-  <div class="transition-to-dark-2"></div>
-  <section class="sources-section">
-    <div class="sources-header">
-      <p class="t-overline reveal" style="color:var(--dark-secondary); margin-bottom:20px;">数据基础设施</p>
-      <h2 class="t-section reveal reveal-d1" style="color:var(--dark-text);">五大数据源，交叉验证。</h2>
-      <p class="t-body reveal reveal-d2">每一条结论至少有一个一手来源背书。没有数据，就不做判断。</p>
-    </div>
-    <div class="sources-grid">
-      <div class="source-card reveal">
-        <div class="source-card__type">金融终端</div>
-        <div class="source-card__name">Wind</div>
-        <div class="source-card__desc">财务三表、估值历史、一致预期、股东变动</div>
-      </div>
-      <div class="source-card reveal reveal-d1">
-        <div class="source-card__type">实时行情</div>
-        <div class="source-card__name">AkShare</div>
-        <div class="source-card__desc">实时报价、技术指标、竞价数据、资金流向</div>
-      </div>
-      <div class="source-card reveal reveal-d2">
-        <div class="source-card__type">搜索引擎</div>
-        <div class="source-card__name">Tavily</div>
-        <div class="source-card__desc">行业研报、政策文件、公司公告</div>
-      </div>
-      <div class="source-card reveal reveal-d3">
-        <div class="source-card__type">搜索引擎</div>
-        <div class="source-card__name">Brave</div>
-        <div class="source-card__desc">新闻资讯、竞对分析、全球市场情报</div>
-      </div>
-      <div class="source-card reveal reveal-d4">
-        <div class="source-card__type">视频媒体</div>
-        <div class="source-card__name">Supadata</div>
-        <div class="source-card__desc">YouTube / B站字幕提取、电话会议录音</div>
-      </div>
-    </div>
-    <div class="sources-note reveal">
-      <p>自动降级：<span>Wind API（优先）</span> &rarr; <span>AkShare（备用）</span>。零停机切换。</p>
-    </div>
-  </section>
-  <div class="transition-to-light-2"></div>
-
-  <!-- ====== 5. REPORT PREVIEW ====== -->
+  <!-- ============================================================
+       ACT 3 — REPORT PREVIEW (LIGHT)
+       ============================================================ -->
   <section class="preview-section" id="preview">
     <div class="preview-header">
       <h2 class="t-section reveal">这就是你会拿到的报告</h2>
@@ -1294,37 +1371,171 @@
     </div>
   </section>
 
-  <!-- ====== 6. TRUST ====== -->
-  <section class="trust-section">
-    <div class="trust-grid">
-      <div class="trust-item reveal">
-        <div class="trust-item__number" data-count="5000" data-suffix="+">0</div>
-        <div class="trust-item__label">覆盖 A 股标的</div>
+  <!-- ============================================================
+       ACT 4 — SIX DISPATCH MODES (LIGHT)
+       ============================================================ -->
+  <section class="capabilities">
+    <div class="cap-header">
+      <h2 class="t-section reveal">一个 Agent，六种调度模式。</h2>
+      <p class="t-body reveal reveal-d1">深度研究只是起点。同一套 AI 可以看盘、拆视频、写纪要。</p>
+    </div>
+    <div class="cap-grid">
+
+      <div class="cap-card reveal">
+        <div class="cap-card__icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"></path><path d="M11 8v6M8 11h6" stroke-width="1.2"></path></svg>
+        </div>
+        <h3 class="cap-card__title">深度研究</h3>
+        <p class="cap-card__desc">行业或公司级深度调研。5 大数据源自主调度，10 节完整报告，含管理层言行一致性追踪。</p>
+        <div class="cap-card__chain">
+          <div class="cap-card__chain-line">Wind <span class="chain-arrow">&rarr;</span> AkShare <span class="chain-arrow">&rarr;</span> 一致预期 <span class="chain-arrow">&rarr;</span> 双搜索 <span class="chain-arrow">&rarr;</span> 会议纪要 <span class="chain-arrow">&rarr;</span> 报告</div>
+        </div>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">Flagship</span>
+          <span class="cap-tag">"研究宁德时代"</span>
+        </div>
       </div>
-      <div class="trust-item reveal reveal-d1">
-        <div class="trust-item__number" data-count="5">0</div>
-        <div class="trust-item__label">独立数据源</div>
+
+      <div class="cap-card reveal reveal-d1">
+        <div class="cap-card__icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="22 12 18 12 15 20 9 4 6 12 2 12"></polyline></svg>
+        </div>
+        <h3 class="cap-card__title">看票分析</h3>
+        <p class="cap-card__desc">短平快的交易视角。输入股票名称，自动搜索财报、资金流向和新闻，生成带情景推演的分析报告。</p>
+        <div class="cap-card__chain">
+          <div class="cap-card__chain-line">AkShare 行情 <span class="chain-arrow">&rarr;</span> Brave 新闻 <span class="chain-arrow">&rarr;</span> Wind 财务 <span class="chain-arrow">&rarr;</span> 结构化报告</div>
+        </div>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">"帮我看看比亚迪"</span>
+        </div>
       </div>
-      <div class="trust-item reveal reveal-d2">
-        <div class="trust-item__number" data-count="1">0</div>
-        <div class="trust-item__label">分钟生成完整报告</div>
+
+      <div class="cap-card reveal reveal-d2">
+        <div class="cap-card__icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a16 16 0 0 1 4 10 16 16 0 0 1-4 10 16 16 0 0 1-4-10A16 16 0 0 1 12 2z"></path></svg>
+        </div>
+        <h3 class="cap-card__title">宏观内参</h3>
+        <p class="cap-card__desc">用通俗语言解读宏观经济。自动获取 GDP、CPI、货币政策，分析对投资和生活的影响。</p>
+        <div class="cap-card__chain">
+          <div class="cap-card__chain-line">AkShare 宏观 <span class="chain-arrow">&rarr;</span> Tavily 政策 <span class="chain-arrow">&rarr;</span> Brave 解读 <span class="chain-arrow">&rarr;</span> 内参报告</div>
+        </div>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">"最近经济形势怎么样"</span>
+        </div>
       </div>
-      <div class="trust-item reveal reveal-d3">
-        <div class="trust-item__number" data-count="0">0</div>
-        <div class="trust-item__label">编造数据</div>
+
+      <div class="cap-card reveal reveal-d3">
+        <div class="cap-card__icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><path d="M14 17h7M17.5 14v7"></path></svg>
+        </div>
+        <h3 class="cap-card__title">集合竞价</h3>
+        <p class="cap-card__desc">盘前集合竞价分析。涨停板排行、量能异动、多因子量化信号扫描。</p>
+        <div class="cap-card__chain">
+          <div class="cap-card__chain-line">AkShare 竞价 <span class="chain-arrow">&rarr;</span> 因子扫描 <span class="chain-arrow">&rarr;</span> Brave 题材 <span class="chain-arrow">&rarr;</span> 信号报告</div>
+        </div>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">盘前 09:15-09:25</span>
+          <span class="cap-tag">量化信号</span>
+        </div>
       </div>
+
+      <div class="cap-card reveal reveal-d4">
+        <div class="cap-card__icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+        </div>
+        <h3 class="cap-card__title">会议纪要</h3>
+        <p class="cap-card__desc">把会议录音、调研记录、访谈文字转成结构清晰的战略报告，可直接用于汇报。</p>
+        <div class="cap-card__chain">
+          <div class="cap-card__chain-line">文本输入 <span class="chain-arrow">&rarr;</span> 结构化拆解 <span class="chain-arrow">&rarr;</span> 关键决策提取 <span class="chain-arrow">&rarr;</span> 战略报告</div>
+        </div>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">"整理这份会议纪要"</span>
+        </div>
+      </div>
+
+      <div class="cap-card reveal reveal-d5">
+        <div class="cap-card__icon">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg>
+        </div>
+        <h3 class="cap-card__title">视频拆解</h3>
+        <p class="cap-card__desc">提供视频逐字稿或链接，拆解为知识点、思维导图和行动清单。</p>
+        <div class="cap-card__chain">
+          <div class="cap-card__chain-line">视频字幕 <span class="chain-arrow">&rarr;</span> 分段摘要 <span class="chain-arrow">&rarr;</span> 知识点提取 <span class="chain-arrow">&rarr;</span> 行动清单</div>
+        </div>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">"帮我拆解这个视频"</span>
+        </div>
+      </div>
+
     </div>
   </section>
 
-  <!-- ====== 7. CTA ====== -->
-  <section class="cta">
-    <h2 class="t-section cta__title reveal">开始你的第一份研究</h2>
-    <p class="t-body cta__desc reveal reveal-d1">
-      输入一个公司名、行业名，或上传会议纪要、视频链接，剩下的交给 AI。
-    </p>
-    <a href="/app/" class="cta__btn reveal reveal-d2">
-      进入工作台
-    </a>
+  <!-- ============================================================
+       ACT 5 — TRUST & CTA (DARK)
+       ============================================================ -->
+  <div class="transition-to-dark"></div>
+  <section class="finale">
+    <div class="sources-header">
+      <span class="t-overline dark-reveal">数据基础设施</span>
+      <h2 class="t-section dark-reveal reveal-d1">五大数据源，交叉验证。</h2>
+      <p class="t-body dark-reveal reveal-d2">每一条结论至少有一个一手来源背书。没有数据，就不做判断。</p>
+    </div>
+    <div class="sources-grid">
+      <div class="source-card dark-reveal">
+        <div class="source-card__type">金融终端</div>
+        <div class="source-card__name">Wind</div>
+        <div class="source-card__desc">财务三表、估值历史、一致预期、股东变动</div>
+      </div>
+      <div class="source-card dark-reveal reveal-d1">
+        <div class="source-card__type">实时行情</div>
+        <div class="source-card__name">AkShare</div>
+        <div class="source-card__desc">实时报价、技术指标、竞价数据、资金流向</div>
+      </div>
+      <div class="source-card dark-reveal reveal-d2">
+        <div class="source-card__type">搜索引擎</div>
+        <div class="source-card__name">Tavily</div>
+        <div class="source-card__desc">行业研报、政策文件、公司公告</div>
+      </div>
+      <div class="source-card dark-reveal reveal-d3">
+        <div class="source-card__type">搜索引擎</div>
+        <div class="source-card__name">Brave</div>
+        <div class="source-card__desc">新闻资讯、竞对分析、全球市场情报</div>
+      </div>
+      <div class="source-card dark-reveal reveal-d4">
+        <div class="source-card__type">视频媒体</div>
+        <div class="source-card__name">Supadata</div>
+        <div class="source-card__desc">YouTube / B站字幕提取、电话会议录音</div>
+      </div>
+    </div>
+
+    <div class="trust-strip">
+      <div class="trust-strip__item dark-reveal">
+        <div class="trust-strip__number" data-count="5000" data-suffix="+">0</div>
+        <div class="trust-strip__label">覆盖 A 股标的</div>
+      </div>
+      <div class="trust-strip__item dark-reveal reveal-d1">
+        <div class="trust-strip__number" data-count="5">0</div>
+        <div class="trust-strip__label">独立数据源</div>
+      </div>
+      <div class="trust-strip__item dark-reveal reveal-d2">
+        <div class="trust-strip__number" data-count="60">0</div>
+        <div class="trust-strip__label">秒完成调度</div>
+      </div>
+      <div class="trust-strip__item dark-reveal reveal-d3">
+        <div class="trust-strip__number" data-count="0">0</div>
+        <div class="trust-strip__label">编造数据</div>
+      </div>
+    </div>
+
+    <div class="finale__cta">
+      <h2 class="t-section finale__cta-title dark-reveal">给它一个问题，看它如何调度。</h2>
+      <p class="t-body finale__cta-desc dark-reveal reveal-d1">
+        输入一个公司名、行业名，或上传会议纪要、视频链接。
+      </p>
+      <a href="/app/" class="finale__cta-btn dark-reveal reveal-d2">
+        进入工作台
+      </a>
+    </div>
   </section>
 
   <footer class="footer">
@@ -1332,13 +1543,13 @@
   </footer>
 
   <script>
-    // Scroll reveal
+    // ---- Scroll Reveal ----
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
     }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    document.querySelectorAll('.reveal, .dark-reveal').forEach(el => observer.observe(el));
 
-    // Counter animation
+    // ---- Counter Animation ----
     const counterObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
@@ -1360,7 +1571,7 @@
     }, { threshold: 0.5 });
     document.querySelectorAll('[data-count]').forEach(el => counterObserver.observe(el));
 
-    // Scroll indicator fade
+    // ---- Scroll indicator fade ----
     const scrollLine = document.querySelector('.hero__scroll');
     if (scrollLine) {
       window.addEventListener('scroll', () => {
@@ -1368,16 +1579,20 @@
       }, { passive: true });
     }
 
-    // Mouse-tracking glow on dark section
-    const darkSection = document.getElementById('darkSection');
-    const darkGlow = document.getElementById('darkGlow');
-    if (darkSection && darkGlow) {
-      darkSection.addEventListener('mousemove', (e) => {
-        const rect = darkSection.getBoundingClientRect();
-        darkGlow.style.left = (e.clientX - rect.left) + 'px';
-        darkGlow.style.top = (e.clientY - rect.top) + 'px';
+    // ---- Header dark/light mode switch ----
+    const header = document.getElementById('siteHeader');
+    const lightSections = document.querySelectorAll('.dispatch, .preview-section, .capabilities');
+    function updateHeaderMode() {
+      let inLight = false;
+      lightSections.forEach(sec => {
+        const rect = sec.getBoundingClientRect();
+        if (rect.top < 52 && rect.bottom > 52) inLight = true;
       });
+      header.classList.toggle('light-mode', inLight);
     }
+    window.addEventListener('scroll', updateHeaderMode, { passive: true });
+    updateHeaderMode();
+
   </script>
 
 </body>
