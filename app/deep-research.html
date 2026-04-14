@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>深度研究 — Finance Suite</title>
+  <script>
+    if (localStorage.getItem('fs_auth') !== 'ok') {
+      location.replace('/?redirect=/app/deep-research.html');
+    }
+  </script>
+  <style>
+    :root {
+      --white: #ffffff;
+      --surface: #f5f5f7;
+      --surface-2: #fafafa;
+      --text: #1d1d1f;
+      --text-secondary: #86868b;
+      --text-tertiary: #a1a1a6;
+      --accent: #0071e3;
+      --accent-hover: #0077ed;
+      --accent-soft: rgba(0,113,227,0.08);
+      --border: rgba(0,0,0,0.08);
+      --border-light: rgba(0,0,0,0.04);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
+      background: var(--surface);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      padding-top: 52px;
+    }
+
+    /* Header */
+    .site-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: rgba(255,255,255,0.78);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border-light);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+    }
+    .site-header__inner {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .site-header__brand {
+      font-size: 14px; font-weight: 600; color: var(--text);
+      text-decoration: none; letter-spacing: -0.01em;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .site-header__brand::after {
+      content: '深度研究';
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 3px 8px;
+      background: var(--surface);
+      border-radius: 6px;
+    }
+    .hdr-actions { display: flex; align-items: center; gap: 10px; }
+    .hdr-btn {
+      font-size: 13px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .hdr-btn--secondary {
+      background: var(--surface);
+      color: var(--text);
+    }
+    .hdr-btn--secondary:hover { background: var(--border); }
+
+    /* Main */
+    .main-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    .page-head {
+      margin-bottom: 32px;
+    }
+    .page-head__title {
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .page-head__desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Input Form */
+    .analyze-form {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: block;
+    }
+    .form-input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 16px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--surface-2);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 16px;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .form-input::placeholder { color: var(--text-tertiary); }
+    .form-submit {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s, transform 0.15s var(--ease);
+      width: 100%;
+    }
+    .form-submit:hover { background: var(--accent-hover); }
+    .form-submit:active { transform: scale(0.98); }
+    .form-submit:disabled {
+      background: var(--border);
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+    }
+
+    /* Result */
+    .result-container {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: none;
+    }
+    .result-container.show { display: block; }
+    .result-loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+    .result-loading__spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .result-content {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+    .result-content pre {
+      background: var(--surface);
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      overflow-x: auto;
+      font-size: 14px;
+      margin: 16px 0;
+    }
+    .result-error {
+      color: #d32f2f;
+      padding: 16px;
+      background: rgba(211, 47, 47, 0.08);
+      border-radius: var(--radius-sm);
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="/app/" class="site-header__brand">Finance Suite</a>
+      <div class="hdr-actions">
+        <a href="/app/" class="hdr-btn hdr-btn--secondary">← 返回工作台</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="page-head">
+      <h1 class="page-head__title">深度研究</h1>
+      <p class="page-head__desc">公司 + 行业双模式，10 节完整报告，含管理层言行一致追踪</p>
+    </div>
+
+    <form class="analyze-form" id="analyzeForm">
+      <label class="form-label" for="queryInput">输入公司名称或股票代码</label>
+      <input
+        type="text"
+        id="queryInput"
+        class="form-input"
+        placeholder="例如：宁德时代、比亚迪、新能源汽车行业"
+        required
+      >
+      <button type="submit" class="form-submit" id="submitBtn">开始分析</button>
+    </form>
+
+    <div class="result-container" id="resultContainer">
+      <div class="result-loading" id="resultLoading">
+        <div class="result-loading__spinner"></div>
+        <div>正在分析中，请稍候...</div>
+      </div>
+      <div class="result-content" id="resultContent"></div>
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById('analyzeForm');
+    const queryInput = document.getElementById('queryInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const resultContainer = document.getElementById('resultContainer');
+    const resultLoading = document.getElementById('resultLoading');
+    const resultContent = document.getElementById('resultContent');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const query = queryInput.value.trim();
+      if (!query) return;
+
+      // Show loading
+      resultContainer.classList.add('show');
+      resultLoading.style.display = 'block';
+      resultContent.style.display = 'none';
+      submitBtn.disabled = true;
+      submitBtn.textContent = '分析中...';
+
+      try {
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            skill_type: 'deep_research',
+            query: query
+          }),
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || '分析失败');
+        }
+
+        // Show result
+        resultLoading.style.display = 'none';
+        resultContent.style.display = 'block';
+        resultContent.innerHTML = formatResult(data);
+
+      } catch (error) {
+        resultLoading.style.display = 'none';
+        resultContent.style.display = 'block';
+        resultContent.innerHTML = `<div class="result-error">错误：${error.message}</div>`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '开始分析';
+      }
+    });
+
+    function formatResult(data) {
+      if (typeof data === 'string') {
+        return `<pre>${data}</pre>`;
+      }
+      return `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    }
+
+    // Pre-fill from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const preQuery = urlParams.get('q');
+    if (preQuery) {
+      queryInput.value = preQuery;
+    }
+  </script>
+</body>
+</html>
