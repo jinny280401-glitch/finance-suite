@@ -12,433 +12,240 @@
   </script>
   <style>
     :root {
+      --bg: #f5f5f7;
       --white: #ffffff;
-      --bg: #f8f9fa;
+      --surface: #f8f8fa;
       --text: #1d1d1f;
       --text-secondary: #6e6e73;
       --text-tertiary: #86868b;
-      --border: #e5e5e7;
-      --border-light: #f0f0f2;
       --accent: #0071e3;
-      --accent-hover: #0077ed;
-      --radius: 12px;
-      --radius-lg: 16px;
+      --border: rgba(0,0,0,0.06);
       --ease: cubic-bezier(0.22, 1, 0.36, 1);
-
-      --blue: #007aff;
-      --green: #34c759;
-      --orange: #ff9500;
-      --purple: #af52de;
-      --cyan: #5ac8fa;
-      --pink: #ff2d55;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", sans-serif;
       background: var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
-      line-height: 1.5;
     }
 
-    /* Header */
-    .header {
-      background: var(--white);
-      border-bottom: 1px solid var(--border-light);
-      padding: 0 32px;
-      height: 60px;
+    /* top bar: keep very light like hero screenshot */
+    .topbar {
+      height: 40px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
       display: flex;
       align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      padding: 0 18px;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
-    .header__inner {
-      width: 100%;
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .header__brand {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--accent);
-      text-decoration: none;
-    }
-    .header__nav {
-      display: flex;
-      gap: 32px;
-      align-items: center;
-    }
-    .header__link {
-      font-size: 14px;
-      color: var(--text-secondary);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .header__link:hover { color: var(--text); }
-    .header__actions {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-    .btn {
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-      font-family: inherit;
-      transition: all 0.2s;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .btn--secondary {
-      background: var(--bg);
-      color: var(--text);
-    }
-    .btn--secondary:hover { background: var(--border-light); }
-    .btn--text {
-      background: none;
-      color: var(--text-secondary);
-    }
-    .btn--text:hover { color: var(--text); }
-
-    /* Main Container */
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 48px 32px 80px;
-    }
-
-    /* Welcome Section */
-    .welcome {
-      margin-bottom: 32px;
-    }
-    .welcome__greeting {
-      font-size: 32px;
-      font-weight: 600;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 8px;
-    }
-    .vip-badge {
+    .brand {
       font-size: 12px;
       font-weight: 600;
-      color: #ff9500;
-      background: rgba(255, 149, 0, 0.1);
-      padding: 4px 10px;
-      border-radius: 6px;
-      letter-spacing: 0.5px;
+      color: #111;
+      text-decoration: none;
     }
 
-    /* Usage Card */
-    .usage-card {
-      background: var(--white);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      margin-bottom: 40px;
-    }
-    .usage-card__title {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 12px;
-    }
-    .usage-card__stat {
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-    .usage-card__stat strong {
-      color: var(--text);
-      font-weight: 600;
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 20px 24px 40px;
     }
 
-    /* Skills Section */
-    .skills-section {
-      margin-bottom: 32px;
-    }
-    .skills-section__title {
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 24px;
-    }
-    .skills-grid {
+    .cap-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-    }
-    @media (max-width: 768px) {
-      .skills-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 560px) {
-      .skills-grid { grid-template-columns: 1fr; }
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
     }
 
-    /* Skill Card */
-    .skill-card {
+    .cap-card {
       background: var(--white);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius-lg);
-      padding: 24px;
+      border-radius: 10px;
+      padding: 18px 16px;
+      border: 1px solid var(--border);
+      transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.2s;
       text-decoration: none;
       color: inherit;
+      min-height: 190px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      transition: all 0.25s var(--ease);
-      cursor: pointer;
-      min-height: 180px;
     }
-    .skill-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
-      border-color: var(--border);
+    .cap-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(0,113,227,0.18);
+      box-shadow: rgba(0,0,0,0.08) 0 8px 24px;
     }
-    .skill-card--selected {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent);
-    }
-    .skill-card__icon-wrapper {
-      width: 56px;
-      height: 56px;
-      border-radius: 14px;
+
+    .cap-card__icon {
+      width: 26px;
+      height: 26px;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
+      border-radius: 8px;
+      background: #f2f6ff;
+      color: #4a78ff;
+      border: 1px solid #e6edff;
       flex-shrink: 0;
     }
-    .skill-card__icon {
-      width: 28px;
-      height: 28px;
-      color: var(--white);
-    }
-    .skill-card__content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .skill-card__title {
-      font-size: 18px;
+
+    .cap-card__title {
+      font-size: 20px;
+      line-height: 1.2;
       font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
       color: var(--text);
     }
-    .skill-card__desc {
-      font-size: 14px;
+
+    .cap-card__desc {
+      font-size: 13px;
       color: var(--text-secondary);
-      line-height: 1.6;
-    }
-    .skill-card__footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: auto;
-      padding-top: 12px;
-      border-top: 1px solid var(--border-light);
-    }
-    .skill-card__meta {
-      font-size: 12px;
-      color: var(--text-tertiary);
-    }
-    .skill-card__arrow {
-      font-size: 18px;
-      color: var(--text-tertiary);
-      transition: transform 0.2s;
-    }
-    .skill-card:hover .skill-card__arrow {
-      transform: translateX(4px);
+      line-height: 1.65;
+      margin-bottom: 12px;
+      min-height: 42px;
     }
 
-    /* Color variants */
-    .skill-card--blue .skill-card__icon-wrapper { background: linear-gradient(135deg, #007aff, #5ac8fa); }
-    .skill-card--green .skill-card__icon-wrapper { background: linear-gradient(135deg, #34c759, #30d158); }
-    .skill-card--orange .skill-card__icon-wrapper { background: linear-gradient(135deg, #ff9500, #ffcc00); }
-    .skill-card--purple .skill-card__icon-wrapper { background: linear-gradient(135deg, #af52de, #bf5af2); }
-    .skill-card--cyan .skill-card__icon-wrapper { background: linear-gradient(135deg, #5ac8fa, #64d2ff); }
-    .skill-card--pink .skill-card__icon-wrapper { background: linear-gradient(135deg, #ff2d55, #ff375f); }
+    .cap-card__chain {
+      font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 10px;
+      color: #9aa0a6;
+      line-height: 1.7;
+      padding: 8px 10px;
+      background: var(--surface);
+      border-radius: 6px;
+      margin-bottom: 10px;
+      border: 1px solid #f0f0f2;
+      flex: 1;
+    }
+
+    .cap-card__tags {
+      display: flex;
+      gap: 6px;
+      margin-top: auto;
+    }
+
+    .cap-tag {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 14px;
+      background: #f4f6f8;
+      color: #9aa0a6;
+      border: 1px solid #edf0f2;
+    }
+    .cap-tag--accent {
+      background: rgba(0,113,227,0.08);
+      color: var(--accent);
+      border-color: rgba(0,113,227,0.1);
+    }
+
+    @media (max-width: 980px) {
+      .cap-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .page { padding: 14px 14px 28px; }
+      .cap-grid { grid-template-columns: 1fr; gap: 12px; }
+      .cap-card { min-height: 176px; }
+    }
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header class="header">
-    <div class="header__inner">
-      <a href="/" class="header__brand">Finance Suite</a>
-      <nav class="header__nav">
-        <a href="/" class="header__link">首页</a>
-        <a href="/#preview" class="header__link">功能</a>
-        <a href="/#pricing" class="header__link">定价</a>
-      </nav>
-      <div class="header__actions">
-        <button class="btn btn--secondary">仅表盘</button>
-        <button class="btn btn--text" onclick="doLogout()">退出</button>
-      </div>
-    </div>
+  <header class="topbar">
+    <a href="/" class="brand">Finance Suite</a>
   </header>
 
-  <!-- Main Content -->
-  <main class="container">
-    <!-- Welcome -->
-    <div class="welcome">
-      <div class="welcome__greeting">
-        你好，<span id="userName">用户</span>
-        <span class="vip-badge">VIP</span>
-      </div>
-    </div>
+  <main class="page">
+    <section class="cap-grid">
+      <a href="/app/deep-research.html" class="cap-card">
+        <span class="cap-card__icon" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </span>
+        <h3 class="cap-card__title">深度研究</h3>
+        <p class="cap-card__desc">行业驱动 + 公司调研双引擎，5 大数据源交叉验证后输出 10 节研究报告。</p>
+        <div class="cap-card__chain">
+          Wind → AkShare → 新闻检索 → 深度汇总 → 观点
+        </div>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">Flagship</span>
+          <span class="cap-tag">研究中枢</span>
+        </div>
+      </a>
 
-    <!-- Usage Card -->
-    <div class="usage-card">
-      <div class="usage-card__title">今日用量</div>
-      <div class="usage-card__stat">
-        今日已使用 <strong id="usageCount">0</strong> / <strong>无限</strong> 次
-      </div>
-    </div>
+      <a href="/app/stock.html" class="cap-card">
+        <span class="cap-card__icon" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        </span>
+        <h3 class="cap-card__title">看票分析</h3>
+        <p class="cap-card__desc">短平快交易视角，输入股票名称或代码，生成资金面 + 估值 + 催化剂判断。</p>
+        <div class="cap-card__chain">
+          AkShare 行情 → Brave 新闻 → Wind 财务 → 结构化报告
+        </div>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">量化看票</span>
+        </div>
+      </a>
 
-    <!-- Skills Section -->
-    <section class="skills-section">
-      <h2 class="skills-section__title">选择分析技能</h2>
-      <div class="skills-grid">
-        <!-- 看票分析 -->
-        <a href="/app/stock.html" class="skill-card skill-card--blue">
-          <div class="skill-card__icon-wrapper">
-            <svg class="skill-card__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-            </svg>
-          </div>
-          <div class="skill-card__content">
-            <div class="skill-card__title">看票分析</div>
-            <div class="skill-card__desc">股票深度分析报告</div>
-          </div>
-          <div class="skill-card__footer">
-            <span class="skill-card__meta">财报 · 资金 · 估值</span>
-            <span class="skill-card__arrow">→</span>
-          </div>
-        </a>
+      <a href="/app/macro.html" class="cap-card">
+        <span class="cap-card__icon" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+        </span>
+        <h3 class="cap-card__title">宏观内参</h3>
+        <p class="cap-card__desc">用通俗语言拆解宏观走势，自动读取 GDP、CPI、PMI、货币政策等核心指标。</p>
+        <div class="cap-card__chain">
+          AkShare 宏观 → Tavily 资讯 → Brave 评论 → 总结输出
+        </div>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">宏观经济拆解</span>
+        </div>
+      </a>
 
-        <!-- 宏观内参 -->
-        <a href="/app/macro.html" class="skill-card skill-card--green">
-          <div class="skill-card__icon-wrapper">
-            <svg class="skill-card__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-            </svg>
-          </div>
-          <div class="skill-card__content">
-            <div class="skill-card__title">宏观内参</div>
-            <div class="skill-card__desc">宏观经济解读</div>
-          </div>
-          <div class="skill-card__footer">
-            <span class="skill-card__meta">GDP · CPI · PMI</span>
-            <span class="skill-card__arrow">→</span>
-          </div>
-        </a>
+      <a href="/app/auction.html" class="cap-card">
+        <span class="cap-card__icon" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+        </span>
+        <h3 class="cap-card__title">集合竞价</h3>
+        <p class="cap-card__desc">盘前集合竞价分析，强势股排行、量能异动、次日开盘信号一页给出。</p>
+        <div class="cap-card__chain">
+          AkShare 竞价 → 分时特征 → Brave 研判 → 策略提示
+        </div>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">盘前 09:05-09:25</span>
+          <span class="cap-tag">观察信号</span>
+        </div>
+      </a>
 
-        <!-- 深度研究 -->
-        <a href="/app/deep-research.html" class="skill-card skill-card--orange">
-          <div class="skill-card__icon-wrapper">
-            <svg class="skill-card__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </div>
-          <div class="skill-card__content">
-            <div class="skill-card__title">深度研究</div>
-            <div class="skill-card__desc">公司+行业双模式，10节完整报告</div>
-          </div>
-          <div class="skill-card__footer">
-            <span class="skill-card__meta">公司 · 行业 · 管理层</span>
-            <span class="skill-card__arrow">→</span>
-          </div>
-        </a>
+      <a href="/app/meeting.html" class="cap-card">
+        <span class="cap-card__icon" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+        </span>
+        <h3 class="cap-card__title">会议纪要</h3>
+        <p class="cap-card__desc">把会议记录、电话纪要、访谈文本快速结构化，沉淀核心观点与行动项。</p>
+        <div class="cap-card__chain">
+          文本输入 → 结构识别 → 关键摘要 → 决策清单
+        </div>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">会议结构化笔记</span>
+        </div>
+      </a>
 
-        <!-- 视频拆解 -->
-        <a href="/app/video.html" class="skill-card skill-card--purple">
-          <div class="skill-card__icon-wrapper">
-            <svg class="skill-card__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-              <polygon points="23 7 16 12 23 17 23 7"></polygon>
-              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-            </svg>
-          </div>
-          <div class="skill-card__content">
-            <div class="skill-card__title">视频拆解</div>
-            <div class="skill-card__desc">视频结构化拆解</div>
-          </div>
-          <div class="skill-card__footer">
-            <span class="skill-card__meta">YouTube · B站</span>
-            <span class="skill-card__arrow">→</span>
-          </div>
-        </a>
-
-        <!-- 集合竞价 -->
-        <a href="/app/auction.html" class="skill-card skill-card--cyan">
-          <div class="skill-card__icon-wrapper">
-            <svg class="skill-card__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-              <line x1="12" y1="20" x2="12" y2="10"></line>
-              <line x1="18" y1="20" x2="18" y2="4"></line>
-              <line x1="6" y1="20" x2="6" y2="16"></line>
-            </svg>
-          </div>
-          <div class="skill-card__content">
-            <div class="skill-card__title">集合竞价</div>
-            <div class="skill-card__desc">涨停排行 + 量化选股信号</div>
-          </div>
-          <div class="skill-card__footer">
-            <span class="skill-card__meta">涨停池 · 强势股</span>
-            <span class="skill-card__arrow">→</span>
-          </div>
-        </a>
-
-        <!-- 会议纪要 -->
-        <a href="/app/meeting.html" class="skill-card skill-card--pink">
-          <div class="skill-card__icon-wrapper">
-            <svg class="skill-card__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-          </div>
-          <div class="skill-card__content">
-            <div class="skill-card__title">会议纪要</div>
-            <div class="skill-card__desc">会议结构化报告</div>
-          </div>
-          <div class="skill-card__footer">
-            <span class="skill-card__meta">文字 · 语音</span>
-            <span class="skill-card__arrow">→</span>
-          </div>
-        </a>
-      </div>
+      <a href="/app/video.html" class="cap-card">
+        <span class="cap-card__icon" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="15" height="10" rx="2"></rect><polygon points="23 7 17 12 23 17 23 7"></polygon></svg>
+        </span>
+        <h3 class="cap-card__title">视频拆解</h3>
+        <p class="cap-card__desc">输入 YouTube/B 站链接，提取字幕后自动提炼观点、证据和可执行结论。</p>
+        <div class="cap-card__chain">
+          字幕提取 → 语义切片 → 观点归纳 → 输出结论
+        </div>
+        <div class="cap-card__tags">
+          <span class="cap-tag cap-tag--accent">视频内容结构化</span>
+        </div>
+      </a>
     </section>
   </main>
-
-  <script>
-    // 初始化
-    (function init() {
-      var user = localStorage.getItem('fs_user') || 'hfzq';
-      document.getElementById('userName').textContent = user;
-
-      // 模拟今日用量
-      var usage = localStorage.getItem('fs_usage_today') || '0';
-      document.getElementById('usageCount').textContent = usage;
-    })();
-
-    function doLogout() {
-      if (confirm('确定要退出吗？')) {
-        localStorage.removeItem('fs_auth');
-        localStorage.removeItem('fs_user');
-        location.replace('/');
-      }
-    }
-  </script>
 </body>
 </html>
