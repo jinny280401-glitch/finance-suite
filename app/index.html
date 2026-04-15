@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
   <title>工作台 — Finance Suite</title>
-  <!-- 登录守卫：未登录立即回跳，避免页面闪烁 -->
   <script>
     if (localStorage.getItem('fs_auth') !== 'ok') {
       location.replace('/?redirect=/app/');
@@ -14,511 +13,431 @@
   <style>
     :root {
       --white: #ffffff;
-      --surface: #f5f5f7;
-      --surface-2: #fafafa;
+      --bg: #f8f9fa;
       --text: #1d1d1f;
-      --text-secondary: #86868b;
-      --text-tertiary: #a1a1a6;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #86868b;
+      --border: #e5e5e7;
+      --border-light: #f0f0f2;
       --accent: #0071e3;
       --accent-hover: #0077ed;
-      --accent-soft: rgba(0,113,227,0.08);
-      --border: rgba(0,0,0,0.08);
-      --border-light: rgba(0,0,0,0.04);
-      --radius: 14px;
-      --radius-sm: 10px;
+      --radius: 12px;
+      --radius-lg: 16px;
       --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+      --blue: #007aff;
+      --green: #34c759;
+      --orange: #ff9500;
+      --purple: #af52de;
+      --cyan: #5ac8fa;
+      --pink: #ff2d55;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
-      font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
-      background: var(--surface);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", sans-serif;
+      background: var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
-      padding-top: 52px;
+      line-height: 1.5;
     }
 
-    /* ---- Header (same as marketing page) ---- */
-    .site-header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 52px;
-      background: rgba(255,255,255,0.78);
-      backdrop-filter: saturate(180%) blur(20px);
-      -webkit-backdrop-filter: saturate(180%) blur(20px);
+    /* Header */
+    .header {
+      background: var(--white);
       border-bottom: 1px solid var(--border-light);
-      z-index: 100;
+      padding: 0 32px;
+      height: 60px;
       display: flex;
       align-items: center;
-      padding: 0 22px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    .site-header__inner {
+    .header__inner {
       width: 100%;
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    .site-header__brand {
-      font-size: 14px; font-weight: 600; color: var(--text);
-      text-decoration: none; letter-spacing: -0.01em;
-      display: flex; align-items: center; gap: 10px;
-    }
-    .site-header__brand::after {
-      content: '工作台';
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      padding: 3px 8px;
-      background: var(--surface);
-      border-radius: 6px;
-    }
-    .hdr-actions { display: flex; align-items: center; gap: 10px; }
-    .hdr-user {
-      font-size: 13px; color: var(--text-secondary);
-      padding: 7px 12px; cursor: pointer; position: relative;
-      border-radius: 8px; transition: background 0.2s;
-    }
-    .hdr-user:hover { background: rgba(0,0,0,0.04); }
-    .hdr-user__menu {
-      position: absolute; top: calc(100% + 6px); right: 0;
-      background: var(--white); border: 1px solid var(--border);
-      border-radius: 12px; min-width: 140px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08); padding: 6px;
-      opacity: 0; pointer-events: none; transform: translateY(-4px);
-      transition: opacity 0.18s, transform 0.18s var(--ease);
-    }
-    .hdr-user:hover .hdr-user__menu,
-    .hdr-user:focus-within .hdr-user__menu { opacity: 1; pointer-events: auto; transform: translateY(0); }
-    .hdr-user__item {
-      display: block; padding: 8px 12px; font-size: 13px;
-      color: var(--text); border-radius: 8px; cursor: pointer;
-      background: none; border: none; width: 100%; text-align: left;
-      font-family: inherit;
-    }
-    .hdr-user__item:hover { background: var(--surface); }
-
-    /* ---- Main workspace (single-column) ---- */
-    .workspace {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 48px 24px 80px;
-    }
-    .workspace__main { min-width: 0; }
-    @media (max-width: 720px) {
-      .workspace { padding: 32px 16px 60px; }
-    }
-    .ws-head {
-      margin-bottom: 32px;
-    }
-    .ws-head__greeting {
-      font-size: 13px;
-      color: var(--text-secondary);
-      margin-bottom: 4px;
-    }
-    .ws-head__title {
-      font-size: 28px;
+    .header__brand {
+      font-size: 18px;
       font-weight: 600;
-      letter-spacing: -0.02em;
-      color: var(--text);
+      color: var(--accent);
+      text-decoration: none;
     }
-
-    /* ---- Quick input (primary action) ---- */
-    .quick-input {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px 22px;
-      margin-bottom: 28px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .quick-input:focus-within {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
-    }
-    .quick-input__label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 10px;
-    }
-    .quick-input__row {
+    .header__nav {
       display: flex;
-      gap: 10px;
+      gap: 32px;
       align-items: center;
     }
-    .quick-input__field {
-      flex: 1;
-      border: none;
-      outline: none;
-      font-size: 16px;
-      font-family: inherit;
-      color: var(--text);
-      background: transparent;
+    .header__link {
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.2s;
     }
-    .quick-input__field::placeholder { color: var(--text-tertiary); }
-    .quick-input__submit {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 10px 18px;
+    .header__link:hover { color: var(--text); }
+    .header__actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
-      font-family: inherit;
-      transition: background 0.2s, transform 0.15s var(--ease);
-    }
-    .quick-input__submit:hover { background: var(--accent-hover); }
-    .quick-input__submit:active { transform: scale(0.97); }
-    .quick-input__hints {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 12px;
-    }
-    .quick-input__hint {
-      font-size: 12px;
-      padding: 4px 10px;
-      background: var(--surface);
-      color: var(--text-secondary);
-      border-radius: 999px;
       border: none;
-      cursor: pointer;
       font-family: inherit;
-      transition: background 0.2s, color 0.2s;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
     }
-    .quick-input__hint:hover { background: var(--accent-soft); color: var(--accent); }
-
-    /* ---- Skills grid ---- */
-    .skills-head {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .skills-head__title {
-      font-size: 15px;
-      font-weight: 600;
+    .btn--secondary {
+      background: var(--bg);
       color: var(--text);
     }
-    .skills-head__count {
-      font-size: 12px;
+    .btn--secondary:hover { background: var(--border-light); }
+    .btn--text {
+      background: none;
       color: var(--text-secondary);
     }
-    .skills-section { margin-bottom: 28px; }
-    .skills-section:last-of-type { margin-bottom: 0; }
+    .btn--text:hover { color: var(--text); }
+
+    /* Main Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 48px 32px 80px;
+    }
+
+    /* Welcome Section */
+    .welcome {
+      margin-bottom: 32px;
+    }
+    .welcome__greeting {
+      font-size: 32px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .vip-badge {
+      font-size: 12px;
+      font-weight: 600;
+      color: #ff9500;
+      background: rgba(255, 149, 0, 0.1);
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Usage Card */
+    .usage-card {
+      background: var(--white);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 40px;
+    }
+    .usage-card__title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .usage-card__stat {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+    .usage-card__stat strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* Skills Section */
+    .skills-section {
+      margin-bottom: 32px;
+    }
+    .skills-section__title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 24px;
+    }
     .skills-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
     }
-    @media (max-width: 840px) {
+    @media (max-width: 768px) {
       .skills-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 560px) {
       .skills-grid { grid-template-columns: 1fr; }
     }
+
+    /* Skill Card */
     .skill-card {
       background: var(--white);
       border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      padding: 18px 18px 16px;
-      cursor: pointer;
-      transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), border-color 0.25s;
+      border-radius: var(--radius-lg);
+      padding: 24px;
       text-decoration: none;
       color: inherit;
       display: flex;
       flex-direction: column;
-      min-height: 148px;
-      position: relative;
+      gap: 16px;
+      transition: all 0.25s var(--ease);
+      cursor: pointer;
+      min-height: 180px;
     }
     .skill-card:hover {
-      transform: translateY(-2px);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
       border-color: var(--border);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.05);
     }
-    .skill-card:focus-visible,
-    .side-item:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-    .skill-card--flagship {
+    .skill-card--selected {
       border-color: var(--accent);
-      background: linear-gradient(180deg, rgba(0,113,227,0.025), var(--white) 60%);
+      box-shadow: 0 0 0 1px var(--accent);
     }
-    .skill-card--flagship:hover {
-      border-color: var(--accent);
-      box-shadow: 0 8px 24px rgba(0,113,227,0.10);
-    }
-    .skill-card__badge {
-      position: absolute;
-      top: 14px; right: 14px;
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--accent);
-      background: var(--accent-soft);
-      padding: 3px 8px;
-      border-radius: 4px;
-      letter-spacing: 0.3px;
-    }
-    .skill-card--disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-    .skill-card--disabled .skill-card__badge {
-      color: var(--text-tertiary);
-      background: var(--surface);
+    .skill-card__icon-wrapper {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
     .skill-card__icon {
-      width: 32px;
-      height: 32px;
-      margin-bottom: 14px;
-      color: var(--text-secondary);
+      width: 28px;
+      height: 28px;
+      color: var(--white);
     }
-    .skill-card:hover .skill-card__icon { color: var(--accent); }
-    .skill-card__name {
-      font-size: 15px;
+    .skill-card__content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .skill-card__title {
+      font-size: 18px;
       font-weight: 600;
       color: var(--text);
-      margin-bottom: 6px;
     }
     .skill-card__desc {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text-secondary);
-      line-height: 1.5;
-      flex: 1;
+      line-height: 1.6;
     }
     .skill-card__footer {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 14px;
+      margin-top: auto;
       padding-top: 12px;
       border-top: 1px solid var(--border-light);
     }
-    .skill-card__source {
-      font-size: 11px;
+    .skill-card__meta {
+      font-size: 12px;
       color: var(--text-tertiary);
     }
     .skill-card__arrow {
-      font-size: 14px;
+      font-size: 18px;
       color: var(--text-tertiary);
-      transition: transform 0.2s, color 0.2s;
+      transition: transform 0.2s;
     }
-    .skill-card:hover .skill-card__arrow { color: var(--accent); transform: translateX(2px); }
-
-    /* ---- Toast ---- */
-    .ws-toast {
-      position: fixed;
-      bottom: 40px; left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: var(--text);
-      color: #fff;
-      padding: 14px 24px;
-      border-radius: 12px;
-      font-size: 14px;
-      line-height: 1.5;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
-      z-index: 1000;
-      max-width: 360px;
-      text-align: center;
-    }
-    .ws-toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
+    .skill-card:hover .skill-card__arrow {
+      transform: translateX(4px);
     }
 
-    /* ---- Footer note ---- */
-    .ws-footer {
-      margin-top: 40px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border-light);
-      font-size: 12px;
-      color: var(--text-tertiary);
-      text-align: center;
-    }
-
-    /* ---- Responsive ---- */
-    @media (max-width: 560px) {
-      .workspace { padding: 32px 16px 60px; }
-      .ws-head__title { font-size: 24px; }
-      .skills-grid { grid-template-columns: 1fr; }
-      .quick-input__row { flex-direction: column; align-items: stretch; }
-      .site-header__brand::after { display: none; }
-    }
+    /* Color variants */
+    .skill-card--blue .skill-card__icon-wrapper { background: linear-gradient(135deg, #007aff, #5ac8fa); }
+    .skill-card--green .skill-card__icon-wrapper { background: linear-gradient(135deg, #34c759, #30d158); }
+    .skill-card--orange .skill-card__icon-wrapper { background: linear-gradient(135deg, #ff9500, #ffcc00); }
+    .skill-card--purple .skill-card__icon-wrapper { background: linear-gradient(135deg, #af52de, #bf5af2); }
+    .skill-card--cyan .skill-card__icon-wrapper { background: linear-gradient(135deg, #5ac8fa, #64d2ff); }
+    .skill-card--pink .skill-card__icon-wrapper { background: linear-gradient(135deg, #ff2d55, #ff375f); }
   </style>
 </head>
 <body>
-
-  <!-- ====== HEADER ====== -->
-  <header class="site-header">
-    <div class="site-header__inner">
-      <a href="/" class="site-header__brand">Finance Suite</a>
-      <div class="hdr-actions">
-        <div class="hdr-user" tabindex="0" id="userMenu">
-          <span id="userName">—</span> <span style="opacity:0.5">▾</span>
-          <div class="hdr-user__menu">
-            <button class="hdr-user__item" onclick="location.href='/'">返回首页</button>
-            <button class="hdr-user__item" onclick="doLogout()">退出登录</button>
-          </div>
-        </div>
+  <!-- Header -->
+  <header class="header">
+    <div class="header__inner">
+      <a href="/" class="header__brand">Finance Suite</a>
+      <nav class="header__nav">
+        <a href="/" class="header__link">首页</a>
+        <a href="/#preview" class="header__link">功能</a>
+        <a href="/#pricing" class="header__link">定价</a>
+      </nav>
+      <div class="header__actions">
+        <button class="btn btn--secondary">仅表盘</button>
+        <button class="btn btn--text" onclick="doLogout()">退出</button>
       </div>
     </div>
   </header>
 
-  <!-- ====== WORKSPACE ====== -->
-  <main class="workspace">
-    <div class="workspace__main">
-    <div class="ws-head">
-      <div class="ws-head__greeting" id="greeting">下午好</div>
-      <h1 class="ws-head__title">今天想研究什么？</h1>
+  <!-- Main Content -->
+  <main class="container">
+    <!-- Welcome -->
+    <div class="welcome">
+      <div class="welcome__greeting">
+        你好，<span id="userName">用户</span>
+        <span class="vip-badge">VIP</span>
+      </div>
     </div>
 
-    <!-- 快速输入：主要动作 -->
-    <form class="quick-input" onsubmit="handleQuickSubmit(event)">
-      <div class="quick-input__label">输入标的或问题</div>
-      <div class="quick-input__row">
-        <input type="text" class="quick-input__field" id="quickField"
-               name="query" autocomplete="off" spellcheck="false"
-               placeholder="例如：研究宁德时代 / 分析新能源汽车行业 / 今天涨停排行…"
-               aria-label="输入标的或问题">
-        <button type="submit" class="quick-input__submit">开始分析</button>
+    <!-- Usage Card -->
+    <div class="usage-card">
+      <div class="usage-card__title">今日用量</div>
+      <div class="usage-card__stat">
+        今日已使用 <strong id="usageCount">0</strong> / <strong>无限</strong> 次
       </div>
-      <div class="quick-input__hints">
-        <button type="button" class="quick-input__hint" onclick="fillHint('研究宁德时代')">研究宁德时代</button>
-        <button type="button" class="quick-input__hint" onclick="fillHint('分析新能源汽车行业')">分析新能源汽车行业</button>
-        <button type="button" class="quick-input__hint" onclick="fillHint('今天涨停排行')">今天涨停排行</button>
-        <button type="button" class="quick-input__hint" onclick="fillHint('整理这份会议纪要')">整理会议纪要</button>
-        <button type="button" class="quick-input__hint" onclick="fillHint('拆解这个视频')">拆解视频</button>
-      </div>
-    </form>
+    </div>
 
-    <!-- 分析技能（6） -->
-    <div class="skills-section">
-      <div class="skills-head">
-        <h2 class="skills-head__title">选择分析技能</h2>
-        <span class="skills-head__count">6 项</span>
-      </div>
+    <!-- Skills Section -->
+    <section class="skills-section">
+      <h2 class="skills-section__title">选择分析技能</h2>
       <div class="skills-grid">
-        <a href="/app/deep-research.html" class="skill-card skill-card--flagship" data-skill="deep-research">
-          <span class="skill-card__badge">旗舰</span>
-          <svg class="skill-card__icon" aria-hidden="true" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="14" r="9"></circle><line x1="21" y1="21" x2="28" y2="28"></line></svg>
-          <div class="skill-card__name">深度研究</div>
-          <div class="skill-card__desc">公司 + 行业双模式，10 节完整报告，含管理层言行一致追踪</div>
+        <!-- 看票分析 -->
+        <a href="/app/stock.html" class="skill-card skill-card--blue">
+          <div class="skill-card__icon-wrapper">
+            <svg class="skill-card__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+          </div>
+          <div class="skill-card__content">
+            <div class="skill-card__title">看票分析</div>
+            <div class="skill-card__desc">股票深度分析报告</div>
+          </div>
           <div class="skill-card__footer">
-            <span class="skill-card__source">A股行情 · 全球检索</span>
-            <span class="skill-card__arrow" aria-hidden="true">→</span>
+            <span class="skill-card__meta">财报 · 资金 · 估值</span>
+            <span class="skill-card__arrow">→</span>
           </div>
         </a>
 
-        <a href="/app/stock.html" class="skill-card" data-skill="stock">
-          <svg class="skill-card__icon" aria-hidden="true" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="28 10 20 18 14 12 4 22"></polyline><polyline points="22 10 28 10 28 16"></polyline></svg>
-          <div class="skill-card__name">看票分析</div>
-          <div class="skill-card__desc">个股短平快交易视角，9 章报告 + 4 位大师视角</div>
+        <!-- 宏观内参 -->
+        <a href="/app/macro.html" class="skill-card skill-card--green">
+          <div class="skill-card__icon-wrapper">
+            <svg class="skill-card__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+          </div>
+          <div class="skill-card__content">
+            <div class="skill-card__title">宏观内参</div>
+            <div class="skill-card__desc">宏观经济解读</div>
+          </div>
           <div class="skill-card__footer">
-            <span class="skill-card__source">A股行情 · 全球检索</span>
-            <span class="skill-card__arrow" aria-hidden="true">→</span>
+            <span class="skill-card__meta">GDP · CPI · PMI</span>
+            <span class="skill-card__arrow">→</span>
           </div>
         </a>
 
-        <a href="/app/macro.html" class="skill-card" data-skill="macro">
-          <svg class="skill-card__icon" aria-hidden="true" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="16" cy="16" r="12"></circle><line x1="4" y1="16" x2="28" y2="16"></line><path d="M16 4a18 18 0 0 1 4.5 12 18 18 0 0 1-4.5 12 18 18 0 0 1-4.5-12A18 18 0 0 1 16 4z"></path></svg>
-          <div class="skill-card__name">宏观内参</div>
-          <div class="skill-card__desc">GDP / CPI / PMI / 货币政策，白话解读</div>
+        <!-- 深度研究 -->
+        <a href="/app/deep-research.html" class="skill-card skill-card--orange">
+          <div class="skill-card__icon-wrapper">
+            <svg class="skill-card__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <div class="skill-card__content">
+            <div class="skill-card__title">深度研究</div>
+            <div class="skill-card__desc">公司+行业双模式，10节完整报告</div>
+          </div>
           <div class="skill-card__footer">
-            <span class="skill-card__source">宏观经济数据</span>
-            <span class="skill-card__arrow" aria-hidden="true">→</span>
+            <span class="skill-card__meta">公司 · 行业 · 管理层</span>
+            <span class="skill-card__arrow">→</span>
           </div>
         </a>
 
-        <a href="/app/auction.html" class="skill-card" data-skill="auction">
-          <svg class="skill-card__icon" aria-hidden="true" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-            <rect x="4" y="10" width="6" height="14" rx="1"></rect>
-            <rect x="13" y="6" width="6" height="18" rx="1"></rect>
-            <rect x="22" y="2" width="6" height="22" rx="1"></rect>
-          </svg>
-          <div class="skill-card__name">集合竞价</div>
-          <div class="skill-card__desc">涨停排行 + 量化选股信号</div>
+        <!-- 视频拆解 -->
+        <a href="/app/video.html" class="skill-card skill-card--purple">
+          <div class="skill-card__icon-wrapper">
+            <svg class="skill-card__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <polygon points="23 7 16 12 23 17 23 7"></polygon>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+          </div>
+          <div class="skill-card__content">
+            <div class="skill-card__title">视频拆解</div>
+            <div class="skill-card__desc">视频结构化拆解</div>
+          </div>
           <div class="skill-card__footer">
-            <span class="skill-card__source">A股实时行情</span>
-            <span class="skill-card__arrow" aria-hidden="true">→</span>
+            <span class="skill-card__meta">YouTube · B站</span>
+            <span class="skill-card__arrow">→</span>
           </div>
         </a>
 
-        <a href="/app/meeting.html" class="skill-card" data-skill="meeting">
-          <svg class="skill-card__icon" aria-hidden="true" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H7a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="9" y1="10" x2="21" y2="10"></line><line x1="9" y1="15" x2="21" y2="15"></line><line x1="9" y1="20" x2="15" y2="20"></line></svg>
-          <div class="skill-card__name">会议纪要</div>
-          <div class="skill-card__desc">把会议录音、访谈记录、谈话文字转成结构化报告</div>
+        <!-- 集合竞价 -->
+        <a href="/app/auction.html" class="skill-card skill-card--cyan">
+          <div class="skill-card__icon-wrapper">
+            <svg class="skill-card__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <line x1="12" y1="20" x2="12" y2="10"></line>
+              <line x1="18" y1="20" x2="18" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="16"></line>
+            </svg>
+          </div>
+          <div class="skill-card__content">
+            <div class="skill-card__title">集合竞价</div>
+            <div class="skill-card__desc">涨停排行 + 量化选股信号</div>
+          </div>
           <div class="skill-card__footer">
-            <span class="skill-card__source">文字 / 语音输入</span>
-            <span class="skill-card__arrow" aria-hidden="true">→</span>
+            <span class="skill-card__meta">涨停池 · 强势股</span>
+            <span class="skill-card__arrow">→</span>
           </div>
         </a>
 
-        <a href="/app/video.html" class="skill-card" data-skill="video">
-          <svg class="skill-card__icon" aria-hidden="true" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="18" rx="2"></rect><polygon points="30 8 22 14 30 20 30 8"></polygon></svg>
-          <div class="skill-card__name">视频拆解</div>
-          <div class="skill-card__desc">提取视频字幕与关键帧，自动提炼观点、生成知识点</div>
+        <!-- 会议纪要 -->
+        <a href="/app/meeting.html" class="skill-card skill-card--pink">
+          <div class="skill-card__icon-wrapper">
+            <svg class="skill-card__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+          </div>
+          <div class="skill-card__content">
+            <div class="skill-card__title">会议纪要</div>
+            <div class="skill-card__desc">会议结构化报告</div>
+          </div>
           <div class="skill-card__footer">
-            <span class="skill-card__source">YouTube · B站</span>
-            <span class="skill-card__arrow" aria-hidden="true">→</span>
+            <span class="skill-card__meta">文字 · 语音</span>
+            <span class="skill-card__arrow">→</span>
           </div>
         </a>
       </div>
-    </div>
-
-    <div class="ws-footer">
-      Finance Suite &mdash; 基于公开数据的 AI 分析，仅供内部研究使用，不构成投资建议
-    </div>
-    </div><!-- /workspace__main -->
+    </section>
   </main>
 
-  <div class="ws-toast" id="wsToast"></div>
-
   <script>
-    // 渲染用户名 + 问候语
-    (function init(){
-      var user = localStorage.getItem('fs_user') || '';
-      document.getElementById('userName').textContent = user || '账户';
-      var h = new Date().getHours();
-      var g = h < 6 ? '凌晨好' : h < 12 ? '早上好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
-      document.getElementById('greeting').textContent = g + (user ? '，' + user : '');
+    // 初始化
+    (function init() {
+      var user = localStorage.getItem('fs_user') || 'hfzq';
+      document.getElementById('userName').textContent = user;
+
+      // 模拟今日用量
+      var usage = localStorage.getItem('fs_usage_today') || '0';
+      document.getElementById('usageCount').textContent = usage;
     })();
 
-    function fillHint(text) {
-      var f = document.getElementById('quickField');
-      f.value = text;
-      f.focus();
-    }
-    // Toast helper
-    var _toastTimer = null;
-    function showToast(msg) {
-      var t = document.getElementById('wsToast');
-      t.textContent = msg;
-      t.classList.add('show');
-      clearTimeout(_toastTimer);
-      _toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2400);
-    }
-    function handleQuickSubmit(e) {
-      e.preventDefault();
-      var v = document.getElementById('quickField').value.trim();
-      if (!v) return;
-      // TODO: 接入后端任务调度接口
-      showToast('任务已识别：' + v + '（后端集成中）');
-    }
-    function doLogout(){
-      localStorage.removeItem('fs_auth');
-      localStorage.removeItem('fs_user');
-      location.href = '/';
+    function doLogout() {
+      if (confirm('确定要退出吗？')) {
+        localStorage.removeItem('fs_auth');
+        localStorage.removeItem('fs_user');
+        location.replace('/');
+      }
     }
   </script>
 </body>
