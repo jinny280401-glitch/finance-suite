@@ -265,6 +265,13 @@
       margin: 0 auto 40px;
       color: var(--dark-secondary);
     }
+    .hero__cta-group {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 64px;
+    }
     .hero__cta {
       display: inline-block;
       padding: 14px 32px;
@@ -278,10 +285,29 @@
       font-family: inherit;
       text-decoration: none;
       transition: background 0.2s, transform 0.2s var(--ease);
-      margin-bottom: 64px;
     }
     .hero__cta:hover { background: var(--accent-hover); transform: scale(1.04); }
     .hero__cta:active { transform: scale(0.98); }
+    .hero__cta-secondary {
+      display: inline-block;
+      padding: 14px 32px;
+      background: transparent;
+      color: var(--dark-text);
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 980px;
+      font-size: 17px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.2s var(--ease), border-color 0.2s;
+    }
+    .hero__cta-secondary:hover {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.35);
+      transform: scale(1.04);
+    }
+    .hero__cta-secondary:active { transform: scale(0.98); }
 
     /* Hero inline demo */
     .hero-demo {
@@ -942,6 +968,14 @@
     }
     @media (max-width: 768px) {
       .hero { min-height: auto; padding: 80px 20px 40px; }
+      .hero__cta-group {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .hero__cta, .hero__cta-secondary {
+        width: 100%;
+        text-align: center;
+      }
       .dispatch__header { padding: 80px 24px 40px; }
       .dispatch__step-inner { padding: 28px 24px; }
       .dispatch__data { grid-template-columns: repeat(2, 1fr); }
@@ -1023,7 +1057,9 @@
       'demo': 'demo2026',
       'zhuanz': 'zhuanz0405',
       'vanilla': 'lemon123456',
-      'nanjian': 'nj123456'
+      'nanjian': 'nj123456',
+      'fengzhijie': 'fzj123456',
+      'lianghailin': 'lhl123456'
     };
     (function(){
       var params = new URLSearchParams(location.search);
@@ -1090,7 +1126,10 @@
       自主规划研究路径，调度 5 大数据源，<br>
       交叉验证后结构化输出。覆盖 A 股 5,000+ 标的。
     </p>
-    <a href="#preview" class="hero__cta reveal reveal-d3">看一份示例报告</a>
+    <div class="hero__cta-group reveal reveal-d3">
+      <a href="#preview" class="hero__cta">看一份示例报告</a>
+      <a href="/app/" class="hero__cta-secondary">进入使用</a>
+    </div>
 
     <div class="hero-demo reveal reveal-d4">
       <div class="hero-demo__bar">
