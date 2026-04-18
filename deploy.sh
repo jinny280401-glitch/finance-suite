@@ -48,17 +48,19 @@ server {
     listen 443 ssl http2;
     server_name touziagent.com www.touziagent.com;
 
-    # SSL 证书（根据实际路径调整）
-    ssl_certificate     /etc/nginx/ssl/touziagent.com_bundle.crt;
-    ssl_certificate_key /etc/nginx/ssl/touziagent.com.key;
+    # SSL 证书（Let's Encrypt，certbot 管理）
+    ssl_certificate     /etc/letsencrypt/live/touziagent.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/touziagent.com/privkey.pem;
     ssl_protocols       TLSv1.2 TLSv1.3;
     ssl_ciphers         HIGH:!aNULL:!MD5;
 
+    root /home/ubuntu/finance-suite-web/static;
+    index index.html;
+
     # ---- 静态首页 ----
     location = / {
-        alias /home/ubuntu/finance-suite-web/static/index.html;
-        default_type text/html;
         add_header Cache-Control "no-cache, must-revalidate";
+        try_files /index.html =404;
     }
 
     # ---- 工作台 + 技能页面 ----
@@ -66,7 +68,7 @@ server {
         alias /home/ubuntu/finance-suite-web/static/app/;
         try_files $uri $uri/ /app/index.html;
         default_type text/html;
-        add_header Cache-Control "no-cache, must-revalidate";
+        add_header Cache-Control "no-cache, must-revalidate, max-age=0";
     }
 
     # ---- 静态资源 ----
