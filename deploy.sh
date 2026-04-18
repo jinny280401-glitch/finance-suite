@@ -58,6 +58,7 @@ server {
     location = / {
         alias /home/ubuntu/finance-suite-web/static/index.html;
         default_type text/html;
+        add_header Cache-Control "no-cache, must-revalidate";
     }
 
     # ---- 工作台 + 技能页面 ----
@@ -65,6 +66,7 @@ server {
         alias /home/ubuntu/finance-suite-web/static/app/;
         try_files $uri $uri/ /app/index.html;
         default_type text/html;
+        add_header Cache-Control "no-cache, must-revalidate";
     }
 
     # ---- 静态资源 ----
