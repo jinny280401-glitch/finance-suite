@@ -14,8 +14,8 @@ mkdir -p /home/ubuntu/finance-suite-web/static/app/
 curl -sL "https://raw.githubusercontent.com/jinny280401-glitch/finance-suite/main/app/index.html" \
   -o /home/ubuntu/finance-suite-web/static/app/index.html
 
-# 拉取6个技能页面
-for page in deep-research stock macro auction meeting video; do
+# 拉取技能页面 + 情报页面
+for page in deep-research stock macro auction meeting video xueqiu-hot; do
   curl -sL "https://raw.githubusercontent.com/jinny280401-glitch/finance-suite/main/app/${page}.html" \
     -o /home/ubuntu/finance-suite-web/static/app/${page}.html
   echo "  ✓ ${page}.html"
