@@ -213,6 +213,36 @@
       background: rgba(211, 47, 47, 0.08);
       border-radius: var(--radius-sm);
     }
+
+    /* watchlist action bar */
+    .watchlist-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .watchlist-bar.show { display: flex; }
+    .watchlist-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--text);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .watchlist-btn:hover { border-color: #f5a623; color: #f5a623; background: rgba(245,166,35,0.06); }
+    .watchlist-btn.added { border-color: var(--green); color: var(--green); background: rgba(52,199,89,0.06); cursor: default; }
+    .watchlist-btn.added:hover { border-color: var(--green); color: var(--green); background: rgba(52,199,89,0.06); }
+    .watchlist-hint { font-size: 11px; color: var(--text-tertiary); }
   </style>
 </head>
 <body>
@@ -249,6 +279,13 @@
         <div>正在分析中，请稍候...</div>
       </div>
       <div class="result-content" id="resultContent"></div>
+      <div class="watchlist-bar" id="watchlistBar">
+        <button class="watchlist-btn" id="watchlistBtn" type="button" onclick="addToWatchlist()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span id="watchlistBtnText">加入自选</span>
+        </button>
+        <span class="watchlist-hint" id="watchlistHint">分析后可加入长期跟踪票池</span>
+      </div>
     </div>
   </main>
 
@@ -259,13 +296,24 @@
     const resultContainer = document.getElementById('resultContainer');
     const resultLoading = document.getElementById('resultLoading');
     const resultContent = document.getElementById('resultContent');
+    const watchlistBar = document.getElementById('watchlistBar');
+    const watchlistBtn = document.getElementById('watchlistBtn');
+    const watchlistBtnText = document.getElementById('watchlistBtnText');
+    const watchlistHint = document.getElementById('watchlistHint');
+
+    let currentQuery = '';
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const query = queryInput.value.trim();
       if (!query) return;
 
-      // Show loading
+      currentQuery = query;
+      watchlistBar.classList.remove('show');
+      watchlistBtn.classList.remove('added');
+      watchlistBtnText.textContent = '加入自选';
+      watchlistHint.textContent = '分析后可加入长期跟踪票池';
+
       resultContainer.classList.add('show');
       resultLoading.style.display = 'block';
       resultContent.style.display = 'none';
@@ -275,49 +323,78 @@
       try {
         const response = await fetch('/api/analyze', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            skill_type: 'stock',
-            query: query
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ skill_type: 'stock', query }),
           credentials: 'include'
         });
 
         const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || '分析失败');
 
-        if (!response.ok) {
-          throw new Error(data.detail || '分析失败');
-        }
-
-        // Show result
         resultLoading.style.display = 'none';
         resultContent.style.display = 'block';
         resultContent.innerHTML = formatResult(data);
+        watchlistBar.classList.add('show');
 
       } catch (error) {
         resultLoading.style.display = 'none';
         resultContent.style.display = 'block';
         resultContent.innerHTML = `<div class="result-error">错误：${error.message}</div>`;
+        watchlistBar.classList.add('show');
       } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = '开始分析';
       }
     });
 
-    function formatResult(data) {
-      if (typeof data === 'string') {
-        return `<pre>${data}</pre>`;
+    async function addToWatchlist() {
+      if (watchlistBtn.classList.contains('added')) return;
+      watchlistBtnText.textContent = '添加中…';
+      watchlistBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/watchlist/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: currentQuery }),
+          credentials: 'include'
+        });
+        const data = await res.json();
+
+        if (data.already) {
+          watchlistBtn.classList.add('added');
+          watchlistBtnText.textContent = '已在自选';
+          watchlistHint.textContent = data.message;
+        } else if (data.success) {
+          watchlistBtn.classList.add('added');
+          watchlistBtnText.textContent = '已加入自选';
+          watchlistHint.textContent = data.message;
+        } else {
+          watchlistBtnText.textContent = '加入自选';
+          watchlistHint.textContent = data.message || '添加失败，请重试';
+          watchlistBtn.disabled = false;
+        }
+      } catch {
+        watchlistBtnText.textContent = '加入自选';
+        watchlistHint.textContent = '网络错误，请重试';
+        watchlistBtn.disabled = false;
       }
+    }
+
+    function formatResult(data) {
+      if (typeof data === 'string') return `<pre>${data}</pre>`;
       return `<pre>${JSON.stringify(data, null, 2)}</pre>`;
     }
 
-    // Pre-fill from URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    const preQuery = urlParams.get('q');
-    if (preQuery) {
-      queryInput.value = preQuery;
+    // Pre-fill from sessionStorage (from workbench hot click) or URL param
+    const prefill = sessionStorage.getItem('fs_prefill');
+    if (prefill) {
+      queryInput.value = prefill;
+      sessionStorage.removeItem('fs_prefill');
+      sessionStorage.removeItem('fs_prefill_skill');
+    } else {
+      const preQuery = new URLSearchParams(window.location.search).get('q');
+      if (preQuery) queryInput.value = preQuery;
     }
   </script>
 </body>
