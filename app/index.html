@@ -601,7 +601,15 @@
     // ---- fetch (mock → replace with /api/intel/* when backend ready) ----
     async function fetchHot() { return mockHot(); }
     async function fetchHotStock() { return mockHotStock(); }
-    async function fetchWatchlist() { return mockWatchlist(); }
+    async function fetchWatchlist() {
+      try {
+        const res = await fetch('/api/watchlist/list', { credentials: 'include' });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (data._qc?.status === 'success' && data.data?.length > 0) return data;
+      } catch {}
+      return mockWatchlist();
+    }
 
     function mockHot() {
       return {
