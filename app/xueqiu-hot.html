@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>雪球热点 — Finance Suite</title>
+  <script>
+    if (localStorage.getItem('fs_auth') !== 'ok') {
+      location.replace('/?redirect=/app/xueqiu-hot.html');
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --white: #ffffff;
+      --surface: #f8f8fa;
+      --text: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --text-tertiary: #86868b;
+      --accent: #0071e3;
+      --accent-bg: rgba(0,113,227,0.07);
+      --border: rgba(0,0,0,0.06);
+      --border-hover: rgba(0,113,227,0.18);
+      --green: #34c759;
+      --red: #ff3b30;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ---- topbar ---- */
+    .topbar {
+      height: 40px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand { font-size: 12px; font-weight: 600; color: #111; text-decoration: none; }
+    .topbar-sep { width: 1px; height: 14px; background: rgba(0,0,0,0.12); margin: 0 10px; }
+    .topbar-page { font-size: 12px; color: var(--text-secondary); }
+    .topbar-back {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ---- layout ---- */
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 24px 24px 48px;
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* ---- section header ---- */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title svg { color: var(--text-secondary); }
+    .section-meta {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ---- status dot ---- */
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ccc;
+      flex-shrink: 0;
+    }
+    .dot--live { background: var(--green); animation: pulse 2s infinite; }
+    .dot--loading { background: #f5a623; animation: pulse 1s infinite; }
+    .dot--error { background: var(--red); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ---- card base ---- */
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    /* ---- hot feed ---- */
+    .feed-list { list-style: none; }
+    .feed-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-item:hover { background: #fafafa; }
+    .feed-item:hover .feed-title { color: var(--accent); }
+
+    .feed-rank {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      min-width: 18px;
+      padding-top: 1px;
+      flex-shrink: 0;
+    }
+    .feed-rank--top { color: var(--red); }
+
+    .feed-body { flex: 1; min-width: 0; }
+    .feed-title {
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.5;
+      color: var(--text);
+      transition: color 0.15s;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .feed-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 5px;
+    }
+    .feed-tag {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .feed-heat {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .feed-arrow {
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+      padding-top: 2px;
+      transition: transform 0.15s;
+    }
+    .feed-item:hover .feed-arrow { transform: translateX(2px); }
+
+    /* ---- hot stocks ---- */
+    .stock-list { list-style: none; }
+    .stock-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .stock-item:last-child { border-bottom: none; }
+    .stock-item:hover { background: #fafafa; }
+
+    .stock-rank {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-tertiary);
+      min-width: 14px;
+      flex-shrink: 0;
+    }
+    .stock-rank--top { color: var(--red); }
+
+    .stock-name {
+      font-size: 13px;
+      font-weight: 500;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stock-code {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-family: "SF Mono", Menlo, monospace;
+    }
+    .stock-change {
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 48px;
+      text-align: right;
+      font-family: "SF Mono", Menlo, monospace;
+    }
+    .stock-change--up { color: var(--red); }
+    .stock-change--down { color: var(--green); }
+    .stock-change--flat { color: var(--text-tertiary); }
+
+    /* ---- skeleton ---- */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f2 25%, #e8e8ea 50%, #f0f0f2 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .skeleton-line { height: 13px; margin-bottom: 6px; }
+    .skeleton-line--short { width: 40%; }
+    .skeleton-line--mid { width: 70%; }
+    .skeleton-line--full { width: 100%; }
+
+    .skeleton-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .skeleton-item:last-child { border-bottom: none; }
+
+    /* ---- error state ---- */
+    .error-state {
+      padding: 32px 16px;
+      text-align: center;
+      color: var(--text-tertiary);
+    }
+    .error-state svg { margin-bottom: 10px; opacity: 0.4; }
+    .error-state p { font-size: 13px; margin-bottom: 12px; }
+    .retry-btn {
+      font-size: 12px;
+      color: var(--accent);
+      background: var(--accent-bg);
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .retry-btn:hover { background: rgba(0,113,227,0.12); }
+
+    /* ---- refresh bar ---- */
+    .refresh-bar {
+      height: 2px;
+      background: var(--border);
+      border-radius: 1px;
+      overflow: hidden;
+      margin: 0 16px 12px;
+    }
+    .refresh-progress {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 1px;
+      transition: width 1s linear;
+      width: 0%;
+    }
+
+    /* ---- sidebar card ---- */
+    .sidebar-card { margin-bottom: 16px; }
+    .sidebar-card:last-child { margin-bottom: 0; }
+
+    .card-header {
+      padding: 14px 16px 0;
+    }
+
+    /* ---- fill-input hint ---- */
+    .fill-hint {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      padding: 8px 16px 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    @media (max-width: 760px) {
+      .page { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="brand">Finance Suite</a>
+    <span class="topbar-sep"></span>
+    <span class="topbar-page">雪球热点</span>
+    <a href="/app/" class="topbar-back">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      工作台
+    </a>
+  </header>
+
+  <main class="page">
+    <!-- 左：热门讨论 -->
+    <div>
+      <div class="section-header">
+        <h2 class="section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          热门讨论
+        </h2>
+        <div class="section-meta">
+          <span class="dot" id="hot-dot"></span>
+          <span id="hot-time">加载中…</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="refresh-bar"><div class="refresh-progress" id="hot-progress"></div></div>
+        <ul class="feed-list" id="hot-list">
+          <!-- skeleton -->
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div><div class="skeleton skeleton-line skeleton-line--mid"></div></li>
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div><div class="skeleton skeleton-line skeleton-line--short"></div></li>
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div><div class="skeleton skeleton-line skeleton-line--mid"></div></li>
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div><div class="skeleton skeleton-line skeleton-line--short"></div></li>
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div><div class="skeleton skeleton-line skeleton-line--mid"></div></li>
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div><div class="skeleton skeleton-line skeleton-line--short"></div></li>
+        </ul>
+        <div class="fill-hint">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          点击任意条目，标题将自动填入工作台输入框
+        </div>
+      </div>
+    </div>
+
+    <!-- 右：热股榜 + 自选股 -->
+    <div>
+      <div class="section-header">
+        <h2 class="section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          热股榜
+        </h2>
+        <div class="section-meta">
+          <span class="dot" id="stock-dot"></span>
+          <span id="stock-time">加载中…</span>
+        </div>
+      </div>
+
+      <div class="card sidebar-card">
+        <ul class="stock-list" id="stock-list">
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div></li>
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div></li>
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div></li>
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div></li>
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div></li>
+        </ul>
+      </div>
+
+      <!-- 自选股 -->
+      <div class="section-header" style="margin-top:20px">
+        <h2 class="section-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          我的自选
+        </h2>
+        <div class="section-meta">
+          <span class="dot" id="watch-dot"></span>
+          <span id="watch-time">加载中…</span>
+        </div>
+      </div>
+
+      <div class="card sidebar-card">
+        <ul class="stock-list" id="watch-list">
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div></li>
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div></li>
+          <li class="skeleton-item"><div class="skeleton skeleton-line skeleton-line--full"></div></li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const REFRESH_SEC = 60;
+    let hotTimer = null;
+    let progressTimer = null;
+
+    // ---- MCP 调用（通过 Claude Code 工具代理） ----
+    // 实际部署时替换为你的后端接口，这里先用 mock 数据演示结构
+    async function fetchHot() {
+      // TODO: 替换为 /api/intel/xueqiu-hot
+      return mockHot();
+    }
+    async function fetchHotStock() {
+      // TODO: 替换为 /api/intel/xueqiu-hot-stock
+      return mockHotStock();
+    }
+    async function fetchWatchlist() {
+      // TODO: 替换为 /api/intel/xueqiu-watchlist
+      return mockWatchlist();
+    }
+
+    // ---- mock 数据（结构与 xueqiu_fetch 返回一致） ----
+    function mockHot() {
+      return {
+        _qc: { status: "success", sources: ["xueqiu_autocli"] },
+        data: [
+          { title: "A股今日涨停板超200只，市场情绪明显回暖", heat: "1.2万", tag: "市场" },
+          { title: "宁德时代发布新一代固态电池，能量密度突破500Wh/kg", heat: "9.8k", tag: "新能源" },
+          { title: "美联储暗示年内降息节奏放缓，美元指数走强", heat: "8.1k", tag: "宏观" },
+          { title: "比亚迪4月销量创历史新高，海外市场占比超30%", heat: "7.4k", tag: "汽车" },
+          { title: "DeepSeek V4发布，百万上下文窗口引发讨论", heat: "6.9k", tag: "AI" },
+          { title: "地产板块集体拉升，政策预期升温", heat: "5.3k", tag: "地产" },
+          { title: "黄金突破3300美元，避险情绪持续升温", heat: "4.7k", tag: "大宗" },
+          { title: "半导体设备国产化率提升，中芯国际订单饱满", heat: "4.2k", tag: "半导体" },
+        ]
+      };
+    }
+    function mockHotStock() {
+      return {
+        _qc: { status: "success", sources: ["xueqiu_autocli"] },
+        data: [
+          { name: "宁德时代", code: "SZ300750", change: "+5.82%" },
+          { name: "比亚迪", code: "SZ002594", change: "+3.41%" },
+          { name: "贵州茅台", code: "SH600519", change: "-0.28%" },
+          { name: "中芯国际", code: "SH688981", change: "+2.17%" },
+          { name: "万科A", code: "SZ000002", change: "+1.93%" },
+        ]
+      };
+    }
+    function mockWatchlist() {
+      return {
+        _qc: { status: "success", sources: ["xueqiu_autocli"] },
+        data: [
+          { name: "人工智能ETF", code: "SZ159819", change: "+1.24%" },
+          { name: "万科A", code: "SZ000002", change: "+1.93%" },
+          { name: "盛视科技", code: "SZ002990", change: "-0.55%" },
+        ]
+      };
+    }
+
+    // ---- 渲染热门讨论 ----
+    function renderHot(result) {
+      const list = document.getElementById('hot-list');
+      const dot = document.getElementById('hot-dot');
+      const timeEl = document.getElementById('hot-time');
+
+      if (!result || result._qc?.status === 'failure') {
+        dot.className = 'dot dot--error';
+        timeEl.textContent = '获取失败';
+        list.innerHTML = `<li class="error-state">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <p>数据获取失败，请检查 autocli 连接</p>
+          <button class="retry-btn" onclick="loadAll()">重试</button>
+        </li>`;
+        return;
+      }
+
+      const items = result.data || [];
+      const source = result._qc?.sources?.[0] || 'xueqiu';
+      const isFallback = source !== 'xueqiu_autocli';
+
+      dot.className = 'dot dot--live';
+      timeEl.textContent = `${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})} · ${isFallback ? '降级:新浪' : '雪球'}`;
+
+      list.innerHTML = items.map((item, i) => `
+        <li class="feed-item" onclick="fillInput(${JSON.stringify(item.title)})">
+          <span class="feed-rank ${i < 3 ? 'feed-rank--top' : ''}">${i + 1}</span>
+          <div class="feed-body">
+            <div class="feed-title">${escHtml(item.title)}</div>
+            <div class="feed-meta">
+              ${item.tag ? `<span class="feed-tag">${escHtml(item.tag)}</span>` : ''}
+              ${item.heat ? `<span class="feed-heat">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path></svg>
+                ${escHtml(item.heat)}
+              </span>` : ''}
+            </div>
+          </div>
+          <svg class="feed-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </li>
+      `).join('');
+    }
+
+    // ---- 渲染热股榜 ----
+    function renderStocks(result, listId, dotId, timeId) {
+      const list = document.getElementById(listId);
+      const dot = document.getElementById(dotId);
+      const timeEl = document.getElementById(timeId);
+
+      if (!result || result._qc?.status === 'failure') {
+        dot.className = 'dot dot--error';
+        timeEl.textContent = '获取失败';
+        list.innerHTML = `<li class="error-state"><p>数据获取失败</p><button class="retry-btn" onclick="loadAll()">重试</button></li>`;
+        return;
+      }
+
+      const items = result.data || [];
+      dot.className = 'dot dot--live';
+      timeEl.textContent = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+
+      list.innerHTML = items.map((s, i) => {
+        const up = s.change?.startsWith('+');
+        const down = s.change?.startsWith('-');
+        const cls = up ? 'stock-change--up' : down ? 'stock-change--down' : 'stock-change--flat';
+        return `
+          <li class="stock-item" onclick="fillInput(${JSON.stringify(s.name)})">
+            <span class="stock-rank ${i < 3 ? 'stock-rank--top' : ''}">${i + 1}</span>
+            <div>
+              <div class="stock-name">${escHtml(s.name)}</div>
+              <div class="stock-code">${escHtml(s.code || '')}</div>
+            </div>
+            <span class="stock-change ${cls}">${escHtml(s.change || '--')}</span>
+          </li>`;
+      }).join('');
+    }
+
+    // ---- 点击填入工作台 ----
+    function fillInput(text) {
+      sessionStorage.setItem('fs_prefill', text);
+      location.href = '/app/';
+    }
+
+    // ---- 进度条 ----
+    function startProgress() {
+      const bar = document.getElementById('hot-progress');
+      let elapsed = 0;
+      clearInterval(progressTimer);
+      bar.style.width = '0%';
+      progressTimer = setInterval(() => {
+        elapsed++;
+        bar.style.width = (elapsed / REFRESH_SEC * 100) + '%';
+        if (elapsed >= REFRESH_SEC) clearInterval(progressTimer);
+      }, 1000);
+    }
+
+    // ---- 加载全部 ----
+    async function loadAll() {
+      document.getElementById('hot-dot').className = 'dot dot--loading';
+      document.getElementById('stock-dot').className = 'dot dot--loading';
+      document.getElementById('watch-dot').className = 'dot dot--loading';
+
+      const [hot, stocks, watch] = await Promise.all([fetchHot(), fetchHotStock(), fetchWatchlist()]);
+      renderHot(hot);
+      renderStocks(stocks, 'stock-list', 'stock-dot', 'stock-time');
+      renderStocks(watch, 'watch-list', 'watch-dot', 'watch-time');
+      startProgress();
+    }
+
+    // ---- 自动刷新 ----
+    function scheduleRefresh() {
+      clearTimeout(hotTimer);
+      hotTimer = setTimeout(async () => {
+        await loadAll();
+        scheduleRefresh();
+      }, REFRESH_SEC * 1000);
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ---- 启动 ----
+    loadAll().then(scheduleRefresh);
+  </script>
+</body>
+</html>
