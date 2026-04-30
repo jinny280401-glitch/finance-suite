@@ -1049,41 +1049,46 @@
     </div>
   </div>
   <script>
-    var _accounts = {
-      'linzuxi': 'lzx123456',
-      'danny': 'danny123456',
-      'ivan': 'ivan123456',
-      'shengwei': '86869945',
-      'demo': 'demo2026',
-      'zhuanz': 'zhuanz0405',
-      'vanilla': 'lemon123456',
-      'nanjian': 'nj123456',
-      'fengzhijie': 'fzj123456',
-      'lianghailin': 'lhl123456'
-    };
     (function(){
       var params = new URLSearchParams(location.search);
       if (params.get('redirect') && localStorage.getItem('fs_auth') !== 'ok') {
         document.getElementById('loginGate').style.display = 'flex';
       }
     })();
-    function doLogin() {
+    async function doLogin() {
       var u = document.getElementById('loginUser').value.trim().toLowerCase();
       var p = document.getElementById('loginPass').value;
-      if (_accounts[u] && _accounts[u] === p) {
-        localStorage.setItem('fs_auth', 'ok');
-        localStorage.setItem('fs_user', u);
-        var params = new URLSearchParams(location.search);
-        var redirect = params.get('redirect');
-        if (redirect && /^\/[\w\-\/]*$/.test(redirect)) {
-          location.href = redirect;
-          return;
+      var errEl = document.getElementById('loginErr');
+      errEl.textContent = '';
+      if (!u || !p) {
+        errEl.textContent = '请输入账号和密码';
+        return;
+      }
+      try {
+        var resp = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        var data = await resp.json();
+        if (data.success) {
+          localStorage.setItem('fs_auth', 'ok');
+          localStorage.setItem('fs_user', data.username);
+          localStorage.setItem('fs_tier', data.tier || 'free');
+          var params = new URLSearchParams(location.search);
+          var redirect = params.get('redirect');
+          if (redirect && /^\/[\w\-\/]*$/.test(redirect)) {
+            location.href = redirect;
+            return;
+          }
+          document.getElementById('loginGate').style.display = 'none';
+          renderHeader();
+        } else {
+          errEl.textContent = data.message || '账号或密码不正确';
+          document.getElementById('loginPass').value = '';
         }
-        document.getElementById('loginGate').style.display = 'none';
-        renderHeader();
-      } else {
-        document.getElementById('loginErr').textContent = '账号或密码不正确';
-        document.getElementById('loginPass').value = '';
+      } catch (e) {
+        errEl.textContent = '网络错误，请稍后重试';
       }
     }
     function renderHeader() {
@@ -1106,9 +1111,11 @@
       }
     }
     function showUserBadge() { renderHeader(); }
-    function doLogout() {
+    async function doLogout() {
+      try { await fetch('/api/logout', { method: 'POST' }); } catch(e) {}
       localStorage.removeItem('fs_auth');
       localStorage.removeItem('fs_user');
+      localStorage.removeItem('fs_tier');
       location.reload();
     }
     document.addEventListener('DOMContentLoaded', renderHeader);
