@@ -24,17 +24,23 @@ _wind_started = False
 
 
 def _ensure_wind():
-    """延迟启动 Wind 连接，只在真正需要时连接"""
+    """延迟启动 Wind 连接，只在真正需要时连接，带重试机制"""
     global _wind_started
     if _wind_started:
         return True
     try:
         from WindPy import w
-        ec = w.start(waitTime=15)
-        if ec.ErrorCode != 0:
-            return False
-        _wind_started = w.isconnected()
-        return _wind_started
+        # 增加超时时间到30秒，并添加重试机制
+        max_retries = 2
+        for attempt in range(max_retries):
+            ec = w.start(waitTime=30)
+            if ec.ErrorCode == 0:
+                _wind_started = w.isconnected()
+                return _wind_started
+            if attempt < max_retries - 1:
+                import time
+                time.sleep(2)  # 重试前等待2秒
+        return False
     except Exception:
         return False
 
@@ -67,13 +73,19 @@ def _wsd_to_dict(data, fields: list) -> list:
     if data.ErrorCode != 0 or not data.Data:
         return []
     result = []
-    dates = data.Times
+    dates = data.Times if data.Times else []
     for i, dt in enumerate(dates):
         row = {"date": str(dt)}
         for j, field in enumerate(fields):
-            if j < len(data.Data) and i < len(data.Data[j]):
+            # 增强空指针保护：检查 data.Data[j] 是否存在且非空
+            if (j < len(data.Data) and
+                data.Data[j] is not None and
+                isinstance(data.Data[j], (list, tuple)) and
+                i < len(data.Data[j])):
                 val = data.Data[j][i]
                 row[field] = val if val is not None else None
+            else:
+                row[field] = None
         result.append(row)
     return result
 
@@ -85,11 +97,32 @@ def _wss_to_dict(data, codes: list, fields: list) -> dict:
     """
     if data.ErrorCode != 0 or not data.Data:
         return {}
+
+    # 增强空指针保护
     if len(codes) == 1:
-        return {fields[j]: data.Data[j][0] if data.Data[j] else None for j in range(len(fields))}
+        result = {}
+        for j in range(len(fields)):
+            if (j < len(data.Data) and
+                data.Data[j] is not None and
+                isinstance(data.Data[j], (list, tuple)) and
+                len(data.Data[j]) > 0):
+                result[fields[j]] = data.Data[j][0]
+            else:
+                result[fields[j]] = None
+        return result
+
     result = {}
     for i, code in enumerate(codes):
-        result[code] = {fields[j]: data.Data[j][i] if i < len(data.Data[j]) else None for j in range(len(fields))}
+        code_data = {}
+        for j in range(len(fields)):
+            if (j < len(data.Data) and
+                data.Data[j] is not None and
+                isinstance(data.Data[j], (list, tuple)) and
+                i < len(data.Data[j])):
+                code_data[fields[j]] = data.Data[j][i]
+            else:
+                code_data[fields[j]] = None
+        result[code] = code_data
     return result
 
 
