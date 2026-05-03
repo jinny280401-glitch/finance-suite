@@ -259,40 +259,46 @@
     const resultLoading = document.getElementById('resultLoading');
     const resultContent = document.getElementById('resultContent');
 
+    const GOLDEN_PIT_TRIGGERS = ['黄金坑', '四重门', 'ghk'];
+
+    function isGoldenPitQuery(query) {
+      return GOLDEN_PIT_TRIGGERS.some(t => query.includes(t));
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const query = queryInput.value.trim();
+      const goldenPit = isGoldenPitQuery(query);
 
-      // Show loading
       resultContainer.classList.add('show');
       resultLoading.style.display = 'block';
       resultContent.style.display = 'none';
       submitBtn.disabled = true;
-      submitBtn.textContent = '分析中...';
+      submitBtn.textContent = goldenPit ? '扫描中...' : '分析中...';
 
       try {
-        const response = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            skill_type: 'auction',
-            query: query
-          }),
-          credentials: 'include'
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.detail || '分析失败');
+        let data;
+        if (goldenPit) {
+          const useRealtime = query.includes('实时');
+          const url = `/api/intel/golden-pit${useRealtime ? '?realtime=true' : ''}`;
+          const resp = await fetch(url, { credentials: 'include' });
+          data = await resp.json();
+          if (!resp.ok) throw new Error(data.detail || '扫描失败');
+          resultContent.innerHTML = formatGoldenPit(data);
+        } else {
+          const resp = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ skill_type: 'auction', query }),
+            credentials: 'include'
+          });
+          data = await resp.json();
+          if (!resp.ok) throw new Error(data.detail || '分析失败');
+          resultContent.innerHTML = formatResult(data);
         }
 
-        // Show result
         resultLoading.style.display = 'none';
         resultContent.style.display = 'block';
-        resultContent.innerHTML = formatResult(data);
 
       } catch (error) {
         resultLoading.style.display = 'none';
@@ -303,6 +309,47 @@
         submitBtn.textContent = '开始分析';
       }
     });
+
+    function formatGoldenPit(data) {
+      const hits = data.hits || [];
+      const watchlist = data.watchlist || [];
+      const env = data.market_env || {};
+      const qc = data._qc || {};
+
+      let html = `<div style="font-family:monospace;font-size:13px;line-height:1.8">`;
+      html += `<div style="font-weight:bold;font-size:15px;margin-bottom:8px">黄金坑四重门扫描结果</div>`;
+      html += `<div style="color:#888;margin-bottom:12px">数据时间：${data.scan_date || '今日'} | 市场环境：${env.status || '未知'}`;
+      if (qc.completeness !== undefined) html += ` | 数据完整度：${Math.round(qc.completeness * 100)}%`;
+      html += `</div>`;
+
+      html += `<div style="font-weight:bold;color:#e74c3c;margin-bottom:6px">命中（四重门全过）：${hits.length} 只</div>`;
+      if (hits.length === 0) {
+        html += `<div style="color:#888;margin-bottom:12px">今日无命中</div>`;
+      } else {
+        hits.forEach((s, i) => {
+          html += `<div style="margin-bottom:4px">${i+1}. <b>${s.code}</b> 收盘${s.close} 综合评分${s.composite || '-'} 距下轨${s.dist_to_lower_pct}%</div>`;
+        });
+        html += `<br>`;
+      }
+
+      html += `<div style="font-weight:bold;color:#e67e22;margin-bottom:6px">观察池（G1-G3过，等待反弹）：${watchlist.length} 只</div>`;
+      if (watchlist.length === 0) {
+        html += `<div style="color:#888">暂无</div>`;
+      } else {
+        watchlist.slice(0, 10).forEach((s, i) => {
+          const dist = s.dist_to_lower_pct;
+          const distStr = dist < 0 ? `已破轨${Math.abs(dist)}%` : `距下轨${dist}%`;
+          html += `<div style="margin-bottom:4px">${i+1}. <b>${s.code}</b> 收盘${s.close} ${distStr}${s.at_lower_now ? ' ⚡已触轨' : ''}</div>`;
+        });
+      }
+
+      if (qc.status && qc.status !== 'success') {
+        html += `<div style="color:#e74c3c;margin-top:12px">数据质检：${qc.status}，来源：${(qc.sources||[]).join('/')}</div>`;
+      }
+      html += `<div style="color:#aaa;margin-top:12px;font-size:11px">免责声明：量化信号仅供参考，不构成投资建议</div>`;
+      html += `</div>`;
+      return html;
+    }
 
     function formatResult(data) {
       if (typeof data === 'string') {
