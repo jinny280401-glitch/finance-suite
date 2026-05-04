@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
   <title>看票分析 — Finance Suite</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     if (localStorage.getItem('fs_auth') !== 'ok') {
       location.replace('/?redirect=/app/stock.html');
@@ -194,24 +195,263 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    /* 券商研报风格 - 主容器 */
     .result-content {
+      max-width: 794px;
+      margin: 0 auto;
+      background: #fff;
+      font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #1a1a1a;
+    }
+
+    /* 报告封面区 */
+    .report-cover {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      color: #fff;
+      padding: 32px 40px;
+      margin: -24px -24px 24px -24px;
+      border-radius: 0;
+    }
+    .report-cover h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+      letter-spacing: 1px;
+    }
+    .report-cover .report-meta {
+      font-size: 13px;
+      opacity: 0.85;
+      margin-top: 12px;
+    }
+
+    /* 核心结论卡片 */
+    .conclusion-card {
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border-left: 4px solid #2563eb;
+      padding: 20px 24px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+    .conclusion-card h3 {
+      color: #1e40af;
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0 0 12px 0;
+    }
+
+    /* 风险提示区 */
+    .risk-warning {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-left: 4px solid #f59e0b;
+      padding: 16px 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+    .risk-warning strong {
+      color: #92400e;
+    }
+
+    /* 章节标题 */
+    .result-content h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin: 32px 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    .result-content h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin: 24px 0 12px 0;
+    }
+    .result-content h3 {
       font-size: 15px;
+      font-weight: 700;
+      color: #374151;
+      margin: 16px 0 10px 0;
+    }
+    .result-content h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #4b5563;
+      margin: 12px 0 8px 0;
+    }
+
+    /* 段落和文本 */
+    .result-content p {
+      margin: 10px 0;
+      line-height: 1.8;
+      text-align: justify;
+    }
+    .result-content strong {
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    .result-content em {
+      font-style: italic;
+      color: #6b7280;
+    }
+
+    /* 列表 */
+    .result-content ul, .result-content ol {
+      margin: 12px 0;
+      padding-left: 28px;
+    }
+    .result-content li {
+      margin: 6px 0;
       line-height: 1.7;
-      color: var(--text);
+    }
+    .result-content ul li {
+      list-style-type: disc;
+    }
+    .result-content ol li {
+      list-style-type: decimal;
+    }
+
+    /* 表格 - 券商研报风格 */
+    .result-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 12px;
+      border: 1px solid #e5e7eb;
+    }
+    .result-content table th {
+      background: #f3f4f6;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 700;
+      color: #374151;
+      border: 1px solid #e5e7eb;
+    }
+    .result-content table td {
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      color: #1f2937;
+    }
+    .result-content table tr:nth-child(even) {
+      background: #f9fafb;
+    }
+    .result-content table tr:hover {
+      background: #f3f4f6;
+    }
+
+    /* 来源标记 */
+    .source-tag {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin: 0 2px;
+    }
+
+    /* 分割线 */
+    .result-content hr {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 24px 0;
+    }
+
+    /* 引用块 */
+    .result-content blockquote {
+      background: #f9fafb;
+      border-left: 3px solid #6b7280;
+      padding: 12px 16px;
+      margin: 16px 0;
+      font-style: italic;
+      color: #4b5563;
+    }
+
+    /* 代码块 */
+    .result-content code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-family: "SF Mono", Monaco, Consolas, monospace;
+      color: #1f2937;
     }
     .result-content pre {
-      background: var(--surface);
+      background: #f9fafb;
       padding: 16px;
-      border-radius: var(--radius-sm);
+      border-radius: 6px;
       overflow-x: auto;
-      font-size: 14px;
+      border: 1px solid #e5e7eb;
       margin: 16px 0;
     }
+    .result-content pre code {
+      background: none;
+      padding: 0;
+    }
+
+    /* 数据来源区 */
+    .sources-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 2px solid #e5e7eb;
+    }
+    .sources-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+    .source-item {
+      background: #f9fafb;
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      border-left: 3px solid #3b82f6;
+    }
+    .source-item a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .source-item a:hover {
+      text-decoration: underline;
+    }
+
+    /* 免责声明 */
+    .disclaimer {
+      margin-top: 32px;
+      padding: 16px 20px;
+      background: #f9fafb;
+      border-radius: 6px;
+      font-size: 11px;
+      color: #6b7280;
+      line-height: 1.6;
+      border: 1px solid #e5e7eb;
+    }
+
+    /* 错误提示 */
     .result-error {
-      color: #d32f2f;
-      padding: 16px;
-      background: rgba(211, 47, 47, 0.08);
-      border-radius: var(--radius-sm);
+      color: #dc2626;
+      padding: 16px 20px;
+      background: #fef2f2;
+      border-radius: 8px;
+      border-left: 4px solid #dc2626;
+    }
+
+    /* PDF 打印样式 */
+    @media print {
+      body { background: #fff; padding: 0; }
+      .site-header, .hdr-actions, .analyze-form, .watchlist-bar { display: none !important; }
+      .main-container { padding: 0; max-width: 100%; }
+      .result-container { box-shadow: none; border: none; }
+      .report-cover { margin: 0; page-break-after: avoid; }
+      .result-content h1, .result-content h2 { page-break-after: avoid; }
+      .result-content table { page-break-inside: avoid; }
+      .conclusion-card, .risk-warning { page-break-inside: avoid; }
+      @page { margin: 15mm; }
     }
 
     /* watchlist action bar */
@@ -409,35 +649,82 @@
           credentials: 'include'
         });
 
-        if (res.ok) {
-          const blob = await res.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${currentQuery}_分析报告.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-
-          exportPdfBtnText.textContent = '导出成功';
-          setTimeout(() => {
-            exportPdfBtnText.textContent = '导出PDF';
-            exportPdfBtn.disabled = false;
-          }, 2000);
-        } else {
-          throw new Error('导出失败');
+        if (!res.ok) {
+          let errMsg = `导出失败(${res.status})`;
+          try {
+            const ct = res.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+              const errData = await res.json();
+              errMsg = errData?.detail || errData?.message || errData?.error || errMsg;
+            } else {
+              const text = await res.text();
+              if (text) errMsg = text.slice(0, 200);
+            }
+          } catch (_) {}
+          throw new Error(errMsg);
         }
+
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/pdf')) {
+          let body = '';
+          try { body = await res.text(); } catch (_) {}
+          throw new Error(`接口未返回PDF，content-type=${contentType}${body ? `，响应=${body.slice(0, 120)}` : ''}`);
+        }
+
+        const blob = await res.blob();
+        if (!blob || blob.size === 0) {
+          throw new Error('返回的PDF为空');
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentQuery}_分析报告.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        exportPdfBtnText.textContent = '导出成功';
+        setTimeout(() => {
+          exportPdfBtnText.textContent = '导出PDF';
+          exportPdfBtn.disabled = false;
+        }, 2000);
       } catch (error) {
         exportPdfBtnText.textContent = '导出PDF';
         exportPdfBtn.disabled = false;
-        alert('导出PDF失败，请重试');
+        alert(error?.message || '导出PDF失败，请重试');
       }
     }
 
     function formatResult(data) {
-      if (typeof data === 'string') return `<pre>${data}</pre>`;
-      return `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      if (typeof data === 'string') {
+        return `<div>${marked.parse(data)}</div>`;
+      }
+
+      const md = data.result || data.content || '';
+      const sources = data.sources || [];
+
+      let html = '';
+
+      if (md) {
+        html += marked.parse(md);
+      } else {
+        html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      }
+
+      if (sources.length > 0) {
+        html += `<div class="sources-section">
+          <div class="sources-title">数据来源</div>`;
+        sources.forEach((s, i) => {
+          const title = s.title || s.url || `来源${i + 1}`;
+          const url = s.url || '#';
+          html += `<div class="source-item">【来源${i + 1}】<a href="${url}" target="_blank" rel="noopener">${title}</a></div>`;
+        });
+        html += `</div>`;
+      }
+
+      return html;
     }
 
     // Pre-fill from sessionStorage (from workbench hot click) or URL param
