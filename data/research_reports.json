@@ -1,42 +1,142 @@
 {
-  "reports": [
+  "sources": [
+    {
+      "type": "wechat",
+      "name": "Goldman Sachs",
+      "wechat_id": "Huaban1925",
+      "description": "每日Pitch + 投行研报汇总",
+      "access": "微信搜索公众号关注"
+    },
+    {
+      "type": "ima",
+      "name": "IMA知识库",
+      "url": "https://ima.qq.com/wiki/?shareId=3c87d42856fecad9a79b2782ceeb11834320752f4467d1ce4309fee45423f6fb",
+      "description": "2026年八大顶级投行研报-每日更新3+次",
+      "access": "需登录IMA"
+    }
+  ],
+  "featured_reports": [
     {
       "id": 1,
-      "title": "高盛：2026年中国经济活动和政策追踪（4月）",
-      "date": "2026-04-15",
+      "title": "今日Pitch-0504",
+      "date": "2026-05-04",
       "source": "Goldman Sachs",
-      "url": "https://ima.xxx/goldman-china-april-2026",
-      "related_stocks": ["600519.SH", "000858.SZ"],
-      "industries": ["白酒", "消费"],
-      "tags": ["宏观经济", "政策", "消费"],
-      "summary": "分析中国经济活动和政策变化，重点关注消费复苏和白酒行业趋势",
-      "added_at": "2026-05-04T23:00:00"
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
     },
     {
       "id": 2,
-      "title": "摩根大通：中国股市八大周期框架",
-      "date": "2026-03-20",
-      "source": "Morgan Stanley",
-      "url": "https://ima.xxx/jpmorgan-china-cycles",
+      "title": "今日Pitch-0503",
+      "date": "2026-05-03",
+      "source": "Goldman Sachs",
+      "url": "",
       "related_stocks": [],
-      "industries": ["A股", "周期"],
-      "tags": ["宏观", "周期", "策略"],
-      "summary": "系统性分析中国股市的八大周期规律，提供投资框架",
-      "added_at": "2026-05-04T23:00:00"
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
     },
     {
       "id": 3,
-      "title": "高盛：白酒行业深度报告 - 茅台估值分析",
+      "title": "今日Pitch-0502",
+      "date": "2026-05-02",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 4,
+      "title": "今日Pitch-0501",
+      "date": "2026-05-01",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 5,
+      "title": "今日Pitch-0430",
+      "date": "2026-04-30",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 6,
+      "title": "今日Pitch-0429",
+      "date": "2026-04-29",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 7,
+      "title": "今日Pitch-0428",
       "date": "2026-04-28",
       "source": "Goldman Sachs",
-      "url": "https://ima.xxx/goldman-baijiu-maotai",
-      "related_stocks": ["600519.SH", "000568.SZ", "000858.SZ"],
-      "industries": ["白酒", "消费"],
-      "tags": ["估值", "白酒", "茅台"],
-      "summary": "深度分析贵州茅台估值水平，对比五粮液、洋河等竞品",
-      "added_at": "2026-05-04T23:00:00"
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 8,
+      "title": "今日Pitch-0427",
+      "date": "2026-04-27",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 9,
+      "title": "今日Pitch-0426",
+      "date": "2026-04-26",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
+    },
+    {
+      "id": 10,
+      "title": "今日Pitch-0425",
+      "date": "2026-04-25",
+      "source": "Goldman Sachs",
+      "url": "",
+      "related_stocks": [],
+      "industries": ["综合"],
+      "tags": ["每日推荐", "投资机会"],
+      "summary": "高盛每日投资建议汇总",
+      "added_at": "2026-05-05T00:30:00"
     }
   ],
-  "tags": ["宏观经济", "政策", "消费", "周期", "策略", "估值", "白酒", "茅台"],
-  "sources": ["Goldman Sachs", "Morgan Stanley", "Bridgewater", "JPMorgan"]
+  "tags": ["每日推荐", "投资机会", "综合"],
+  "report_sources": ["Goldman Sachs"]
 }

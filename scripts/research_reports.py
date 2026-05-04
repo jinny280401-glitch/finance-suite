@@ -21,41 +21,63 @@ class ResearchReportManager:
                 return json.load(f)
         except FileNotFoundError:
             return {
-                "reports": [],
+                "sources": [
+                    {
+                        "type": "wechat",
+                        "name": "Goldman Sachs",
+                        "wechat_id": "Huaban1925",
+                        "description": "每日Pitch + 投行研报汇总",
+                        "access": "微信搜索公众号关注"
+                    },
+                    {
+                        "type": "ima",
+                        "name": "IMA知识库",
+                        "url": "https://ima.qq.com/wiki/?shareId=3c87d42856fecad9a79b2782ceeb11834320752f4467d1ce4309fee45423f6fb",
+                        "description": "2026年八大顶级投行研报-每日更新3+次",
+                        "access": "需登录IMA"
+                    }
+                ],
+                "featured_reports": [],
                 "tags": [],
-                "sources": []
+                "report_sources": []
             }
 
+    def get_sources(self) -> List[Dict]:
+        """获取研报来源信息"""
+        return self.reports.get("sources", [])
+
     def add_report(self, report: Dict) -> bool:
-        """添加研报"""
+        """添加研报到精选列表"""
         required_fields = ["title", "date", "source", "url"]
         if not all(field in report for field in required_fields):
             return False
 
-        report["id"] = len(self.reports["reports"]) + 1
+        report["id"] = len(self.reports.get("featured_reports", [])) + 1
         report["added_at"] = datetime.now().isoformat()
-        self.reports["reports"].append(report)
+        if "featured_reports" not in self.reports:
+            self.reports["featured_reports"] = []
+        self.reports["featured_reports"].append(report)
         self._save_reports()
         return True
 
     def get_reports_by_stock(self, code: str) -> List[Dict]:
         """获取股票相关研报"""
         return [
-            r for r in self.reports["reports"]
+            r for r in self.reports.get("featured_reports", [])
             if code in r.get("related_stocks", [])
         ]
 
     def get_reports_by_industry(self, industry: str) -> List[Dict]:
         """获取行业相关研报"""
         return [
-            r for r in self.reports["reports"]
+            r for r in self.reports.get("featured_reports", [])
             if industry in r.get("industries", [])
         ]
 
     def get_reports_by_tag(self, tag: str) -> List[Dict]:
         """获取标签相关研报"""
         return [
-            r for r in self.reports["reports"]
+            r for r in self.reports.get("featured_reports", [])
             if tag in r.get("tags", [])
         ]
 
@@ -63,7 +85,7 @@ class ResearchReportManager:
         """搜索研报"""
         keyword_lower = keyword.lower()
         return [
-            r for r in self.reports["reports"]
+            r for r in self.reports.get("featured_reports", [])
             if keyword_lower in r.get("title", "").lower()
             or keyword_lower in r.get("summary", "").lower()
         ]
@@ -71,7 +93,7 @@ class ResearchReportManager:
     def get_latest_reports(self, limit: int = 10) -> List[Dict]:
         """获取最新研报"""
         sorted_reports = sorted(
-            self.reports["reports"],
+            self.reports.get("featured_reports", []),
             key=lambda x: x.get("date", ""),
             reverse=True
         )
@@ -90,7 +112,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="研报管理")
     parser.add_argument("--action", required=True, choices=[
-        "add", "list", "search", "by-stock", "by-industry", "by-tag"
+        "sources", "add", "list", "search", "by-stock", "by-industry", "by-tag"
     ])
     parser.add_argument("--title", help="研报标题")
     parser.add_argument("--date", help="发布日期 (YYYY-MM-DD)")
@@ -110,7 +132,11 @@ if __name__ == "__main__":
 
     manager = ResearchReportManager()
 
-    if args.action == "add":
+    if args.action == "sources":
+        sources = manager.get_sources()
+        print(json.dumps(sources, ensure_ascii=False, indent=2))
+
+    elif args.action == "add":
         report = {
             "title": args.title,
             "date": args.date,
