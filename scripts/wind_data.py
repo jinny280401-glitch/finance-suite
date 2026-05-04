@@ -136,14 +136,15 @@ def check_connection() -> dict:
 
 def get_stock_snapshot(code: str) -> dict:
     """
-    获取个股基础快照：价格、市值、PE/PB/PS、ROE、52周高低点
+    获取个股基础快照：价格、市值、PE/PB/PS、ROE、股息率
     """
     if not _ensure_wind():
         return {}
     from WindPy import w
     wcode = _wind_code(code)
+    # 移除有问题的字段：high_52wk_, low_52wk_, chg_pct (ErrorCode=-40522006)
     fields = ["sec_name", "close", "mkt_cap_ard", "pe_ttm", "pb_lf", "ps_ttm",
-              "roe_ttm2", "dividendyield2", "high_52wk_", "low_52wk_", "chg_pct"]
+              "roe_ttm2", "dividendyield2"]
     data = w.wss(wcode, ",".join(fields))
     if data.ErrorCode != 0:
         return {}
