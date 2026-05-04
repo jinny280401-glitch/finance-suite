@@ -464,10 +464,13 @@ barchart_fetch(command="options", symbol="AAPL")
 
 **功能**：管理顶级投行研报链接
 
-**数据来源**：IMA 订阅的投行研报（高盛、摩根大通、桥水等）
+**数据来源**：
+- 微信公众号"Goldman Sachs"（Huaban1925）- 每日Pitch + 研报汇总
+- IMA知识库 - 2026年八大顶级投行研报，每日更新3+次
 
 **查询类型**：
-- list：获取最新研报列表
+- sources：获取研报来源信息（微信公众号 + IMA知识库入口）
+- list：获取最新精选研报列表
 - by-stock：按股票代码查询相关研报
 - by-industry：按行业查询相关研报
 - by-tag：按标签查询相关研报
@@ -475,6 +478,9 @@ barchart_fetch(command="options", symbol="AAPL")
 
 **使用示例**：
 ```python
+# 获取研报来源入口
+research_reports(action="sources")
+
 # 按股票查询
 research_reports(action="by-stock", code="600519.SH")
 
@@ -499,21 +505,40 @@ research_reports(action="list", limit=10)
     "missing_dimensions": [],
     "stale_data": []
   },
-  "action": "by-stock",
-  "count": 2,
-  "reports": [
+  "action": "sources",
+  "sources": [
     {
-      "id": 1,
-      "title": "高盛：白酒行业深度报告 - 茅台估值分析",
-      "date": "2026-04-28",
-      "source": "Goldman Sachs",
-      "url": "https://ima.xxx/goldman-baijiu-maotai",
-      "related_stocks": ["600519.SH", "000568.SZ"],
-      "industries": ["白酒", "消费"],
-      "tags": ["估值", "白酒", "茅台"],
-      "summary": "深度分析贵州茅台估值水平，对比五粮液、洋河等竞品"
+      "type": "wechat",
+      "name": "Goldman Sachs",
+      "wechat_id": "Huaban1925",
+      "description": "每日Pitch + 投行研报汇总",
+      "access": "微信搜索公众号关注"
+    },
+    {
+      "type": "ima",
+      "name": "IMA知识库",
+      "url": "https://ima.qq.com/wiki/?shareId=...",
+      "description": "2026年八大顶级投行研报-每日更新3+次",
+      "access": "需登录IMA"
     }
-  ]
+  ],
+  "featured_reports": {
+    "count": 2,
+    "reports": [
+      {
+        "id": 1,
+        "title": "今日Pitch-0504",
+        "date": "2026-05-04",
+        "source": "Goldman Sachs",
+        "url": "",
+        "related_stocks": [],
+        "industries": ["综合"],
+        "tags": ["每日推荐", "投资机会"],
+        "summary": "高盛每日投资建议汇总"
+      }
+    ]
+  },
+  "note": "精选研报为手动维护，更多研报请访问 sources 中的入口"
 }
 ```
 
