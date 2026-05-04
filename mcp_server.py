@@ -18,6 +18,7 @@ Finance Suite MCP Server
   - zhihu_fetch          知乎数据抓取（热榜/搜索/问题详情）
   - sinafinance_fetch    新浪财经数据抓取（7x24实时快讯）
   - barchart_fetch       Barchart数据抓取（美股行情/期权链/Greeks/异常期权流）
+  - research_reports     投行研报管理（高盛/摩根大通等顶级投行研报链接）
 
 Pipeline 设计：
   取数（自动增量） + 质检（结构化JSON） → LLM 分析 → 报告
@@ -845,6 +846,75 @@ def barchart_fetch(command: str, symbol: str = "") -> str:
         "stale_data": [],
     }
     return _wrap_response(qc, json.dumps(data, ensure_ascii=False, indent=2))
+
+
+# ============================================================
+# Tool 13: 投行研报管理
+# ============================================================
+@mcp.tool()
+def research_reports(action: str, code: str = "", industry: str = "", tag: str = "", keyword: str = "", limit: int = 10) -> str:
+    """管理顶级投行研报链接（高盛、摩根大通、桥水等）。
+
+    action 可选值：
+    - list: 获取最新研报列表
+    - by-stock: 按股票代码查询相关研报（需提供 code）
+    - by-industry: 按行业查询相关研报（需提供 industry）
+    - by-tag: 按标签查询相关研报（需提供 tag）
+    - search: 关键词搜索研报（需提供 keyword）
+
+    返回结构化 _qc 质检 JSON + 研报列表。
+
+    示例：
+    - research_reports("by-stock", code="600519.SH")
+    - research_reports("by-industry", industry="白酒")
+    - research_reports("search", keyword="茅台")
+    """
+    try:
+        import research_reports as rr_module
+
+        manager = rr_module.ResearchReportManager()
+
+        if action == "list":
+            reports = manager.get_latest_reports(limit)
+        elif action == "by-stock":
+            if not code:
+                return _make_error_response("action=by-stock 需要提供 code 参数")
+            reports = manager.get_reports_by_stock(code)
+        elif action == "by-industry":
+            if not industry:
+                return _make_error_response("action=by-industry 需要提供 industry 参数")
+            reports = manager.get_reports_by_industry(industry)
+        elif action == "by-tag":
+            if not tag:
+                return _make_error_response("action=by-tag 需要提供 tag 参数")
+            reports = manager.get_reports_by_tag(tag)
+        elif action == "search":
+            if not keyword:
+                return _make_error_response("action=search 需要提供 keyword 参数")
+            reports = manager.search_reports(keyword)
+        else:
+            return _make_error_response(f"未知 action: {action}")
+
+        has_data = bool(reports)
+        qc = {
+            "status": "success" if has_data else "partial",
+            "completeness": 1.0 if has_data else 0.5,
+            "sources": ["research_reports"],
+            "fallback_source": None,
+            "missing_dimensions": [] if has_data else ["研报数据"],
+            "stale_data": [],
+        }
+
+        result = {
+            "action": action,
+            "count": len(reports),
+            "reports": reports
+        }
+
+        return _wrap_response(qc, json.dumps(result, ensure_ascii=False, indent=2))
+
+    except Exception as e:
+        return _make_error_response(f"research_reports 异常: {e}")
 
 
 # ============================================================
