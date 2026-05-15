@@ -1,0 +1,30 @@
+# Finance Suite MCP backend dependencies
+#
+# Note:
+# - The code imports `from mcp.server.fastmcp import FastMCP`, which is provided by
+#   the PyPI package `mcp`.
+# - WindPy is installed with the Wind terminal/client, not through pip on Linux.
+
+# MCP server core
+mcp>=1.27.0
+fastapi>=0.115.0
+flask>=3.0.0
+uvicorn>=0.30.0
+
+# Financial data sources
+jqdatasdk>=1.9.8
+akshare>=1.18.0
+tushare>=1.4.0
+
+# Utilities
+pandas>=2.2.0
+numpy>=1.26.0
+requests>=2.32.0
+httpx>=0.28.0
+python-dotenv>=1.0.0
+
+# Tests
+pytest>=8.0.0
+
+# Optional video transcript helper
+youtube-transcript-api>=0.6.0
