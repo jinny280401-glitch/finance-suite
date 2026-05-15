@@ -47,18 +47,22 @@ sqlite3 finance_suite.db "SELECT username, tier FROM users;"
 # 给脚本添加执行权限
 chmod +x server_scripts/import_accounts.sh
 
-# 执行导入（如果用户已存在会跳过）
+# 执行同步（可重复执行；会补齐缺失账号，并把默认密码/权限恢复到标准值）
 bash server_scripts/import_accounts.sh
 ```
 
-### 5. 添加华福证券账号
+### 5. 确认华福证券账号
+
+默认同步脚本已经包含：
+
+```text
+hfzq / <REMOVED_SECRET> / vip
+```
+
+如需新增其他华福账号，再执行：
 
 ```bash
-# 手动添加华福证券账号（替换为实际用户名和密码）
 python3 server_scripts/manage_users.py add huafu01 实际密码 vip
-python3 server_scripts/manage_users.py add huafu02 实际密码 vip
-
-# 查看所有账号
 python3 server_scripts/manage_users.py list
 ```
 
@@ -125,6 +129,16 @@ python3 server_scripts/manage_users.py list
 ```bash
 python3 server_scripts/manage_users.py add 用户名 密码 权限
 # 权限: free / vip / admin
+```
+
+### 新增或修复用户
+```bash
+python3 server_scripts/manage_users.py upsert 用户名 密码 权限
+```
+
+### 一键恢复默认账号
+```bash
+python3 server_scripts/manage_users.py sync-defaults
 ```
 
 ### 重置密码

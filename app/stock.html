@@ -7,6 +7,9 @@
   <title>看票分析 — Finance Suite</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
+    if (location.hostname === 'touziagent.com') {
+      location.replace('https://www.touziagent.com' + location.pathname + location.search + location.hash);
+    }
     if (localStorage.getItem('fs_auth') !== 'ok') {
       location.replace('/?redirect=/app/stock.html');
     }
@@ -576,6 +579,12 @@
         });
 
         const data = await response.json();
+        if (response.status === 401) {
+          localStorage.removeItem('fs_auth');
+          alert('登录已过期，请重新登录');
+          location.replace('/?redirect=/app/stock.html');
+          return;
+        }
         if (!response.ok) throw new Error(data.detail || '分析失败');
 
         resultLoading.style.display = 'none';

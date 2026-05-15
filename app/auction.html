@@ -6,7 +6,8 @@
   <meta name="robots" content="noindex">
   <title>集合竞价 — Finance Suite</title>
   <script>
-    if (localStorage.getItem('fs_auth') !== 'ok') {
+    const isLocalDemo = ['localhost', '127.0.0.1'].includes(location.hostname);
+    if (!isLocalDemo && localStorage.getItem('fs_auth') !== 'ok') {
       location.replace('/?redirect=/app/auction.html');
     }
   </script>
@@ -213,6 +214,35 @@
       background: rgba(211, 47, 47, 0.08);
       border-radius: var(--radius-sm);
     }
+    .qc-panel {
+      margin: 14px 0;
+      padding: 12px 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .qc-panel__title {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .qc-panel__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 4px 12px;
+    }
+    .qc-panel__warning {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(230, 126, 34, 0.10);
+      color: #b95f00;
+      font-weight: 500;
+    }
   </style>
 </head>
 <body>
@@ -259,10 +289,26 @@
     const resultLoading = document.getElementById('resultLoading');
     const resultContent = document.getElementById('resultContent');
 
-    const GOLDEN_PIT_TRIGGERS = ['黄金坑', '四重门', 'ghk'];
+    const GOLDEN_PIT_TRIGGERS = ['黄金坑', '四重门', 'hjk'];
 
     function isGoldenPitQuery(query) {
       return GOLDEN_PIT_TRIGGERS.some(t => query.includes(t));
+    }
+
+    async function readJsonOrThrow(resp, fallbackMessage) {
+      const text = await resp.text();
+      try {
+        return text ? JSON.parse(text) : {};
+      } catch (e) {
+        const preview = text
+          .replace(/<script[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[\s\S]*?<\/style>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, 120);
+        throw new Error(`${fallbackMessage}：接口返回的不是 JSON${preview ? `（${preview}）` : ''}`);
+      }
     }
 
     form.addEventListener('submit', async (e) => {
@@ -282,7 +328,7 @@
           const useRealtime = query.includes('实时');
           const url = `/api/intel/golden-pit${useRealtime ? '?realtime=true' : ''}`;
           const resp = await fetch(url, { credentials: 'include' });
-          data = await resp.json();
+          data = await readJsonOrThrow(resp, '扫描失败');
           if (!resp.ok) throw new Error(data.detail || '扫描失败');
           resultContent.innerHTML = formatGoldenPit(data);
         } else {
@@ -292,7 +338,7 @@
             body: JSON.stringify({ skill_type: 'auction', query }),
             credentials: 'include'
           });
-          data = await resp.json();
+          data = await readJsonOrThrow(resp, '分析失败');
           if (!resp.ok) throw new Error(data.detail || '分析失败');
           resultContent.innerHTML = formatResult(data);
         }
@@ -343,9 +389,7 @@
         });
       }
 
-      if (qc.status && qc.status !== 'success') {
-        html += `<div style="color:#e74c3c;margin-top:12px">数据质检：${qc.status}，来源：${(qc.sources||[]).join('/')}</div>`;
-      }
+      html += renderQcPanel(qc);
       html += `<div style="color:#aaa;margin-top:12px;font-size:11px">免责声明：量化信号仅供参考，不构成投资建议</div>`;
       html += `</div>`;
       return html;
@@ -355,7 +399,48 @@
       if (typeof data === 'string') {
         return `<pre>${data}</pre>`;
       }
-      return `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      const qcPanel = renderQcPanel(data._qc || {});
+      return `${qcPanel}<pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre>`;
+    }
+
+    function renderQcPanel(qc) {
+      if (!qc || Object.keys(qc).length === 0) return '';
+      const completeness = typeof qc.completeness === 'number' ? `${Math.round(qc.completeness * 100)}%` : '未知';
+      const sources = Array.isArray(qc.sources) && qc.sources.length ? qc.sources.join(' / ') : '未知';
+      const fallback = qc.fallback_source || '无';
+      const missing = Array.isArray(qc.missing_dimensions) && qc.missing_dimensions.length ? qc.missing_dimensions.join(' / ') : '无';
+      const stale = Array.isArray(qc.stale_data) ? qc.stale_data : [];
+      const staleText = stale.map(item => {
+        if (!item || typeof item !== 'object') return String(item);
+        const date = item.data_date ? `数据日期 ${item.data_date}` : '';
+        const reason = item.reason || item.message || '数据可能延迟';
+        return [date, reason].filter(Boolean).join('，');
+      }).join('；');
+
+      let html = `<div class="qc-panel">`;
+      html += `<div class="qc-panel__title">数据质检 / 信源</div>`;
+      html += `<div class="qc-panel__grid">`;
+      html += `<div>status：${escapeHtml(qc.status || 'unknown')}</div>`;
+      html += `<div>completeness：${escapeHtml(completeness)}</div>`;
+      html += `<div>sources：${escapeHtml(sources)}</div>`;
+      html += `<div>fallback_source：${escapeHtml(fallback)}</div>`;
+      html += `<div>missing：${escapeHtml(missing)}</div>`;
+      html += `<div>stale_data：${stale.length ? escapeHtml(staleText || '存在') : '无'}</div>`;
+      html += `</div>`;
+      if (stale.length) {
+        html += `<div class="qc-panel__warning">旧数据/试用账号延迟：${escapeHtml(staleText || '当前结果包含延迟或过期数据')}</div>`;
+      }
+      html += `</div>`;
+      return html;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     // Pre-fill from URL params
