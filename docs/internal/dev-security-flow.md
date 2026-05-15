@@ -105,11 +105,10 @@ pip install git-filter-repo
 # 方案 A：完全删除该文件历史
 git filter-repo --path DEPLOY_AUTH_FIX.md --invert-paths
 
-# 方案 B：仅替换 blob 中的敏感密码
-git filter-repo --blob-callback '
-if b"<LEAKED_PASSWORD>" in blob.data:
-    blob.data = b"# REDACTED - see internal docs\n"
-'
+# 方案 B：保留文件演进，仅替换敏感 blob
+# 不在 runbook 中提供 Python 回调清洗伪代码。
+# 实际命令必须由安全负责人按当时仓库状态单独生成、审查，并在隔离镜像中演练通过。
+# 命令生成材料不得进入 git / memory / 公开文档。
 
 # 清洗后 force push
 git push --force origin main
