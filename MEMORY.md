@@ -98,3 +98,177 @@
 - Added local deprecation warning to `/Users/Zhuanz/finance-suite/server_scripts/watchlist_api.py`: old Flask watchlist API is not mounted in production; production uses `finance-suite-web/app/routers/watchlist.py`.
 - Final public smoke passed: `/`, `/app/index.html`, `/app/deep-research.html`, `/app/stock.html`, `/api/health`, `/api/watchlist/list`, `/api/intel/xueqiu-hot`, `/api/intel/xueqiu-hot-stock`, `/api/intel/research`, `/api/intel/all` all return 200; `/api/check-auth` returns expected 401 when logged out.
 - Additional production backups: `app/routers/api.py.bak_codex_check_auth_20260512020447`, `app/routers/intel.py.bak_codex_intel_stubs_20260512020548`.
+
+## 2026-05-16: Finance Suite security TODO and local development rules
+
+### Low-priority security risk: `DEPLOY_AUTH_FIX.md` plaintext passwords
+
+- Risk file: `DEPLOY_AUTH_FIX.md`.
+- Historical plaintext passwords exist in GitHub public `origin/main` history:
+  - `linzuxi / <REDACTED>`
+  - `shengwei / <REDACTED>`
+  - `demo / <REDACTED>`
+  - `zhuanz / <REDACTED>`
+  - `hfzq / <REDACTED>`
+- Current local status:
+  - A local redacted version is prepared, using `<PASSWORD>` or `请通过运维安全渠道获取`.
+  - Not pushed to remote.
+  - Repository access/traffic is low, so short-term risk is currently controlled.
+
+Short-term strategy:
+
+1. Do not push redacted Commit B or any `DEPLOY_AUTH_FIX.md` related commit until the history question is resolved.
+2. Keep the repository private or access-restricted.
+3. Make sure team members know the risk and do not share sensitive commits.
+
+Long-term strategy:
+
+1. Rotate production server account passwords.
+2. Clean git history to remove old plaintext passwords from `DEPLOY_AUTH_FIX.md` with `git filter-repo`.
+3. Move sensitive deployment docs to `docs/internal/`.
+4. Use only `<PASSWORD>` / internal secure-channel placeholders for passwords in commits and docs.
+
+### Local development rules
+
+1. `DEPLOY_AUTH_FIX.md`
+   - Use only `<PASSWORD>` or `请通过运维安全渠道获取`.
+   - Use placeholders in curl examples and command examples.
+2. Test accounts
+   - `demo` account may be used for local testing; password must be obtained via operations channel.
+   - Production account passwords should exist only in the server database or internal operations docs.
+3. `.env` files
+   - `.env.save` is permanently ignored.
+   - `.env.example` should contain only empty placeholders.
+4. Commit / push
+   - Never commit plaintext passwords.
+   - Push the redacted Commit B only after history cleaning is complete.
+   - Other feature work can be committed normally, but avoid sensitive examples.
+5. Repository access
+   - Do not push redacted Commit B or historical plaintext commits to a public repository.
+   - Low-risk commits such as `monitor_sources.py`, `requirements.txt`, and `MEMORY.md` may be committed normally.
+
+### Current C / CC action guide
+
+C / Claude:
+
+1. Pause Commit B and any other commit containing `DEPLOY_AUTH_FIX.md`.
+2. Continue local development and testing under the local development rules above.
+3. Wait for history-cleaning instructions or security-owner approval before submitting redacted Commit B.
+
+CC / Codex:
+
+1. Gatekeep: confirm team members do not push historical leaked commits.
+2. Track the low-priority security TODO until it is resolved.
+3. Review history cleaning and the redacted Commit B before giving final PASS / BLOCK.
+
+### Local development security flow
+
+```mermaid
+flowchart TD
+    A[开始开发/测试] --> B{是否涉及 DEPLOY_AUTH_FIX.md 或 .env.save?}
+    B -- 是 --> C[使用脱敏版本：<PASSWORD> / 内部安全渠道获取]
+    B -- 否 --> D[正常开发/测试]
+
+    C --> E{是否修改 Commit B?}
+    E -- 是 --> F[只修改脱敏 commit 本地版本，不 push]
+    E -- 否 --> D
+
+    D --> G[运行本地测试]
+    G --> H{测试通过?}
+    H -- 是 --> I[保留本地 commit，脱敏安全]
+    H -- 否 --> J[修复逻辑问题，不涉及敏感信息]
+
+    I --> K{准备 push?}
+    K -- 是 --> L[检查 staged 文件，只包含低风险 commit]
+    L --> M{包含 DEPLOY_AUTH_FIX.md / 明文密码?}
+    M -- 否 --> N[安全 push]
+    M -- 是 --> O[阻止 push，重新脱敏]
+
+    J --> G
+```
+
+## 2026-05-15: production password rotation record
+
+### Operation overview
+
+- Operator: Codex via SSH to `ubuntu@touziagent.com`.
+- Operation time (UTC): `2026-05-15T17:27:02Z`.
+- Scope: Rotate passwords for leaked production accounts.
+- Safety note: All new passwords were generated and applied on the remote server. No plaintext passwords were printed or stored locally.
+
+### Rotated accounts
+
+| Username | Tier | Status | Note |
+|---|---|---|---|
+| linzuxi | vip | rotated | Password updated; bcrypt hash stored |
+| shengwei | vip | rotated | Password updated; bcrypt hash stored |
+| demo | vip | rotated | Password updated; bcrypt hash stored |
+| zhuanz | vip | rotated | Password updated; bcrypt hash stored |
+| hfzq | vip | rotated | Password updated; bcrypt hash stored |
+
+### Database backup
+
+- Path: `/home/ubuntu/finance-suite-web/finance_suite.db.bak_rotate_20260515T172702Z`.
+- Permission: `0600`.
+- Purpose: Rollback and audit only; does not contain plaintext passwords.
+
+### Remote handoff
+
+- Path: `/home/ubuntu/.finance-suite/rotated_passwords_20260515T172702Z.json`.
+- Permission: `0600`.
+- Note: Stored only on the production server for operations handoff. Do not copy into git or local workspace.
+
+### Verification
+
+- `https://www.touziagent.com/api/login` demo login check: HTTP `200`.
+- `https://touziagent.com/api/login` apex-domain check: HTTP `405` because the canonical login endpoint is on `www`.
+
+### CC review
+
+- Reviewer: Codex.
+- Review time (UTC): `2026-05-15T17:27:02Z`.
+- Review note: Rotation followed the safety rule: no plaintext passwords were recorded locally.
+
+## Finance Suite: production password rotation / history-cleaning / local validation tracking template
+
+| Operation ID | Operation type | Repository / mirror path | HEAD / Commit | Time (UTC) | Operator | `DEPLOY_AUTH_FIX.md` sensitive history status | Local enhanced validation report path | Notes |
+|---|---|---|---|---|---|---|---|---|
+| 1 | Local mirror dry run | `/tmp/finance-suite-filter-repo-dryrun-20260516012815.git` | `2e7cdb5` | `2026-05-16T01:28:15Z` | Codex | CLEAN | N/A | No force push; isolated dry run |
+| 2 | Formal history clean | `/Users/Zhuanz/finance-suite` or safe clone | TBD | TBD | Zhuanz | TBD | N/A | Execute only after approval; force push requires separate approval |
+| 3 | Production password rotation | Remote `/home/ubuntu/finance-suite-web` | N/A | `2026-05-15T17:27:02Z` | Codex | N/A | N/A | Passwords generated remotely; handoff file `0600`; `MEMORY.md` records no plaintext passwords |
+| 4 | Historical safety verification | Same as operation #2 mirror / repository | TBD | TBD | Zhuanz | CLEAN | N/A | Verify with grep after cleaning |
+| 5 | Re-submit redacted Commit B | `/Users/Zhuanz/finance-suite` | TBD | TBD | Zhuanz | CLEAN | `logs/mcp_local_test_YYYYMMDDTHHMMSSffffff+0000.md` / `logs/mcp_local_test_YYYYMMDDTHHMMSSffffff+0000.html` | Strict staged-file check; no plaintext passwords |
+
+Usage notes:
+
+1. Operation ID: record actions in sequence.
+2. Operation type examples: local mirror dry run, formal history clean, production password rotation, historical safety verification, re-submit redacted Commit B.
+3. Time / operator: use UTC and the actual executor.
+4. Sensitive-value status: use `CLEAN`, `FOUND`, or `TBD`.
+5. Local enhanced validation report path: record generated Markdown / HTML report paths so the team can inspect MCP Server tool success rate, fallback levels, and errors.
+6. Notes: record special precautions, backup paths, or manual rollback notes without plaintext passwords.
+7. Safety rules:
+   - Do not record plaintext passwords in `MEMORY.md` or local files.
+   - Keep handoff files and backups remote-only with `0600` permissions.
+   - Execute force push only after explicit security approval.
+8. Append a new row for each future dry run, rotation, verification, local validation, or clean.
+
+## High-risk account expansion rule
+
+- Scope: A second production password rotation would cover the remaining admin account plus six VIP accounts.
+- Requirement: Do not execute any rotation for these accounts without explicit authorization.
+- Purpose: Prevent accidental high-privilege account changes and avoid production security incidents.
+- Before execution: Obtain approval from the security owner or an authorized approver.
+- Note: This rule runs alongside the existing low-risk local development rules, redaction rules, and Memory execution constraints. It does not replace the `git filter-repo` command plan.
+
+## 2026-05-28: Research Runtime v0.2 accepted
+
+- `research_runtime/` package complete: `session.py`, `events.py`, `workflow.py`, `__init__.py`.
+- Both smoke tests pass: `smoke_research_runtime.py` (local mode) and `smoke_research_runtime_gateway.py` (gateway mode).
+- `compileall` clean on all new modules.
+- Artifacts confirmed: `/tmp/research_runtime_latest.json`, `/tmp/research_runtime_events.jsonl` (11 events).
+- Gateway online path: `finance_data_gateway.get_finance_data("quote", symbol)` via Wind → Tushare → JoinQuant → AkShare → cache.
+- Gateway offline fallback: `local_research_stub` — no network, no LLM.
+- Acceptance doc: `docs/research_runtime_v0_2_acceptance.md`.
+- Not included: production router, frontend UI, new data_type, new provider, LLM calls.
+- Next phase: v0.3 — not started, scope TBD.
