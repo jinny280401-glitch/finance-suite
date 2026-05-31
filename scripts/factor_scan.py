@@ -13,8 +13,8 @@ import sys
 import os
 from datetime import datetime
 
-# trading-system 路径（同一台机器）
-TRADING_SYSTEM_PATH = "/Users/Zhuanz/trading-system"
+# trading-system 路径（支持环境变量配置）
+TRADING_SYSTEM_PATH = os.getenv("TRADING_SYSTEM_PATH") or "/Users/Zhuanz/trading-system"
 FACTOR_SCAN_SCRIPT = f"{TRADING_SYSTEM_PATH}/scripts/factor_scan.py"
 FALLBACK_CHAIN = ["trading_system", "joinquant", "wind", "tushare", "akshare"]
 
