@@ -7,7 +7,7 @@
 """
 from __future__ import annotations
 
-import subprocess
+import asyncio
 import json
 import sys
 import os
@@ -15,7 +15,6 @@ from datetime import datetime
 
 # trading-system 路径（支持环境变量配置）
 TRADING_SYSTEM_PATH = os.getenv("TRADING_SYSTEM_PATH") or "/Users/Zhuanz/trading-system"
-FACTOR_SCAN_SCRIPT = f"{TRADING_SYSTEM_PATH}/scripts/factor_scan.py"
 FALLBACK_CHAIN = ["trading_system", "joinquant", "wind", "tushare", "akshare"]
 
 
@@ -97,70 +96,76 @@ def _joinquant_fallback(scan_date: str = None, attempted_sources: list[str] | No
         }, "joinquant", True, attempted_sources)
 
 
+def _trading_system_python() -> str:
+    python_path = os.path.join(TRADING_SYSTEM_PATH, ".venv", "bin", "python3.12")
+    if os.path.exists(python_path):
+        return python_path
+    return sys.executable
+
+
+def _parse_mcp_tool_text(text: str) -> dict:
+    if not text:
+        return {}
+
+    parts = text.split("\n\n", 1)
+    payload = parts[1] if len(parts) == 2 else text
+
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError:
+        return {}
+
+    return data if isinstance(data, dict) else {}
+
+
+async def _call_trading_system_mcp(scan_date: str = None) -> dict:
+    """通过标准 MCP stdio 会话调用 trading-system 的 factor_scan 工具。"""
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+
+    server_params = StdioServerParameters(
+        command=_trading_system_python(),
+        args=[os.path.join(TRADING_SYSTEM_PATH, "mcp_server.py")],
+        cwd=TRADING_SYSTEM_PATH,
+    )
+
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            result = await session.call_tool(
+                "factor_scan",
+                arguments={"scan_date": scan_date or ""},
+            )
+
+    if getattr(result, "isError", False):
+        return {}
+
+    for content in result.content or []:
+        text = getattr(content, "text", None)
+        if not text:
+            continue
+        data = _parse_mcp_tool_text(text)
+        if data and "error" not in data:
+            return data
+
+    return {}
+
+
 def get_factor_signals(scan_date: str = None) -> dict:
     """调用 trading-system 因子扫描（通过 MCP 协议），返回结构化数据"""
     if os.getenv("FORCE_TRADING_SYSTEM_FAIL") == "1":
         return _joinquant_fallback(scan_date)
 
-    # 通过 MCP 协议调用 trading-system 的 factor_scan 工具
-    # 构造 MCP 请求 JSON
-    mcp_request = {
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": "tools/call",
-        "params": {
-            "name": "factor_scan",
-            "arguments": {"scan_date": scan_date or ""}
-        }
-    }
-
     try:
-        # 启动 trading-system MCP 服务（stdio 模式）
-        mcp_server_path = os.path.join(TRADING_SYSTEM_PATH, "mcp_server.py")
-        python_path = os.path.join(TRADING_SYSTEM_PATH, ".venv", "bin", "python3.12")
-
-        # 如果虚拟环境不存在，降级到系统 python3
-        if not os.path.exists(python_path):
-            python_path = "python3"
-
-        result = subprocess.run(
-            [python_path, mcp_server_path],
-            input=json.dumps(mcp_request) + "\n",
-            capture_output=True,
-            text=True,
-            timeout=300,
-            cwd=TRADING_SYSTEM_PATH,
-        )
-
-        if result.returncode == 0:
-            # 解析 MCP 响应
-            stdout = result.stdout.strip()
-            # MCP 响应可能有多行，找到包含 result 的 JSON
-            for line in stdout.split("\n"):
-                if not line.strip():
-                    continue
-                try:
-                    response = json.loads(line)
-                    if "result" in response:
-                        # MCP 工具返回的是字符串，需要解析 _qc + JSON
-                        result_str = response["result"]
-                        # 提取 JSON 部分（跳过 _qc 行）
-                        lines = result_str.split("\n\n", 1)
-                        if len(lines) == 2:
-                            qc_line = lines[0]
-                            data_json = lines[1]
-                            data = json.loads(data_json)
-                            if isinstance(data, dict) and "error" not in data:
-                                return _finalize(data, "trading_system", False, ["trading_system"])
-                except json.JSONDecodeError:
-                    continue
-
+        data = asyncio.run(asyncio.wait_for(_call_trading_system_mcp(scan_date), timeout=300))
+        if data:
+            return _finalize(data, "trading_system", False, ["trading_system"])
         return _joinquant_fallback(scan_date)
-    except subprocess.TimeoutExpired:
+    except TimeoutError:
         return _joinquant_fallback(scan_date)
     except FileNotFoundError:
         return _joinquant_fallback(scan_date)
-    except Exception as e:
+    except Exception:
         return _joinquant_fallback(scan_date)
 
 
