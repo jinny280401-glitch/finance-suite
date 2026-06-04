@@ -5,42 +5,168 @@
 独立CLI脚本，无内部依赖
 用法: python3 factor_scan.py [--date 2025-04-03]
 """
+from __future__ import annotations
 
-import subprocess
+import asyncio
 import json
 import sys
+import os
 from datetime import datetime
 
-# trading-system 路径（同一台机器）
-TRADING_SYSTEM_PATH = "/Users/Zhuanz/trading-system"
-FACTOR_SCAN_SCRIPT = f"{TRADING_SYSTEM_PATH}/scripts/factor_scan.py"
+# trading-system 路径（支持环境变量配置）
+TRADING_SYSTEM_PATH = os.getenv("TRADING_SYSTEM_PATH") or "/Users/Zhuanz/trading-system"
+FALLBACK_CHAIN = ["trading_system", "joinquant", "wind", "tushare", "akshare"]
+
+
+def _trial_stale_entry(data_date: str | None) -> dict:
+    return {
+        "source": "joinquant",
+        "reason": "trial_account_delay",
+        "data_date": data_date,
+        "message": "JoinQuant trial account returned delayed historical data.",
+    }
+
+
+def _build_qc(data: dict, source_used: str, fallback_triggered: bool, attempted_sources: list[str]) -> dict:
+    hits = data.get("hits") or []
+    signals = data.get("signals") or []
+    market_env = data.get("market_env") or {}
+    has_hits = bool(hits or signals)
+    has_market_env = bool(market_env)
+
+    if has_hits:
+        status = "success"
+        completeness = 1.0
+        missing_dimensions = []
+    elif has_market_env:
+        status = "partial"
+        completeness = 0.5
+        missing_dimensions = ["候选信号"]
+    else:
+        status = "partial"
+        completeness = 0.3
+        missing_dimensions = ["候选信号", "市场环境"]
+
+    stale_data = []
+    meta = data.get("_metadata") if isinstance(data.get("_metadata"), dict) else data
+    if source_used == "joinquant" and meta.get("used_fallback_date"):
+        stale_data.append(_trial_stale_entry(meta.get("data_date") or data.get("scan_date")))
+
+    return {
+        "status": status,
+        "completeness": completeness,
+        "sources": attempted_sources,
+        "fallback_source": source_used if fallback_triggered else None,
+        "missing_dimensions": missing_dimensions,
+        "stale_data": stale_data,
+    }
+
+
+def _finalize(data: dict, source_used: str, fallback_triggered: bool, attempted_sources: list[str]) -> dict:
+    data.setdefault("scan_date", datetime.now().strftime("%Y-%m-%d"))
+    data["source_used"] = source_used
+    data["fallback_chain"] = FALLBACK_CHAIN
+    data["fallback_triggered"] = fallback_triggered
+    if "_qc" not in data:
+        data["_qc"] = _build_qc(data, source_used, fallback_triggered, attempted_sources)
+    return data
+
+
+def _joinquant_fallback(scan_date: str = None, attempted_sources: list[str] | None = None) -> dict:
+    attempted_sources = attempted_sources or ["trading_system", "joinquant"]
+    try:
+        import joinquant_data
+
+        data = joinquant_data.get_factor_signals(scan_date)
+        if data and "error" not in data and "signals" in data:
+            return _finalize(data, "joinquant", True, attempted_sources)
+        fallback_data = {
+            "scan_date": scan_date or datetime.now().strftime("%Y-%m-%d"),
+            "signals": [],
+            "market_env": {},
+            "error": data.get("error", "JoinQuant returned no factor signals") if isinstance(data, dict) else "JoinQuant returned no data",
+        }
+        return _finalize(fallback_data, "joinquant", True, attempted_sources)
+    except Exception as e:
+        return _finalize({
+            "scan_date": scan_date or datetime.now().strftime("%Y-%m-%d"),
+            "signals": [],
+            "market_env": {},
+            "error": str(e),
+        }, "joinquant", True, attempted_sources)
+
+
+def _trading_system_python() -> str:
+    python_path = os.path.join(TRADING_SYSTEM_PATH, ".venv", "bin", "python3.12")
+    if os.path.exists(python_path):
+        return python_path
+    return sys.executable
+
+
+def _parse_mcp_tool_text(text: str) -> dict:
+    if not text:
+        return {}
+
+    parts = text.split("\n\n", 1)
+    payload = parts[1] if len(parts) == 2 else text
+
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError:
+        return {}
+
+    return data if isinstance(data, dict) else {}
+
+
+async def _call_trading_system_mcp(scan_date: str = None) -> dict:
+    """通过标准 MCP stdio 会话调用 trading-system 的 factor_scan 工具。"""
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+
+    server_params = StdioServerParameters(
+        command=_trading_system_python(),
+        args=[os.path.join(TRADING_SYSTEM_PATH, "mcp_server.py")],
+        cwd=TRADING_SYSTEM_PATH,
+    )
+
+    async with stdio_client(server_params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            result = await session.call_tool(
+                "factor_scan",
+                arguments={"scan_date": scan_date or ""},
+            )
+
+    if getattr(result, "isError", False):
+        return {}
+
+    for content in result.content or []:
+        text = getattr(content, "text", None)
+        if not text:
+            continue
+        data = _parse_mcp_tool_text(text)
+        if data and "error" not in data:
+            return data
+
+    return {}
 
 
 def get_factor_signals(scan_date: str = None) -> dict:
-    """调用 trading-system 因子扫描，返回结构化数据"""
-    cmd = ["python3", FACTOR_SCAN_SCRIPT, "--json"]
-    if scan_date:
-        cmd.append(scan_date)
+    """调用 trading-system 因子扫描（通过 MCP 协议），返回结构化数据"""
+    if os.getenv("FORCE_TRADING_SYSTEM_FAIL") == "1":
+        return _joinquant_fallback(scan_date)
 
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=300,
-            cwd=TRADING_SYSTEM_PATH,
-        )
-        if result.returncode == 0:
-            # 过滤掉 stderr 中的进度信息，只解析 stdout 的 JSON
-            stdout = result.stdout.strip()
-            # JSON 从第一个 { 开始
-            json_start = stdout.find("{")
-            if json_start >= 0:
-                return json.loads(stdout[json_start:])
-        return {"error": f"扫描失败: {result.stderr[-200:] if result.stderr else '未知错误'}"}
-    except subprocess.TimeoutExpired:
-        return {"error": "扫描超时（>5分钟）"}
+        data = asyncio.run(asyncio.wait_for(_call_trading_system_mcp(scan_date), timeout=300))
+        if data:
+            return _finalize(data, "trading_system", False, ["trading_system"])
+        return _joinquant_fallback(scan_date)
+    except TimeoutError:
+        return _joinquant_fallback(scan_date)
     except FileNotFoundError:
-        return {"error": f"找不到扫描脚本: {FACTOR_SCAN_SCRIPT}"}
-    except Exception as e:
-        return {"error": str(e)}
+        return _joinquant_fallback(scan_date)
+    except Exception:
+        return _joinquant_fallback(scan_date)
 
 
 def format_factor_signals(data: dict) -> str:

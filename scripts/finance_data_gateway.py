@@ -13,6 +13,17 @@ from finance_data_contract import build_response
 
 
 PROVIDER_CHAIN = ["wind", "tushare", "joinquant", "akshare", "cache"]
+QUOTE_CORE_FIELDS = ["price", "volume", "amount"]
+
+PROVIDER_TIER = {
+    "wind": 1,
+    "ifind": 1,
+    "choice": 1,
+    "tushare": 2,
+    "joinquant": 2,
+    "akshare": 3,
+    "cache": 7,
+}
 
 
 def _utc_now_iso() -> str:
@@ -117,6 +128,18 @@ def _as_of_for(provider: str, data: dict[str, Any]) -> str:
     return _utc_now_iso()
 
 
+def _missing_quote_fields(data: dict[str, Any]) -> list[str]:
+    return [field for field in QUOTE_CORE_FIELDS if data.get(field) in (None, "")]
+
+
+def _partial_reason(freshness: str, missing_fields: list[str]) -> str | None:
+    if freshness in {"delayed", "stale"}:
+        return "delayed_source"
+    if missing_fields:
+        return "missing_fields"
+    return None
+
+
 def _quote(symbol: str) -> dict[str, Any]:
     normalized_symbol = _normalize_symbol(symbol)
     attempted_sources: list[dict[str, str]] = []
@@ -133,12 +156,18 @@ def _quote(symbol: str) -> dict[str, Any]:
             data = runners[provider](normalized_symbol or symbol)
             if _has_data(data):
                 freshness = _freshness_for(provider, data)
+                missing_fields = _missing_quote_fields(data)
+                is_partial = bool(missing_fields) or freshness in {"delayed", "stale"}
+                completeness = max(0, (len(QUOTE_CORE_FIELDS) - len(missing_fields)) / len(QUOTE_CORE_FIELDS))
                 qc = {
-                    "status": "success",
-                    "completeness": 1.0,
+                    "status": "partial" if is_partial else "success",
+                    "reason": _partial_reason(freshness, missing_fields),
+                    "completeness": completeness,
+                    "partial": is_partial,
                     "sources": [provider],
                     "fallback_source": None if provider == "wind" else provider,
-                    "missing_dimensions": [],
+                    "missing_fields": missing_fields,
+                    "missing_dimensions": missing_fields,
                     "stale_data": [data.get("_metadata")] if freshness in {"delayed", "stale"} and data.get("_metadata") else [],
                     "attempted_sources": attempted_sources + [{"provider": provider, "status": "success"}],
                     "provider_chain": PROVIDER_CHAIN,
@@ -148,6 +177,7 @@ def _quote(symbol: str) -> dict[str, Any]:
                     symbol=normalized_symbol,
                     data_type="quote",
                     provider=provider,
+                    provider_tier=PROVIDER_TIER.get(provider),
                     freshness=freshness,
                     as_of=_as_of_for(provider, data),
                     data=data,
@@ -162,10 +192,12 @@ def _quote(symbol: str) -> dict[str, Any]:
         symbol=normalized_symbol,
         data_type="quote",
         provider=None,
+        provider_tier=None,
         freshness="unavailable",
         data={},
         qc={
             "status": "failure",
+            "reason": "all_providers_failed",
             "completeness": 0,
             "sources": [],
             "fallback_source": "cache",
@@ -188,10 +220,12 @@ def get_finance_data(data_type: str, symbol: str | None = None, params: dict[str
             symbol=_normalize_symbol(symbol),
             data_type=normalized_type,
             provider=None,
+            provider_tier=None,
             freshness="unsupported",
             data={},
             qc={
                 "status": "failure",
+                "reason": "unsupported_data_type",
                 "completeness": 0,
                 "sources": [],
                 "fallback_source": None,
@@ -206,10 +240,12 @@ def get_finance_data(data_type: str, symbol: str | None = None, params: dict[str
             symbol=None,
             data_type="quote",
             provider=None,
+            provider_tier=None,
             freshness="invalid_request",
             data={},
             qc={
                 "status": "failure",
+                "reason": "missing_symbol",
                 "completeness": 0,
                 "sources": [],
                 "fallback_source": None,

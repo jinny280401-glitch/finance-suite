@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from .evidence_bundle import _run_trust_gate, TrustGateResult
 from .session import ResearchSession
 
 
@@ -56,11 +57,13 @@ def _retrieve_evidence(symbol: str, provider: str) -> list[dict[str, Any]]:
     ]
 
 
-def _build_context(session: ResearchSession) -> dict[str, Any]:
+def _build_context(session: ResearchSession, gate_result: TrustGateResult) -> dict[str, Any]:
     return {
         "symbol": session.symbol,
         "provider": session.provider,
-        "evidence_count": len(session.evidence),
+        "allowed_evidence_count": len(gate_result.allowed_bundles),
+        "blocked_evidence_count": len(gate_result.blocked_items),
+        "passthrough_count": len(gate_result.passthrough_items),
         "research_question": "Build a traceable research navigation context without recommendations.",
         "llm_enabled": False,
     }
@@ -114,14 +117,29 @@ def run_research_workflow(symbol: str = "300750.SZ", mode: str = "local") -> Res
         })
 
         session.set_state("EVIDENCE_RETRIEVAL", "Retrieving evidence")
-        session.evidence = _retrieve_evidence(symbol, session.provider)
+        raw_evidence = _retrieve_evidence(symbol, session.provider)
         session.add_event("evidence_retrieved", "Evidence retrieved", {
-            "evidence_count": len(session.evidence),
-            "evidence_kinds": [item.get("kind") for item in session.evidence],
+            "evidence_count": len(raw_evidence),
+            "evidence_kinds": [item.get("kind") for item in raw_evidence],
         })
 
+        session.set_state("TRUST_GATE", "Filtering evidence through Trust Gate")
+        gate_result = _run_trust_gate(raw_evidence)
+        for evt in gate_result.gate_events:
+            session.add_event(evt["type"], evt["message"], evt.get("payload", {}))
+
+        session.allowed_evidence = [b.to_dict() for b in gate_result.allowed_bundles]
+        session.blocked_evidence = [b.to_dict() for b in gate_result.blocked_items]
+        session.evidence = session.allowed_evidence + gate_result.passthrough_items
+
+        if not gate_result.has_any_allowed and any(item.get("kind", "").startswith("gateway_") for item in raw_evidence):
+            session.set_state("NO_EVIDENCE", "All gateway evidence blocked by Trust Gate")
+            session.qc = {"passed": False, "status": "no_evidence", "reason": "trust_gate_blocked_all"}
+            _write_artifacts(session)
+            return session
+
         session.set_state("CONTEXT_BUILDING", "Building research context")
-        session.context = _build_context(session)
+        session.context = _build_context(session, gate_result)
         session.add_event("context_built", "Research context built", session.context)
 
         session.set_state("QC", "Completing runtime QC")

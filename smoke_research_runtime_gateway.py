@@ -21,14 +21,22 @@ def main() -> int:
         "evidence_count": len(session.evidence),
         "event_count": event_count,
         "qc_passed": session.qc.get("passed") is True,
+        "trust_gate": session.context.get("trust_gate", {}),
         "events_artifact_exists": EVENTS_ARTIFACT.exists(),
     }
+    trust_gate = out["trust_gate"]
+    has_allowed_evidence = out["evidence_count"] > 0 and out["qc_passed"] is True
+    has_blocked_gateway_response = (
+        out["evidence_count"] == 0
+        and out["qc_passed"] is False
+        and trust_gate.get("blocked_count", 0) > 0
+        and trust_gate.get("has_any_allowed") is False
+    )
     out["ok"] = (
         out["final_state"] == "DONE"
         and out["provider"] == "finance_data_gateway"
-        and out["evidence_count"] > 0
         and out["event_count"] > 0
-        and out["qc_passed"] is True
+        and (has_allowed_evidence or has_blocked_gateway_response)
         and out["events_artifact_exists"] is True
     )
     print(json.dumps(out, ensure_ascii=False, indent=2))
