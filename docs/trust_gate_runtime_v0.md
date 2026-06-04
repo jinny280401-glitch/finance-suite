@@ -107,3 +107,21 @@ Registry + Route Policy + Trust Contract
 足以承载新数据能力。如果不够，优先修 Contract，不硬接 Provider。
 
 通过 Trust Gate Runtime v0 后，Research Runtime 的下一步才是把真实 section workflow 改为只消费 Evidence Bundle。
+
+## 6. v1 Integration 红线
+
+Trust Gate Runtime Integration v1 只检查一件事：
+
+```text
+现有 Research Runtime / Workflow / Market Context 是否还有路径能绕过 EvidenceBundle 直接进入 LLM
+```
+
+验收红线：
+
+- raw provider data 进入 prompt：FAIL
+- raw gateway response 进入 prompt：FAIL
+- `ok=true` response 直接进入 prompt：FAIL
+- HTTP 200 response 直接进入 prompt：FAIL
+- `_qc.status=partial` 未过滤数据进入 prompt：FAIL
+
+Runtime 的 gateway evidence 必须先经过 `build_evidence_bundle()`；`session.evidence` 中不应保留 raw `_qc` 或 raw `payload`。
