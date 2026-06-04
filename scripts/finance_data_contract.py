@@ -28,6 +28,7 @@ def build_response(
     """Build the unified Finance Data Gateway response."""
     normalized_qc = dict(qc or {})
     normalized_qc.setdefault("status", "success" if ok else "failure")
+    normalized_qc.setdefault("reason", None if ok else "request_failed")
     normalized_qc.setdefault("provider", provider)
     normalized_qc.setdefault("provider_tier", provider_tier)
     normalized_qc.setdefault("freshness", freshness)

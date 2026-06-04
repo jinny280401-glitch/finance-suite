@@ -132,6 +132,14 @@ def _missing_quote_fields(data: dict[str, Any]) -> list[str]:
     return [field for field in QUOTE_CORE_FIELDS if data.get(field) in (None, "")]
 
 
+def _partial_reason(freshness: str, missing_fields: list[str]) -> str | None:
+    if freshness in {"delayed", "stale"}:
+        return "delayed_source"
+    if missing_fields:
+        return "missing_fields"
+    return None
+
+
 def _quote(symbol: str) -> dict[str, Any]:
     normalized_symbol = _normalize_symbol(symbol)
     attempted_sources: list[dict[str, str]] = []
@@ -153,6 +161,7 @@ def _quote(symbol: str) -> dict[str, Any]:
                 completeness = max(0, (len(QUOTE_CORE_FIELDS) - len(missing_fields)) / len(QUOTE_CORE_FIELDS))
                 qc = {
                     "status": "partial" if is_partial else "success",
+                    "reason": _partial_reason(freshness, missing_fields),
                     "completeness": completeness,
                     "partial": is_partial,
                     "sources": [provider],
@@ -188,6 +197,7 @@ def _quote(symbol: str) -> dict[str, Any]:
         data={},
         qc={
             "status": "failure",
+            "reason": "all_providers_failed",
             "completeness": 0,
             "sources": [],
             "fallback_source": "cache",
@@ -215,6 +225,7 @@ def get_finance_data(data_type: str, symbol: str | None = None, params: dict[str
             data={},
             qc={
                 "status": "failure",
+                "reason": "unsupported_data_type",
                 "completeness": 0,
                 "sources": [],
                 "fallback_source": None,
@@ -234,6 +245,7 @@ def get_finance_data(data_type: str, symbol: str | None = None, params: dict[str
             data={},
             qc={
                 "status": "failure",
+                "reason": "missing_symbol",
                 "completeness": 0,
                 "sources": [],
                 "fallback_source": None,

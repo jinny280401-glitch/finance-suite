@@ -33,24 +33,23 @@ LLM
   "ok": true,
   "symbol": "600519.SH",
   "data_type": "quote",
-  "provider": "ifind",
-  "provider_tier": 1,
-  "freshness": "realtime",
-  "as_of": "2026-06-04T10:30:00Z",
+  "provider": "joinquant",
+  "provider_tier": 2,
+  "freshness": "delayed",
+  "as_of": "2026-03-01",
   "data": {},
   "_qc": {
-    "status": "success",
-    "provider": "ifind",
-    "provider_tier": 1,
-    "freshness": "realtime",
-    "completeness": 0.82,
+    "status": "partial",
+    "reason": "delayed_source",
+    "provider": "joinquant",
+    "provider_tier": 2,
+    "freshness": "delayed",
+    "completeness": 0,
     "partial": true,
     "dimension_sources": {
-      "quote": "ifind",
-      "valuation": "joinquant",
-      "financials": "tushare"
+      "quote": "joinquant"
     },
-    "missing_fields": ["target_price"],
+    "missing_fields": ["price", "volume", "amount"],
     "attempted_sources": [],
     "provider_chain": []
   }
@@ -68,6 +67,7 @@ LLM
 | 字段 | 含义 |
 |---|---|
 | `status` | `success` / `partial` / `failure` |
+| `reason` | `partial` 或 `failure` 的机器可读原因 |
 | `provider` | 最终主 provider |
 | `provider_tier` | 信源组层级，不等于执行顺序 |
 | `freshness` | `realtime` / `daily` / `delayed` / `cached` / `stale` / `unavailable` |
@@ -79,6 +79,16 @@ LLM
 | `provider_chain` | 本次 route policy 使用的候选链 |
 
 前端、报告、Research Runtime 都应以 `_qc.status` 和 `_qc.dimension_sources` 作为可信度闸门。HTTP 200 不代表数据可信。
+
+`partial` 必须说明原因，不能只给状态。当前保留原因：
+
+| reason | 含义 |
+|---|---|
+| `delayed_source` | provider 有数据，但不是当前实时口径 |
+| `missing_fields` | 核心字段缺失 |
+| `unsupported_data_type` | Gateway 尚未支持该数据类型 |
+| `missing_symbol` | 请求缺少必需标的 |
+| `all_providers_failed` | 本次 route policy 内所有 provider 均失败或为空 |
 
 ## 4. Source Taxonomy
 
