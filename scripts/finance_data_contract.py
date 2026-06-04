@@ -20,6 +20,7 @@ def build_response(
     data_type: str,
     provider: str | None,
     freshness: str,
+    provider_tier: int | None = None,
     as_of: str | None = None,
     data: Any = None,
     qc: dict[str, Any] | None = None,
@@ -27,8 +28,15 @@ def build_response(
     """Build the unified Finance Data Gateway response."""
     normalized_qc = dict(qc or {})
     normalized_qc.setdefault("status", "success" if ok else "failure")
+    normalized_qc.setdefault("provider", provider)
+    normalized_qc.setdefault("provider_tier", provider_tier)
+    normalized_qc.setdefault("freshness", freshness)
     normalized_qc.setdefault("sources", [provider] if provider else [])
-    normalized_qc.setdefault("missing_dimensions", [] if ok else [data_type])
+    normalized_qc.setdefault("completeness", 1.0 if ok else 0)
+    normalized_qc.setdefault("partial", normalized_qc.get("status") == "partial")
+    normalized_qc.setdefault("dimension_sources", {data_type: provider} if ok and provider else {})
+    normalized_qc.setdefault("missing_fields", [] if ok else [data_type])
+    normalized_qc.setdefault("missing_dimensions", normalized_qc["missing_fields"])
     normalized_qc.setdefault("stale_data", [])
 
     return {
@@ -36,8 +44,10 @@ def build_response(
         "symbol": symbol,
         "data_type": data_type,
         "provider": provider,
+        "provider_tier": provider_tier,
         "freshness": freshness,
         "as_of": as_of or _utc_now_iso(),
         "data": data if data is not None else {},
+        "_qc": normalized_qc,
         "qc": normalized_qc,
     }

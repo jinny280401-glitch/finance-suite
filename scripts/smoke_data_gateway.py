@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 from urllib.request import urlopen
 
 
-REQUIRED_FIELDS = {"ok", "provider", "freshness", "as_of", "data", "qc"}
+REQUIRED_FIELDS = {"ok", "provider", "provider_tier", "freshness", "as_of", "data", "_qc", "qc"}
 
 
 def main() -> int:
