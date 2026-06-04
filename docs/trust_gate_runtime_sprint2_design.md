@@ -328,7 +328,96 @@ assert len(result.passthrough_items) == 2
 
 ---
 
-## 7. Sprint 2 验收口径
+## 7. 旁路审计 Smoke（补充）
+
+主链路经过 Trust Gate 不够——必须验证 `gateway_response` 没有通过任何旁路到达 `build_prompt()`。
+
+新增 Smoke 7：`test_no_raw_evidence_reaches_prompt()`
+
+验证 `gateway_response` 不能通过以下任何路径到达 `build_prompt()`：
+
+```python
+def test_no_raw_evidence_reaches_prompt():
+    gateway_response = build_response(
+        ok=True, symbol="600519.SH", data_type="quote",
+        provider="joinquant", provider_tier=2, freshness="delayed",
+        data={"price": 1800.0, "pe": 30.0},
+        qc={"status": "partial", "reason": "delayed_source"}
+    )
+    session = run_research_workflow_with_gate(
+        symbol="600519.SH",
+        mock_gateway=[{"kind": "gateway_quote", "payload": gateway_response}]
+    )
+
+    # 1. context 不包含 raw gateway_response
+    assert "payload" not in str(session.context)
+    assert "_qc" not in str(session.context)
+
+    # 2. workflow state 不包含 raw gateway_response
+    state_str = json.dumps(session.to_dict())
+    assert '"payload"' not in state_str or _payload_only_in_evidence_raw(state_str)
+
+    # 3. 每个 evidence item 是 EvidenceBundle.to_dict()，不是原始 gateway_response
+    for item in session.allowed_evidence:
+        assert "trust_status" in item          # EvidenceBundle 字段
+        assert "allowed_use" in item           # EvidenceBundle 字段
+        assert "blocked_fields" in item        # EvidenceBundle 字段
+        assert "_qc" not in item               # 原始 gateway 字段不得出现
+        assert "ok" not in item                # 原始 gateway 字段不得出现
+
+    # 4. 直接传入 raw dict 给 build_prompt 时必须抛 TypeError
+    with pytest.raises(TypeError):
+        build_prompt(gateway_response)         # 必须只接受 list[EvidenceBundle]
+```
+
+这个 smoke 和 Smoke 1-6 的区别：前 6 个验证 Gate 输出是否正确，Smoke 7 验证旁路是否封堵。
+
+---
+
+## 8. ProviderClass 枚举（补充）
+
+`freshness` 原值保留不够——Trust Gate 内部必须显式形成 `ProviderClass` 枚举，
+并将其约束注入 `EvidenceBundle.allowed_use`。
+
+```python
+class ProviderClass(str, Enum):
+    MOCK = "mock"        # local_research_stub / freshness=mock
+    FALLBACK = "fallback"  # akshare / tier=3 / freshness=delayed/stale
+    REAL = "real"          # wind/ifind/tushare/joinquant 且 freshness=realtime/delayed
+```
+
+### ProviderClass 判定规则
+
+```python
+def _classify_provider(gateway_response: dict) -> ProviderClass:
+    provider = (gateway_response.get("provider") or "").lower()
+    freshness = (gateway_response.get("freshness") or "").lower()
+    tier = gateway_response.get("provider_tier")
+
+    if freshness == "mock" or "stub" in provider or provider == "":
+        return ProviderClass.MOCK
+    if tier == 3 or freshness in ("stale", "cached"):
+        return ProviderClass.FALLBACK
+    return ProviderClass.REAL
+```
+
+### ProviderClass → allowed_use 约束
+
+| ProviderClass | 额外允许 | 额外禁止 |
+|---|---|---|
+| MOCK | `workflow_smoke`, `runtime_test` | `report_generation`, `investment_analysis`, 以及所有 `fundamental_*` 用途 |
+| FALLBACK | `fundamental_overview`, `historical_context` | `trading_signal`, `conviction_statement`, `realtime_snapshot` |
+| REAL | 正常使用（由 `_qc.status` 决定） | — |
+
+**关键约束**：`ProviderClass.MOCK` 的 `EvidenceBundle` 不得进入研报生成链路。
+Trust Gate 对 MOCK 的处理是：允许通过（`gate_status=allowed`），但 `allowed_use` 只包含测试用途，
+报告组装层在遇到 `allowed_use=["workflow_smoke"]` 时主动跳过。
+
+这与 `mock ≠ fallback ≠ real` 的一贯原则一致：三者都能通过 gate，但获得的 `allowed_use` 完全不同。
+
+---
+
+## 9. Sprint 2 验收口径
 
 通过条件（全部 6 条 smoke PASS）：
 
