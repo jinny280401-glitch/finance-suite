@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field
+from enum import Enum
 from typing import Any
 
 
@@ -19,6 +20,13 @@ TRADING_DECISION_FIELDS = [
     "position_sizing",
     "buy_sell_recommendation",
 ]
+
+
+class ProviderClass(str, Enum):
+    """Provider classification for trust gate filtering."""
+    MOCK = "mock"
+    FALLBACK = "fallback"
+    REAL = "real"
 
 
 @dataclass(frozen=True)
@@ -61,6 +69,19 @@ def _base_blocked_fields(gateway_response: dict[str, Any]) -> list[str]:
     return blocked
 
 
+def _classify_provider(gateway_response: dict[str, Any]) -> ProviderClass:
+    """Classify provider as MOCK, FALLBACK, or REAL based on gateway response."""
+    provider = (gateway_response.get("provider") or "").lower()
+    freshness = (gateway_response.get("freshness") or "").lower()
+    tier = gateway_response.get("provider_tier")
+
+    if freshness == "mock" or "stub" in provider or provider == "":
+        return ProviderClass.MOCK
+    if tier == 3 or freshness in ("stale", "cached"):
+        return ProviderClass.FALLBACK
+    return ProviderClass.REAL
+
+
 def _allowed_use(gateway_response: dict[str, Any], data_type: str) -> list[str]:
     qc = _qc(gateway_response)
     explicit = qc.get("allowed_use")
@@ -71,25 +92,38 @@ def _allowed_use(gateway_response: dict[str, Any], data_type: str) -> list[str]:
     reason = _reason(gateway_response)
     missing = set(_missing_fields(gateway_response))
 
+    # ProviderClass constraint injection
+    provider_class = _classify_provider(gateway_response)
+    if provider_class == ProviderClass.MOCK:
+        return ["workflow_smoke", "runtime_test"]
+
     if status == "failure":
         return []
 
     if data_type == "quote":
         if status == "success":
-            return ["fundamental_overview", "valuation_analysis", "peer_comparison"]
-        if status == "partial" and (reason == "delayed_source" or missing.intersection(REALTIME_FIELDS)):
-            return ["fundamental_overview"]
-
-    if data_type == "stock_analysis":
+            allowed = ["fundamental_overview", "valuation_analysis", "peer_comparison"]
+        elif status == "partial" and (reason == "delayed_source" or missing.intersection(REALTIME_FIELDS)):
+            allowed = ["fundamental_overview"]
+        else:
+            allowed = []
+    elif data_type == "stock_analysis":
         if status == "partial":
-            return ["fundamental_overview"]
-        if status == "success":
-            return ["fundamental_overview", "valuation_analysis", "peer_comparison"]
+            allowed = ["fundamental_overview"]
+        elif status == "success":
+            allowed = ["fundamental_overview", "valuation_analysis", "peer_comparison"]
+        else:
+            allowed = []
+    elif status == "partial":
+        allowed = ["fundamental_overview"]
+    else:
+        allowed = []
 
-    if status == "partial":
-        return ["fundamental_overview"]
+    # FALLBACK providers: restrict to overview + historical
+    if provider_class == ProviderClass.FALLBACK:
+        allowed = [u for u in allowed if u in ("fundamental_overview", "historical_context")]
 
-    return []
+    return allowed
 
 
 def _runtime_blocked_fields(gateway_response: dict[str, Any], data_type: str) -> list[str]:
@@ -161,3 +195,116 @@ def generate_section_body(evidence_bundle: EvidenceBundle) -> dict[str, Any]:
         "evidence": evidence_bundle.evidence,
         "trust_status": evidence_bundle.trust_status,
     }
+
+
+@dataclass(frozen=True)
+class BlockedEvidence:
+    """Evidence rejected by Trust Gate."""
+    gate_status: str = "blocked"
+    reason: str = ""
+    blocked_fields: list[str] = field(default_factory=lambda: ["all"])
+    source: dict[str, Any] = field(default_factory=dict)
+    trust_status: str = "failure"
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class TrustGateResult:
+    """Result of Trust Gate filtering on raw evidence."""
+    allowed_bundles: list[EvidenceBundle] = field(default_factory=list)
+    blocked_items: list[BlockedEvidence] = field(default_factory=list)
+    passthrough_items: list[dict[str, Any]] = field(default_factory=list)
+    gate_events: list[dict[str, Any]] = field(default_factory=list)
+
+    @property
+    def has_any_allowed(self) -> bool:
+        return len(self.allowed_bundles) > 0
+
+
+def _run_trust_gate(raw_evidence: list[dict[str, Any]]) -> TrustGateResult:
+    """Run Trust Gate filter on raw evidence items from workflow.
+
+    Gateway evidence (kind=gateway_*) is converted to EvidenceBundle or BlockedEvidence.
+    Non-gateway evidence (kind=research_scope, skeleton) passes through unchanged.
+    """
+    result = TrustGateResult()
+
+    for item in raw_evidence:
+        kind = item.get("kind", "")
+
+        # Non-gateway evidence: passthrough
+        if not kind.startswith("gateway_"):
+            result.passthrough_items.append(item)
+            result.gate_events.append({
+                "type": "trust_gate_passthrough",
+                "message": f"Non-gateway evidence passed through: {kind}",
+                "payload": {"kind": kind, "source": item.get("source")},
+            })
+            continue
+
+        # Gateway evidence: run through Trust Gate
+        payload = item.get("payload")
+        if not payload or not isinstance(payload, dict):
+            result.gate_events.append({
+                "type": "trust_gate_error",
+                "message": f"Gateway evidence missing valid payload: {kind}",
+                "payload": {"kind": kind},
+            })
+            continue
+
+        bundle = build_evidence_bundle(payload)
+
+        # Block if failure or empty allowed_use
+        if bundle.trust_status == "failure" or not bundle.allowed_use:
+            blocked = BlockedEvidence(
+                gate_status="blocked",
+                reason=bundle.reason or "qc_failure" if bundle.trust_status == "failure" else "no_allowed_use",
+                blocked_fields=bundle.blocked_fields if bundle.blocked_fields else ["all"],
+                source=bundle.source,
+                trust_status=bundle.trust_status,
+            )
+            result.blocked_items.append(blocked)
+            result.gate_events.append({
+                "type": "evidence_blocked",
+                "message": f"Evidence blocked: {bundle.source.get('symbol')} {bundle.source.get('data_type')}",
+                "payload": {
+                    "reason": blocked.reason,
+                    "trust_status": blocked.trust_status,
+                    "symbol": bundle.source.get("symbol"),
+                    "data_type": bundle.source.get("data_type"),
+                },
+            })
+        else:
+            result.allowed_bundles.append(bundle)
+            result.gate_events.append({
+                "type": "evidence_allowed",
+                "message": f"Evidence allowed: {bundle.source.get('symbol')} {bundle.source.get('data_type')}",
+                "payload": {
+                    "trust_status": bundle.trust_status,
+                    "allowed_use": bundle.allowed_use,
+                    "symbol": bundle.source.get("symbol"),
+                    "data_type": bundle.source.get("data_type"),
+                },
+            })
+
+    result.gate_events.insert(0, {
+        "type": "trust_gate_started",
+        "message": "Trust Gate filter started",
+        "payload": {
+            "raw_evidence_count": len(raw_evidence),
+            "gateway_count": sum(1 for item in raw_evidence if item.get("kind", "").startswith("gateway_")),
+        },
+    })
+    result.gate_events.append({
+        "type": "trust_gate_completed",
+        "message": "Trust Gate filter completed",
+        "payload": {
+            "allowed_count": len(result.allowed_bundles),
+            "blocked_count": len(result.blocked_items),
+            "passthrough_count": len(result.passthrough_items),
+        },
+    })
+
+    return result
