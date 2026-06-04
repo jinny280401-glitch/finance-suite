@@ -417,7 +417,147 @@ Trust Gate 对 MOCK 的处理是：允许通过（`gate_status=allowed`），但
 
 ---
 
-## 9. Sprint 2 验收口径
+## 9. Implementation Plan（锁定实现顺序）
+
+G 审评指定的实现顺序，不得颠倒。每一步是下一步的前提。
+
+---
+
+### Step 1 — `ProviderClass` 枚举 + `allowed_use` 约束注入
+
+**文件**：`research_runtime/evidence_bundle.py`
+
+新增内容：
+- `ProviderClass(str, Enum)` 枚举（`MOCK / FALLBACK / REAL`）
+- `_classify_provider(gateway_response) -> ProviderClass`
+- 修改 `_allowed_use()` 调用 `_classify_provider()`，按 `ProviderClass` 裁剪结果
+
+`MOCK` 的 `allowed_use` 硬覆盖为 `["workflow_smoke", "runtime_test"]`，
+不调用原有的 `data_type` 分支逻辑。
+
+**验证**：单独可测，无依赖。
+
+---
+
+### Step 2 — `BlockedEvidence` + `TrustGateResult` 数据结构
+
+**文件**：`research_runtime/evidence_bundle.py`（追加到现有文件末尾）
+
+新增内容：
+
+```python
+@dataclass(frozen=True)
+class BlockedEvidence:
+    gate_status: str = "blocked"
+    reason: str
+    blocked_fields: list[str]
+    source: dict[str, Any]
+    trust_status: str
+
+@dataclass
+class TrustGateResult:
+    allowed_bundles: list[EvidenceBundle]
+    blocked_items: list[BlockedEvidence]
+    passthrough_items: list[dict[str, Any]]  # non-gateway evidence
+    gate_events: list[dict[str, Any]]
+
+    @property
+    def has_any_allowed(self) -> bool:
+        return len(self.allowed_bundles) > 0
+```
+
+**验证**：纯数据结构，无业务逻辑，可以用构造测试验证。
+
+---
+
+### Step 3 — `_run_trust_gate()`
+
+**文件**：`research_runtime/evidence_bundle.py`（追加）
+
+函数签名：
+
+```python
+def _run_trust_gate(raw_evidence: list[dict[str, Any]]) -> TrustGateResult:
+```
+
+逻辑：
+1. 遍历 `raw_evidence`
+2. `kind` 不以 `gateway_` 开头 → 加入 `passthrough_items`，生成 `trust_gate_passthrough` 事件
+3. `kind` 以 `gateway_` 开头 → 取 `item["payload"]`，调用 `build_evidence_bundle()`
+4. 如果 `bundle.trust_status == "failure"` 或 `bundle.allowed_use == []` → 转为 `BlockedEvidence`，生成 `evidence_blocked` 事件
+5. 否则 → 加入 `allowed_bundles`，生成 `evidence_allowed` 事件
+6. 返回 `TrustGateResult`
+
+**依赖**：Step 1（`ProviderClass` 已注入 `build_evidence_bundle()`）、Step 2（结构体已定义）。
+
+---
+
+### Step 4 — 改 `_build_context()` / `build_prompt()` 签名
+
+**文件**：`research_runtime/workflow.py`
+
+4a. `_build_context()` 改为接收 `TrustGateResult`：
+
+```python
+# 旧签名
+def _build_context(session: ResearchSession) -> dict[str, Any]:
+
+# 新签名
+def _build_context(session: ResearchSession, gate_result: TrustGateResult) -> dict[str, Any]:
+```
+
+内部只访问 `gate_result.allowed_bundles`，不再访问 `session.evidence` 的原始 payload。
+
+4b. `run_research_workflow()` 中插入 `TRUST_GATE` 阶段：
+
+```python
+session.set_state("TRUST_GATE", "Running trust gate filter")
+gate_result = _run_trust_gate(session.evidence)
+session.allowed_evidence = [b.to_dict() for b in gate_result.allowed_bundles]
+session.blocked_evidence = [b.to_dict() for b in gate_result.blocked_items]
+for evt in gate_result.gate_events:
+    session.add_event(**evt)
+if not gate_result.has_any_allowed and _has_gateway_evidence(session.evidence):
+    session.set_state("NO_EVIDENCE", "All gateway evidence blocked by Trust Gate")
+    ...
+```
+
+4c. `generate_section_body()` 签名已正确（只接受 `EvidenceBundle`），无需修改。
+
+**验证**：改完后原有 smoke（`smoke_research_runtime_v0.py` 等）必须继续通过。
+
+---
+
+### Step 5 — 7 个 Smoke
+
+**文件**：`smoke_trust_gate_workflow_v1.py`（新建）
+
+实现 Section 5 定义的 Smoke 1-6 + Section 7 定义的 Smoke 7（旁路审计）。
+
+Smoke 7 是最后写的，因为它依赖 Step 4 的 `session.allowed_evidence` 字段已经存在。
+
+**验收红线（来自 G）**：
+
+```
+raw dict / gateway_response / payload / _qc
+任何一个能进 prompt，就 FAIL
+```
+
+Smoke 7 的失败意味着整个 Sprint 2 FAIL，不管前 6 个是否通过。
+
+---
+
+### Step 实现约束
+
+- 每一步完成后单独运行已有 smoke，不得引入回归
+- Step 1-3 全在 `evidence_bundle.py` 内完成，不改 `workflow.py`
+- Step 4 是唯一改 `workflow.py` 的步骤
+- Step 5 是唯一新建文件的步骤
+- 不改 `session.py`、`events.py`、`finance_data_gateway.py`、`finance_data_contract.py`
+
+---
+
+## 10. Sprint 2 验收口径
 
 通过条件（全部 6 条 smoke PASS）：
 
