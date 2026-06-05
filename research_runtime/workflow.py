@@ -128,9 +128,16 @@ def run_research_workflow(symbol: str = "300750.SZ", mode: str = "local") -> Res
         for evt in gate_result.gate_events:
             session.add_event(evt["type"], evt["message"], evt.get("payload", {}))
 
+        # Store allowed and blocked evidence as dynamic attributes for inspection
         session.allowed_evidence = [b.to_dict() for b in gate_result.allowed_bundles]
         session.blocked_evidence = [b.to_dict() for b in gate_result.blocked_items]
-        session.evidence = session.allowed_evidence + gate_result.passthrough_items
+
+        # Add allowed bundles to session.evidence via the guarded API
+        for bundle in gate_result.allowed_bundles:
+            session.add_evidence_bundle(bundle)
+
+        # Add passthrough items directly (non-gateway editorial scaffolding)
+        session.evidence.extend(gate_result.passthrough_items)
 
         if not gate_result.has_any_allowed and any(item.get("kind", "").startswith("gateway_") for item in raw_evidence):
             session.set_state("NO_EVIDENCE", "All gateway evidence blocked by Trust Gate")

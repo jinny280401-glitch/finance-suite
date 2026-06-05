@@ -3,9 +3,12 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from .events import RuntimeEvent, RuntimeEventLog, utc_now_iso
+
+if TYPE_CHECKING:
+    from .evidence_bundle import EvidenceBundle
 
 
 @dataclass
@@ -37,6 +40,14 @@ class ResearchSession:
                 payload=payload or {},
             )
         )
+
+    def add_evidence_bundle(self, bundle: EvidenceBundle) -> None:
+        """Add an evidence bundle to the session. Rejects raw dicts."""
+        from .evidence_bundle import EvidenceBundle
+        if not isinstance(bundle, EvidenceBundle):
+            raise TypeError(f"add_evidence_bundle only accepts EvidenceBundle, got {type(bundle).__name__}")
+        self.evidence.append(bundle.to_dict())
+        self.updated_at = utc_now_iso()
 
     def set_state(self, state: str, message: str | None = None) -> None:
         self.state = state
