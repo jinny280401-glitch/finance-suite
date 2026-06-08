@@ -22,6 +22,16 @@
 
 ## 待选 Sprint（二选一）
 
+### Sprint 3 起点
+
+在进入 Research Runtime v1 或 Market Context v1 前，先冻结：
+
+```text
+P0a: Strategy ADR freeze — docs/external_intelligence_provider_strategy.md
+```
+
+P0a 只定义 Provider / Skill / Agent / Research System 的治理边界，不接新 Provider、不改 Runtime 代码。
+
 | 选项 | 方向 |
 |---|---|
 | A. Research Runtime v1 | Evidence→Trust Gate→Workflow→Section→Artifact 主链路闭环 |
