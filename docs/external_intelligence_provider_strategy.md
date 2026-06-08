@@ -153,6 +153,8 @@ P0a: Strategy ADR freeze
 
 P0a 完成后再进入 Provider / Skill / Agent 的具体 P1 接入项。Serenity Skill 项目级安装是 P1 子项，但任何进一步接入必须引用本 ADR。
 
+涉及产业链上下游勾稽时，不得从本 ADR 直接跳到 Gate Contract。下一层先冻结 `docs/supply_chain_consistency_model.md`，证明“问题 → 字段 → 证据 → 匹配 → 判定”能被真实案例手工跑通。
+
 ## 10. Serenity 接入状态
 
 Serenity Skill 的项目级安装属于本 ADR 的 P1 子项：

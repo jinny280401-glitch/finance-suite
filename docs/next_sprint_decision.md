@@ -28,9 +28,12 @@
 
 ```text
 P0a: Strategy ADR freeze — docs/external_intelligence_provider_strategy.md
+P0a.5: Supply Chain Consistency Model — docs/supply_chain_consistency_model.md
 ```
 
 P0a 只定义 Provider / Skill / Agent / Research System 的治理边界，不接新 Provider、不改 Runtime 代码。
+
+P0a.5 只定义产业链一致性的“问题 → 字段 → 证据 → 匹配 → 判定”模型，不写 Gate Contract、不写 Runtime。P0a.5 未跑通真实案例 pressure test 前，不启动 P0b。
 
 | 选项 | 方向 |
 |---|---|
