@@ -163,6 +163,37 @@ Trust Gate 后续至少读取：
 
 `status=partial` 时必须有 `reason`。Market Context、Research Runtime、Deep Research 不能只看 `ok=true` 或 HTTP 200。
 
-## 6. 当前代码边界
+## 6. Skill Consumer 预留位
+
+Skill 不是 Provider，不产生数据，也不占用 Provider `allowed_usage` 配额。但 Skill 消费 evidence 的方式必须登记，避免第三方方法论反向定义 runtime。
+
+```yaml
+skill_consumers:
+  serenity-skill:
+    consumer_class: methodology_consumer
+    provider_registration: false
+    evidence_producer: false
+    trust_gate_producer: false
+    report_assembly_writer: false
+    allowed_inputs:
+      - trust_gate_evidence
+      - section_output
+      - user_prompt
+      - public_source_path
+    allowed_outputs:
+      - research_framework
+      - verification_checklist
+      - ranked_research_priority
+      - prompt_pack
+    disallowed_outputs:
+      - raw_provider_data
+      - executable_trade_signal
+      - buy_sell_instruction
+      - report_evidence
+```
+
+Skill Consumer 只能位于 Trust Gate 之后。它可以提出核验清单和研究排序，但不得注册 Provider、绕过 QC、绕过 Trust Gate、或修改 ReportAssembly 输入契约。
+
+## 7. 当前代码边界
 
 当前 `finance_data_gateway.py` 仍是 v0 quote-only 包装层。Provider Route Policy v1 先作为设计契约冻结，Sprint 2 再实现 Provider Registry 与策略选择。

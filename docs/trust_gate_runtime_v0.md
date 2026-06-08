@@ -125,3 +125,19 @@ Trust Gate Runtime Integration v1 只检查一件事：
 - `_qc.status=partial` 未过滤数据进入 prompt：FAIL
 
 Runtime 的 gateway evidence 必须先经过 `build_evidence_bundle()`；`session.evidence` 中不应保留 raw `_qc` 或 raw `payload`。
+
+## 7. Methodology Consumer 边界
+
+`serenity-skill` 这类外部方法论 skill 只能作为 Trust Gate 之后的 consumer。它不在 Trust Gate producer 白名单内，不生产 Evidence Bundle，不读取 raw Gateway Response，也不修改 ReportAssembly。
+
+允许：
+
+- 消费 Trust Gate 后的 evidence 或 section output。
+- 输出研究框架、证据核验清单、产业链层级和候选优先级。
+
+禁止：
+
+- 作为 Provider 或 Gateway 数据源。
+- 生成可直接进入报告的 evidence。
+- 基于 raw provider data 直接进入 prompt。
+- 覆盖 Research Runtime 的编排权。
