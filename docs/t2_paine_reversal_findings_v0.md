@@ -26,7 +26,7 @@ This is not a verdict that European end-user residential storage demand fully co
 | 2023 年报后，卖方是否继续使用去库存解释全年下滑？ | Post-annual-report sell-side confirmation | 东吴证券《2023 年年报点评：产能利用率维持低位》(2024-04-12), 东方财富 PDF: https://pdf.dfcfw.com/pdf/H3_AP202404121630195684_1.pdf | 报告称 2023 出货 1.9GWh，同比下降 47%；库存量 0.6GWh，同比增加 14%；Q4 出货约 0.2GWh，同环比 -85%/-35%，原因是欧洲户储经销商持续去库。 | If a later sell-side report repeats destocking and quantifies shipment decline, classify as confirmed reversal. | Shipment figures can be estimate-based if source labels them as analyst estimate. | PASS | Sell-side shipment data is analyst estimate; official company report confirms sales decline and demand pressure but not every estimate. |
 | 公司 2023 实际是否支持暴跌事实？ | 2023 actual revenue / profit / sales | 派能科技 2023 年年度报告, 新浪财经公告页: https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=9961538&stockid=688063 | 2023 营收 32.99 亿元，同比 -45.13%；归母净利 5.16 亿元，同比 -59.49%；软包电池销量 1874.53MWh，同比 -46.92%；公司称家储产品销售量下降。 | If official filing confirms revenue / profit / sales decline, classify as actual downturn. | RMB figures rounded to 2 decimals in billions; MWh rounded to 2 decimals. | PASS | None. Official filing supports downturn baseline. |
 | 公司对 2023 下滑的归因是否与卖方去库存叙事一致？ | Company attribution | 派能科技 2023 年年度报告, 新浪财经公告页: https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=9961538&stockid=688063 | 公司称宏观环境变化、部分国家和地区补贴政策退坡、海外下游企业去库存，使家用储能市场需求较上年增速阶段性放缓；还称海外下游渠道商库存高企，2023 年海外家储市场持续处于去库阶段。 | If company filing names overseas downstream/channel inventory and demand slowdown, classify as company-side corroboration. | Need at least one official company source. | PASS | Company adds subsidy phase-out and macro factors, so attribution is multi-factor, not inventory-only. |
-| 是否存在“终端需求仍稳健”与“公司出货下滑”的冲突？ | Conflict source | 派能科技投资者关系活动记录表(2024-04-30), 东方财富 PDF: https://pdf.dfcfw.com/pdf/H22_AN202404301632045186_1.pdf | 公司把 2022-2024 称为连续周期：2022 因地缘政治等因素倍增；2023 Q1 供应链恐慌造成库存高企，行业发货量下降；同时观察到欧洲户储装机量相对稳健，没有特别大增长也没有下滑。 | If terminal installations are described as steady while shipments fall due to inventory, classify as channel-stock conflict. | Qualitative steady/weak wording allowed if source distinguishes installation from shipment. | PASS | Conflict source is shipment vs end-installation timing. 2022 channel stocking pulled forward reported shipments. |
+| 是否存在“终端需求仍稳健”与“公司出货下滑”的冲突？ | Conflict source: shipment vs installation 同比 | installation: 华福证券 2023-04-10 全球户储装机规模 12.2/23.6/34.4GWh (2021A/2022A/2023E), https://pdf.dfcfw.com/pdf/H3_AP202304101585257820_1.pdf；shipment/inventory: 东吴 2024-04-12 + 公司年报；定性旁证: 派能 IR 2024-04-30 (欧洲户储装机相对稳健) | shipment 3.5→1.9 GWh (-47%, company level); installation 23.6→34.4 GWh (+46%, global market level); inventory 0.6 GWh (+14%) | **Rule-3 channel-inventory invariant**: IF shipment_growth < installation_growth AND inventory_change > 0 → channel_destocking supported / demand_collapse weakened. | growth ±5pct; GWh 口径 ±10%; **level mismatch tolerated as residual risk** | PASS WITH EVIDENCE GAP | **Field→Rule→Verdict 闭环**（由 Rule-3 推出，非叙事断言）。Residual risk: installation 为 global market level 卖方测算(2023=E)，shipment/inventory 为 Paine company level，口径不对等 → 可支持 demand_collapse WEAKENED，不可支持 channel_destocking PROVEN。详见 `t2_paine_installation_evidence_v0.md`。 |
 
 ## Conclusion
 
@@ -36,6 +36,14 @@ The case passes the reversal test.
 - 2023 negative explanation: overseas downstream/channel inventory, destocking, demand growth slowdown, lower shipments, low utilization, price competition.
 - Company filings corroborate both the 2022 boom and 2023 downturn.
 - Cleanest failure attribution: channel inventory and shipment timing, not a simple collapse in European terminal installation demand.
+
+### Task #19 Closure (2026-06-11)
+
+Conflict 行的 installation 字段已从定性升级为数值（23.6→34.4 GWh，华福 2023-04 全球口径），
+派能由此达成 **Field→Rule→Verdict 闭环**（Rule-3 channel-inventory invariant）。
+判定 **PASS WITH EVIDENCE GAP**：installation 为 global market level 卖方测算，shipment/inventory 为
+Paine company level，口径不对等。能力边界 = 可支持 "demand_collapse weakened"，不可支持
+"channel_destocking proven"。详见 `t2_paine_installation_evidence_v0.md`。
 
 ## Source Register
 
