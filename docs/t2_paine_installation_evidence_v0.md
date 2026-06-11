@@ -63,6 +63,19 @@ VERDICT
 
 ## 4. Residual Risk（必须随 Verdict 一起呈现，不可省略）
 
+### 4.1 ADR 六字段记录（per `evidence_gap_source_adr_v0.md` §"Required Recording Fields"）
+
+| Field | Value |
+| --- | --- |
+| **Gap Type** | Quality Gap (Type B — Field Hierarchy Mismatch) |
+| **Description** | installation 字段为 global market level（华福卖方测算, 2023=E 预测），与同 Rule 内的 shipment / inventory 字段（Paine company level）口径不对等。三者处于不同分析层级，无法在严格意义上构成同一层级的"同比对照"。 |
+| **Impact Scope** | 影响 Rule-3 (channel-inventory invariant) 的因果链强度：Rule 仍可被触发达成 verdict，但 verdict 强度从 PROVEN 降为 SUPPORTED；具体削弱 `channel_destocking is PROVEN`，仅保留 `demand_collapse is WEAKENED`。 |
+| **Blocks Method Validation** | No（Field→Rule→Verdict 闭环存在；Method Validation 仍可进行） |
+| **Confidence Penalty** | Medium（gap 影响 verdict 因果链强度，但不影响 Field/Rule/Verdict 结构本身的存在） |
+| **Mitigation Path** | 引入 SolarPower Europe 欧洲住宅储能装机年报作为 Paine-relevant market level 的独立第三方 actual 源；或引入 EUPD 全欧年度户储装机 actual（不止德国）以构造 2022→2023 实际同比。两者均为新 provider / 新数据范畴，需 G 批准突破"不扩 provider"冻结边界；当前 out of scope。 |
+
+### 4.2 完整 Residual Risk 展开
+
 ```
 EVIDENCE QUALITY RISK — 字段口径不对等 (level mismatch)
   installation : GLOBAL market level   (华福卖方测算, 2023 为预测值 E)
@@ -85,6 +98,8 @@ EVIDENCE QUALITY RISK — 字段口径不对等 (level mismatch)
   - 真正可消除此 gap 的独立源 (SolarPower Europe 欧洲住宅储能装机年报) = 新 provider，
     out of current scope，未引入。
 ```
+
+> **本节为 Review Alignment Patch (per G 2026-06-11 拍板)**:仅补 ADR 六字段表,不改 §3 Rule-3 推导、不改 §5 Closure 状态、不改 §6 Changelog 既有结论。
 
 ## 5. Task #19 Closure 状态
 
