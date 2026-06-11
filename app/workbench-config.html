@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>工作台配置 — Finance Suite</title>
+  <script>
+    if (localStorage.getItem('fs_auth') !== 'ok') {
+      location.replace('/?redirect=/app/workbench-config.html');
+    }
+  </script>
+  <style>
+    :root {
+      --white: #ffffff;
+      --surface: #f5f5f7;
+      --surface-2: #fafafa;
+      --text: #1d1d1f;
+      --text-secondary: #86868b;
+      --text-tertiary: #a1a1a6;
+      --accent: #0071e3;
+      --accent-soft: rgba(0,113,227,0.08);
+      --border: rgba(0,0,0,0.08);
+      --border-light: rgba(0,0,0,0.04);
+      --radius: 14px;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
+      background: var(--surface);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      padding-top: 52px;
+    }
+    .site-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: rgba(255,255,255,0.78);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border-light);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+    }
+    .site-header__inner {
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .header-link {
+      color: var(--text-secondary);
+      font-size: 13px;
+      text-decoration: none;
+      padding: 7px 10px;
+      border-radius: 8px;
+    }
+    .header-link:hover { background: rgba(0,0,0,0.04); color: var(--text); }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    .page-head { margin-bottom: 24px; }
+    .eyebrow {
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    h1 {
+      font-size: 28px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      font-weight: 600;
+    }
+    .subhead {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-top: 8px;
+      max-width: 680px;
+    }
+
+    .panel {
+      background: var(--white);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+    .panel-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .panel-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .panel-meta {
+      color: var(--text-tertiary);
+      font-size: 12px;
+    }
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .config-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 92px 108px;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .card-key {
+      color: var(--text-tertiary);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+    }
+    .card-desc {
+      color: var(--text-secondary);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .badge {
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 7px;
+      text-transform: uppercase;
+    }
+    .badge--muted {
+      color: var(--text-secondary);
+      background: rgba(0,0,0,0.05);
+    }
+    .order-field {
+      width: 92px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--white);
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+      padding: 9px 10px;
+    }
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle input { display: none; }
+    .switch {
+      width: 42px;
+      height: 24px;
+      border-radius: 999px;
+      background: #d2d2d7;
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .switch::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.22);
+      transition: transform 0.2s var(--ease);
+    }
+    .toggle input:checked + .switch { background: var(--accent); }
+    .toggle input:checked + .switch::after { transform: translateX(18px); }
+    .move-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .icon-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      background: var(--white);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font: inherit;
+    }
+    .icon-btn:hover { color: var(--accent); border-color: var(--border); }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .btn {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--white);
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      padding: 10px 14px;
+    }
+    .btn--primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .flow-step {
+      background: var(--surface-2);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      padding: 12px;
+      min-height: 70px;
+    }
+    .flow-step strong {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    .flow-step span {
+      color: var(--text-secondary);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .code-block {
+      background: #1d1d1f;
+      color: #f5f5f7;
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.6;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .toast {
+      position: fixed;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%) translateY(14px);
+      background: var(--text);
+      color: #fff;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s var(--ease);
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    @media (max-width: 760px) {
+      .container { padding: 34px 16px 60px; }
+      .config-card { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="/app/index.html" class="brand">Finance Suite</a>
+      <a href="/app/index.html" class="header-link">返回工作台</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="page-head">
+      <div class="eyebrow">Workbench Sidebar</div>
+      <h1>工作台页面配置</h1>
+      <p class="subhead">统一管理 Sidebar 卡片显示与排序。市场温度卡片仅在 Registry 中预留，当前不渲染业务 UI、不接 API、不定义 Runtime。</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Sidebar Card Registry</div>
+        <div class="panel-meta" id="registryMeta">0 cards</div>
+      </div>
+      <div class="card-list" id="cardList"></div>
+      <div class="actions">
+        <button class="btn btn--primary" type="button" onclick="saveCards()">保存配置</button>
+        <button class="btn" type="button" onclick="resetCards()">恢复默认</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div class="panel-title">配置 Schema</div>
+        <div class="panel-meta">localStorage: fs_sidebar_cards_v1</div>
+      </div>
+      <pre class="code-block" id="schemaBlock"></pre>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Sidebar 渲染流程</div>
+        <div class="panel-meta">Card Registry driven</div>
+      </div>
+      <div class="flow" aria-label="Sidebar rendering flow">
+        <div class="flow-step"><strong>1. Registry</strong><span>声明 card key、默认开关、默认排序与渲染状态。</span></div>
+        <div class="flow-step"><strong>2. Config</strong><span>读取用户配置，并与默认配置合并。</span></div>
+        <div class="flow-step"><strong>3. Filter</strong><span>过滤 disabled 与 reserved/unrenderable card。</span></div>
+        <div class="flow-step"><strong>4. Sort</strong><span>按 order 升序生成最终 Sidebar 队列。</span></div>
+        <div class="flow-step"><strong>5. Render</strong><span>工作台只消费队列，不写业务卡片逻辑。</span></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="sidebar-registry.js"></script>
+  <script>
+    var draftConfig = window.SidebarCards.loadConfig();
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function renderConfig() {
+      var cards = window.SidebarCards.getCards({
+        config: draftConfig,
+        includeDisabled: true,
+        includeReserved: true
+      });
+      document.getElementById('registryMeta').textContent = cards.length + ' cards';
+      document.getElementById('schemaBlock').textContent = JSON.stringify(draftConfig, null, 2);
+      document.getElementById('cardList').innerHTML = cards.map(function (card) {
+        var status = card.renderable ? '<span class="badge">renderable</span>' : '<span class="badge badge--muted">reserved</span>';
+        return [
+          '<div class="config-card" data-key="' + escapeHtml(card.key) + '">',
+          '  <div>',
+          '    <div class="card-title-row"><span class="card-title">' + escapeHtml(card.title) + '</span>' + status + '</div>',
+          '    <div class="card-key">' + escapeHtml(card.key) + '</div>',
+          '    <div class="card-desc">' + escapeHtml(card.description) + '</div>',
+          '  </div>',
+          '  <div>',
+          '    <input class="order-field" type="number" step="10" value="' + escapeHtml(card.order) + '" aria-label="' + escapeHtml(card.title) + ' 排序" onchange="updateOrder(\'' + escapeHtml(card.key) + '\', this.value)">',
+          '    <div class="move-actions">',
+          '      <button class="icon-btn" type="button" onclick="moveCard(\'' + escapeHtml(card.key) + '\', -1)" title="上移">↑</button>',
+          '      <button class="icon-btn" type="button" onclick="moveCard(\'' + escapeHtml(card.key) + '\', 1)" title="下移">↓</button>',
+          '    </div>',
+          '  </div>',
+          '  <label class="toggle">',
+          '    <span>' + (card.enabled ? '显示' : '隐藏') + '</span>',
+          '    <input type="checkbox" ' + (card.enabled ? 'checked' : '') + ' onchange="toggleCard(\'' + escapeHtml(card.key) + '\', this.checked)">',
+          '    <span class="switch" aria-hidden="true"></span>',
+          '  </label>',
+          '</div>'
+        ].join('');
+      }).join('');
+    }
+
+    function toggleCard(key, enabled) {
+      draftConfig[key].enabled = enabled;
+      renderConfig();
+    }
+
+    function updateOrder(key, value) {
+      var order = Number(value);
+      if (Number.isFinite(order)) draftConfig[key].order = order;
+      renderConfig();
+    }
+
+    function moveCard(key, direction) {
+      var cards = window.SidebarCards.getCards({
+        config: draftConfig,
+        includeDisabled: true,
+        includeReserved: true
+      });
+      var index = cards.findIndex(function (card) { return card.key === key; });
+      var targetIndex = index + direction;
+      if (index < 0 || targetIndex < 0 || targetIndex >= cards.length) return;
+      var current = cards[index];
+      var target = cards[targetIndex];
+      var currentOrder = draftConfig[current.key].order;
+      draftConfig[current.key].order = draftConfig[target.key].order;
+      draftConfig[target.key].order = currentOrder;
+      renderConfig();
+    }
+
+    function saveCards() {
+      draftConfig = window.SidebarCards.saveConfig(draftConfig);
+      showToast('工作台配置已保存');
+      renderConfig();
+    }
+
+    function resetCards() {
+      draftConfig = window.SidebarCards.resetConfig();
+      showToast('已恢复默认配置');
+      renderConfig();
+    }
+
+    var toastTimer = null;
+    function showToast(message) {
+      var toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2200);
+    }
+
+    renderConfig();
+  </script>
+</body>
+</html>
