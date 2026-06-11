@@ -21,6 +21,18 @@ for page in deep-research stock macro auction meeting video xueqiu-hot; do
   echo "  ✓ ${page}.html"
 done
 
+# Sidebar P0 资产 (04d5f7d, 63211ff) — Registry 驱动右栏 + market_temperature card
+for asset in sidebar-registry.js market-temperature-mini.js market-temperature-mini.css market-temperature-mini.html market-temperature-fixture.js; do
+  curl -sL "https://raw.githubusercontent.com/jinny280401-glitch/finance-suite/main/app/${asset}" \
+    -o /home/ubuntu/finance-suite-web/static/app/${asset}
+  echo "  ✓ ${asset}"
+done
+
+# Workbench 配置页 (Registry enabled/order 持久化)
+curl -sL "https://raw.githubusercontent.com/jinny280401-glitch/finance-suite/main/app/workbench-config.html" \
+  -o /home/ubuntu/finance-suite-web/static/app/workbench-config.html
+echo "  ✓ workbench-config.html"
+
 # 拉取首页
 curl -sL "https://raw.githubusercontent.com/jinny280401-glitch/finance-suite/main/index.html" \
   -o /home/ubuntu/finance-suite-web/static/index.html
