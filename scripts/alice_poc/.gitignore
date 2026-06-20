@@ -1,0 +1,7 @@
+# Alice 生成的投研内容 = 本地 evidence archive,不进公开 repo 历史
+data/
+# 编译产物,可从 wind_focus.swift 重编
+wind_focus
+# 从 .pyc 反汇编恢复的对照基线,非主 harness
+run_alice_poc.RECOVERED.py
+# (.pyc / __pycache__ 已被根 .gitignore 覆盖)
