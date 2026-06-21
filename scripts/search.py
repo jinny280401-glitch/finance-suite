@@ -10,8 +10,37 @@
 
 import os
 import threading
+import time
 import httpx
+from enum import Enum
+from dataclasses import dataclass, field
 from typing import Optional
+
+
+# ---- RuntimeState & NewsProviderResult（P0: 新闻检索层 runtime_state 支持）----
+
+class RuntimeState(str, Enum):
+    REAL = "real"              # provider 调用成功，返回真实数据
+    FALLBACK = "fallback"      # 主 provider 不可用，降级到备用 provider 成功
+    MOCK = "mock"              # 明确使用 mock/fixture/synthetic data
+    UNAVAILABLE = "unavailable"  # provider 被调用但本次请求失败（网络错误/超时/限流）
+
+
+@dataclass
+class NewsProviderResult:
+    provider: str                              # "tavily" | "brave_web" | "brave_news" | "sinafinance" | "skill_aggregator"
+    runtime_state: RuntimeState
+    items: list[dict] = field(default_factory=list)  # {title, url, content} 结构不变
+    reason: str | None = None                 # "key_missing" | "empty_result" | "timeout" | "http_error:429" | None
+    elapsed_ms: int | None = None
+
+    def to_qc_fragment(self) -> dict:
+        """供 mcp_server.py 直接拼进 _qc，不需要再自己猜 status。"""
+        return {
+            "provider": self.provider,
+            "runtime_state": self.runtime_state.value,
+            "reason": self.reason,
+        }
 
 # ---- API Key 管理（round-robin，从环境变量读取）----
 
@@ -188,6 +217,224 @@ async def tavily_extract(url: str) -> Optional[str]:
             return None
     except Exception:
         return None
+
+
+# ---- v2 函数：返回 NewsProviderResult，暴露 runtime_state ----
+
+async def tavily_search_v2(
+    query: str,
+    topic: str = "general",
+    max_results: int = 5,
+    time_range: str = "week",
+    include_domains: list[str] | None = None,
+) -> NewsProviderResult:
+    """
+    Tavily 搜索 v2：返回 NewsProviderResult（含 runtime_state）。
+    调用者可通过 .runtime_state 感知数据来源质量。
+    """
+    key = _get_tavily_key()
+    if not key:
+        return NewsProviderResult(
+            provider="tavily",
+            runtime_state=RuntimeState.UNAVAILABLE,
+            items=[],
+            reason="key_missing",
+        )
+
+    t0 = time.monotonic()
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(
+                "https://api.tavily.com/search",
+                headers={"Authorization": f"Bearer {key}"},
+                json={
+                    "query": query,
+                    "topic": topic,
+                    "max_results": max_results,
+                    "time_range": time_range,
+                    "include_answer": False,
+                    **({"include_domains": include_domains} if include_domains is not None else {}),
+                },
+            )
+            elapsed = int((time.monotonic() - t0) * 1000)
+            if resp.status_code != 200:
+                return NewsProviderResult(
+                    provider="tavily",
+                    runtime_state=RuntimeState.UNAVAILABLE,
+                    items=[],
+                    reason=f"http_error:{resp.status_code}",
+                    elapsed_ms=elapsed,
+                )
+            data = resp.json()
+            results = data.get("results", [])
+            items = [
+                {"title": r.get("title", ""), "url": r.get("url", ""), "content": r.get("content", "")}
+                for r in results
+            ]
+            return NewsProviderResult(
+                provider="tavily",
+                runtime_state=RuntimeState.REAL,
+                items=items,
+                reason=None if items else "empty_result",
+                elapsed_ms=elapsed,
+            )
+    except httpx.TimeoutException:
+        elapsed = int((time.monotonic() - t0) * 1000)
+        return NewsProviderResult(
+            provider="tavily",
+            runtime_state=RuntimeState.UNAVAILABLE,
+            items=[],
+            reason="timeout",
+            elapsed_ms=elapsed,
+        )
+    except Exception as e:
+        elapsed = int((time.monotonic() - t0) * 1000)
+        return NewsProviderResult(
+            provider="tavily",
+            runtime_state=RuntimeState.UNAVAILABLE,
+            items=[],
+            reason=f"error:{type(e).__name__}",
+            elapsed_ms=elapsed,
+        )
+
+
+async def brave_search_v2(query: str, max_results: int = 5) -> NewsProviderResult:
+    """
+    Brave Web 搜索 v2：返回 NewsProviderResult（含 runtime_state）。
+    """
+    key = _get_brave_key()
+    if not key:
+        return NewsProviderResult(
+            provider="brave_web",
+            runtime_state=RuntimeState.UNAVAILABLE,
+            items=[],
+            reason="key_missing",
+        )
+
+    t0 = time.monotonic()
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.get(
+                "https://api.search.brave.com/res/v1/web/search",
+                headers={
+                    "Accept": "application/json",
+                    "Accept-Encoding": "gzip",
+                    "X-Subscription-Token": key,
+                },
+                params={"q": query, "count": max_results, "search_lang": "zh", "country": "cn"},
+            )
+            elapsed = int((time.monotonic() - t0) * 1000)
+            if resp.status_code != 200:
+                return NewsProviderResult(
+                    provider="brave_web",
+                    runtime_state=RuntimeState.UNAVAILABLE,
+                    items=[],
+                    reason=f"http_error:{resp.status_code}",
+                    elapsed_ms=elapsed,
+                )
+            data = resp.json()
+            web_results = data.get("web", {}).get("results", [])
+            items = [
+                {"title": r.get("title", ""), "url": r.get("url", ""), "content": r.get("description", "")}
+                for r in web_results
+            ]
+            return NewsProviderResult(
+                provider="brave_web",
+                runtime_state=RuntimeState.REAL,
+                items=items,
+                reason=None if items else "empty_result",
+                elapsed_ms=elapsed,
+            )
+    except httpx.TimeoutException:
+        elapsed = int((time.monotonic() - t0) * 1000)
+        return NewsProviderResult(
+            provider="brave_web",
+            runtime_state=RuntimeState.UNAVAILABLE,
+            items=[],
+            reason="timeout",
+            elapsed_ms=elapsed,
+        )
+    except Exception as e:
+        elapsed = int((time.monotonic() - t0) * 1000)
+        return NewsProviderResult(
+            provider="brave_web",
+            runtime_state=RuntimeState.UNAVAILABLE,
+            items=[],
+            reason=f"error:{type(e).__name__}",
+            elapsed_ms=elapsed,
+        )
+
+
+async def brave_news_v2(query: str, max_results: int = 5) -> NewsProviderResult:
+    """
+    Brave News 搜索 v2：返回 NewsProviderResult（含 runtime_state）。
+    """
+    key = _get_brave_key()
+    if not key:
+        return NewsProviderResult(
+            provider="brave_news",
+            runtime_state=RuntimeState.UNAVAILABLE,
+            items=[],
+            reason="key_missing",
+        )
+
+    t0 = time.monotonic()
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.get(
+                "https://api.search.brave.com/res/v1/news/search",
+                headers={
+                    "Accept": "application/json",
+                    "Accept-Encoding": "gzip",
+                    "X-Subscription-Token": key,
+                },
+                params={"q": query, "count": max_results, "search_lang": "zh", "country": "cn"},
+            )
+            elapsed = int((time.monotonic() - t0) * 1000)
+            if resp.status_code != 200:
+                return NewsProviderResult(
+                    provider="brave_news",
+                    runtime_state=RuntimeState.UNAVAILABLE,
+                    items=[],
+                    reason=f"http_error:{resp.status_code}",
+                    elapsed_ms=elapsed,
+                )
+            data = resp.json()
+            news_results = data.get("results", [])
+            items = [
+                {"title": r.get("title", ""), "url": r.get("url", ""), "content": r.get("description", "")}
+                for r in news_results
+            ]
+            return NewsProviderResult(
+                provider="brave_news",
+                runtime_state=RuntimeState.REAL,
+                items=items,
+                reason=None if items else "empty_result",
+                elapsed_ms=elapsed,
+            )
+    except httpx.TimeoutException:
+        elapsed = int((time.monotonic() - t0) * 1000)
+        return NewsProviderResult(
+            provider="brave_news",
+            runtime_state=RuntimeState.UNAVAILABLE,
+            items=[],
+            reason="timeout",
+            elapsed_ms=elapsed,
+        )
+    except Exception as e:
+        elapsed = int((time.monotonic() - t0) * 1000)
+        return NewsProviderResult(
+            provider="brave_news",
+            runtime_state=RuntimeState.UNAVAILABLE,
+            items=[],
+            reason=f"error:{type(e).__name__}",
+            elapsed_ms=elapsed,
+        )
+
+
+# ---- 兼容边界 ----
+# tavily_search / brave_search / brave_news 仍保留原签名和返回结构。
+# v2 函数并行提供 runtime_state，不改变历史调用方行为。
 
 
 async def unified_search(query: str, search_type: str) -> list[dict]:
