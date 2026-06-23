@@ -15,10 +15,17 @@ curl -sL "https://raw.githubusercontent.com/jinny280401-glitch/finance-suite/mai
   -o /home/ubuntu/finance-suite-web/static/app/index.html
 
 # 拉取技能页面 + 情报页面
-for page in deep-research stock macro auction meeting video xueqiu-hot; do
+for page in deep-research stock macro auction meeting video xueqiu-hot workbench-config market-temperature-mini; do
   curl -sL "https://raw.githubusercontent.com/jinny280401-glitch/finance-suite/main/app/${page}.html" \
     -o /home/ubuntu/finance-suite-web/static/app/${page}.html
   echo "  ✓ ${page}.html"
+done
+
+# 拉取工作台 Sidebar 依赖资源
+for asset in sidebar-registry.js market-temperature-fixture.js market-temperature-mini.js market-temperature-mini.css; do
+  curl -sL "https://raw.githubusercontent.com/jinny280401-glitch/finance-suite/main/app/${asset}" \
+    -o /home/ubuntu/finance-suite-web/static/app/${asset}
+  echo "  ✓ ${asset}"
 done
 
 # 拉取首页
@@ -119,5 +126,7 @@ echo "看票：   https://touziagent.com/app/stock.html"
 echo "深度：   https://touziagent.com/app/deep-research.html"
 echo "宏观：   https://touziagent.com/app/macro.html"
 echo "竞价：   https://touziagent.com/app/auction.html"
+echo "配置：   https://touziagent.com/app/workbench-config.html"
+echo "温度：   https://touziagent.com/app/market-temperature-mini.html"
 echo "会议：   https://touziagent.com/app/meeting.html"
 echo "视频：   https://touziagent.com/app/video.html"
