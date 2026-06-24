@@ -69,7 +69,7 @@
       title: payload.title || '市场温度',
       status: payload.status || payload.conclusion || context.market_preference || '降级显示',
       metrics: metricItems,
-      themes: themeItems.length ? themeItems : (global.marketTemperatureFixture || {}).themes || [],
+      themes: themeItems.length ? themeItems : [],
       riskNote: qc.status === 'success' ? '仅市场结构，不含操作建议' : '降级显示，仅作入口占位'
     };
   }
