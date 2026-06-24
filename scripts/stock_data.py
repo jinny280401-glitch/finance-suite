@@ -131,7 +131,7 @@ def resolve_stock(query: str) -> tuple[str, str] | None:
                 return (info["code"], key)
 
     # 2. 缓存没就绪 → 快速备用方案（不等待，不阻塞）
-    # 常见股票硬编码映射（覆盖最热门的50只）
+    # 常见股票硬编码映射（覆盖最热门的50只 + 高频查询的次新股/传媒股）
     QUICK_MAP = {
         "贵州茅台": "600519", "茅台": "600519",
         "比亚迪": "002594", "宁德时代": "300750",
@@ -154,6 +154,7 @@ def resolve_stock(query: str) -> tuple[str, str] | None:
         "三一重工": "600031", "中联重科": "000157",
         "科大讯飞": "002230", "海康威视": "002415",
         "中芯国际": "688981", "韦尔股份": "603501",
+        "博纳影业": "001330",  # 2022年8月上市,传媒板块龙头
     }
     for name, code in QUICK_MAP.items():
         if query in name or query == code:
