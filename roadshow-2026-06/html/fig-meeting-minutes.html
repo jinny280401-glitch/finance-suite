@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>meeting-minutes · Before → After</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  .hero-title{
+    text-align:center; margin-top:14px; z-index:3; position:relative;
+  }
+  .hero-title h1{
+    font-size:30px; font-weight:800; color:var(--ink);
+    margin:0; letter-spacing:1.5px; line-height:1.25;
+  }
+  .hero-title h1 .accent{
+    background:linear-gradient(110deg, var(--cyan) 0%, var(--blue) 50%, var(--violet) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+
+  /* 两栏:左 before / 右 after */
+  .proof{
+    display:grid; grid-template-columns: 1fr 1fr; gap:16px; flex:1; margin-top:20px; z-index:2;
+  }
+  .card{
+    background:var(--glass); border:1px solid var(--stroke); border-radius:14px; padding:16px 18px;
+    display:flex; flex-direction:column; min-height:0;
+  }
+  .card .ct{font-size:13.5px; font-weight:800; color:var(--cyan); margin-bottom:10px; letter-spacing:1px}
+  .card .ct-row{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px}
+  .card .moat{
+    font-size:15px; font-weight:700; color:#0a0e1a;
+    padding:6px 16px; border-radius:999px;
+    background:linear-gradient(110deg, var(--cyan) 0%, var(--blue) 50%, var(--violet) 100%);
+    box-shadow:0 4px 14px rgba(78,168,255,.35); white-space:nowrap;
+  }
+  .card .body{font-size:12.5px; color:var(--ink); line-height:1.8; overflow:auto; flex:1}
+  .card .body b{color:var(--orange); font-weight:700}
+
+  /* Before(左):会议录音原文 */
+  .input-body{
+    background:rgba(0,0,0,.18); border:1px solid var(--stroke); border-radius:8px;
+    padding:12px 14px; font-size:12.5px; line-height:1.9; color:var(--ink);
+    white-space:pre-wrap; font-family: -apple-system, "SF Pro Text", "PingFang SC", sans-serif;
+  }
+  .speaker{color:var(--cyan); font-weight:700}
+
+  /* 主图:填左卡下方空缺(无饰章边框,底部留白) */
+  .hero-img{
+    margin:14px 0 22px; border-radius:14px; overflow:hidden;
+  }
+  .hero-img img{width:100%; display:block; object-fit:cover; aspect-ratio:16/9}
+
+  /* After(右):9 段结构 */
+  ol.minutes{margin:0; padding-left:20px; color:var(--ink); font-size:15px; line-height:2.1}
+  ol.minutes > li{margin-bottom:10px}
+  ol.minutes > li b{color:var(--orange); font-size:15.5px; font-weight:700}
+  ol.minutes .ai b{color:var(--cyan); font-size:15.5px}
+  ol.minutes ul{margin:5px 0 0; padding-left:18px; line-height:1.95; font-size:13.5px}
+
+  /* AI 商业策略小卡 */
+  .strategy{
+    margin-top:4px; padding:6px 10px; background:rgba(78,168,255,.08);
+    border-left:3px solid var(--cyan); border-radius:6px; font-size:12px; color:var(--ink); line-height:1.7;
+  }
+  .strategy b{color:var(--cyan)}
+
+  /* Action Items 表格 */
+  table.mtable{width:100%; border-collapse:collapse; font-size:13.5px; margin-top:5px}
+  table.mtable th{text-align:left; color:var(--sub); font-weight:600; padding:5px 8px; border-bottom:1px solid var(--stroke); font-size:12.5px}
+  table.mtable td{padding:6px 8px; color:var(--ink); border-bottom:1px solid rgba(255,255,255,.05)}
+  table.mtable td.hl{color:var(--cyan); font-weight:700}
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <div class="hero-title">
+    <h1>会议录音 <span class="accent">Before</span> → <span class="accent">After</span> 9 段纪要</h1>
+  </div>
+
+  <div class="proof">
+    <!-- 左:Before - 会议录音原文 -->
+    <div class="card">
+      <div class="ct">① Before · 会议录音原文</div>
+      <div class="body">
+        <div class="input-body"><span class="speaker">张总:</span>我们刚和华福三明分公司做了闽商会客室的接洽,对方希望结合三明的钢铁产业特色做定制化金融服务。
+
+<span class="speaker">李经理:</span>他们问我们能不能做一套针对闽商钢铁企业的授信模型,前三个月先跑两个试点:三明本地和福州马尾。
+
+<span class="speaker">陈总:</span>我建议我们金融研究先出三份报告:行业分析、企业画像、产品方案。一个月内出第一份。
+
+<span class="speaker">张总:</span>研发那边需要评估接口对接,确认能不能拿到企业工商和税务数据。
+
+<span class="speaker">李经理:</span>可以,下周三前给一个可行性结论。
+
+<span class="speaker">陈总:</span>好,客户那边下周五再来一次,我同步讲我们的研究方案。</div>
+        <!-- 主图:签合同 / 会议语义,填左卡下方空缺 -->
+        <div class="hero-img">
+          <img src="assets/fig-meeting-minutes-hero.png" alt="">
+        </div>
+      </div>
+    </div>
+
+    <!-- 右:After - 9 段纪要 -->
+    <div class="card">
+      <div class="ct-row">
+        <span class="ct">② After · 9 段结构化纪要</span>
+        <span class="moat">💎 内置麦肯锡战略分析</span>
+      </div>
+      <div class="body">
+        <ol class="minutes">
+          <li><b>会议主题</b>:待补</li>
+          <li><b>一句话总结</b>:待补</li>
+          <li><b>核心结论</b>:待补</li>
+          <li><b>关键讨论</b>:待补(可附商业策略分析)</li>
+          <li><b>已确认决策</b>:待补</li>
+          <li class="ai"><b>Action Items</b>:
+            <table class="mtable">
+              <thead><tr><th>#</th><th>事项</th><th>负责人</th><th>截止</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td>待补</td><td class="hl">—</td><td>—</td></tr>
+                <tr><td>2</td><td>待补</td><td class="hl">—</td><td>—</td></tr>
+                <tr><td>3</td><td>待补</td><td class="hl">—</td><td>—</td></tr>
+              </tbody>
+            </table>
+          </li>
+          <li><b>风险与待确认</b>:待补</li>
+          <li><b>后续建议</b>:待补</li>
+          <li><b>附录 · 原始信息提取</b>:待补</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
