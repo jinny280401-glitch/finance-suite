@@ -272,3 +272,27 @@ Usage notes:
 - Acceptance doc: `docs/research_runtime_v0_2_acceptance.md`.
 - Not included: production router, frontend UI, new data_type, new provider, LLM calls.
 - Next phase: v0.3 — not started, scope TBD.
+
+## 2026-07-03: Report UX Folding Patch local-source lock
+
+- Final accepted state:
+  - Report UX Folding Patch: `PASS / LOCAL SOURCE`.
+  - Transparency: `PRESERVED`.
+  - Data Chain: `UNCHANGED`.
+  - Production Ready: `NOT CLAIMED`.
+  - Push: `NOT AUTHORIZED` before this commit request.
+  - Deploy: `NOT AUTHORIZED`.
+- What changed locally:
+  - `app/stock.html` now renders report body before trust/transparency details.
+  - `数据完整性摘要`, `信源检索情况`, and `QC / Trust Gate 详情` are split into default-collapsed `<details>` sections.
+  - Disclosure titles retain status cues such as Partial, available source keys, blocked fields, allowed use, and `_qc.status`.
+- Boundary preserved:
+  - No provider, prompt, backend contract, or `/api/analyze` data-chain change.
+  - Do not turn unavailable data into available data.
+  - Body compliance filtering remains responsible for blocking current-price, capital-flow, valuation, short-term breakout, position, and unsupported trend claims when `realtime`, `capital_flow`, `valuation`, or `macro` data is unavailable.
+- Deployment rule:
+  - Do not upgrade this local-source PASS to production PASS.
+  - Only legal next entry is `Report UX Folding Deploy Window`.
+  - Deploy window requires git diff review, selective `stock.html` commit/review, production target mapping, backup + checksum, smoke proof, and rollback path.
+- Engram lesson written:
+  - `d707e07f43f7` — Report UX folding must preserve transparency and trust boundaries; local-source UX PASS is not live or production proof.

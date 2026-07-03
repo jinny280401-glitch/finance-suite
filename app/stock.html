@@ -423,6 +423,143 @@
       text-decoration: underline;
     }
 
+    /* Trust Presentation Layer */
+    .trust-panel {
+      margin: 0 0 22px 0;
+      padding: 16px 18px;
+      border: 1px solid #dbeafe;
+      border-radius: 10px;
+      background: #f8fbff;
+    }
+    .trust-disclosure-stack {
+      margin-top: 24px;
+    }
+    .trust-disclosure-stack .trust-panel {
+      margin-bottom: 12px;
+    }
+    .trust-panel__title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 8px;
+    }
+    .trust-panel__text {
+      font-size: 12px;
+      line-height: 1.7;
+      color: #374151;
+    }
+    .trust-disclosure {
+      border: 1px solid #dbeafe;
+      border-radius: 10px;
+      background: #f8fbff;
+      margin: 0 0 18px 0;
+      overflow: hidden;
+    }
+    .trust-disclosure summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      list-style: none;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e40af;
+    }
+    .trust-disclosure summary::-webkit-details-marker { display: none; }
+    .trust-disclosure__hint {
+      color: #2563eb;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .trust-disclosure__body {
+      border-top: 1px solid #dbeafe;
+      padding: 0 16px 14px;
+    }
+    .trust-detail-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: #374151;
+    }
+    .trust-detail-row {
+      padding: 9px 10px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .trust-detail-row strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #111827;
+      font-size: 12px;
+    }
+    .trust-detail-row a {
+      color: #2563eb;
+      text-decoration: none;
+      white-space: normal;
+    }
+    .trust-detail-row a:hover { text-decoration: underline; }
+    .availability-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .availability-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+    .availability-item__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .availability-item__name {
+      font-weight: 700;
+      color: #111827;
+    }
+    .availability-status {
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #f3f4f6;
+      color: #4b5563;
+      white-space: nowrap;
+    }
+    .availability-status--complete { background: #dcfce7; color: #166534; }
+    .availability-status--partial { background: #fef3c7; color: #92400e; }
+    .availability-status--unavailable { background: #f3f4f6; color: #6b7280; }
+    .availability-detail {
+      color: #4b5563;
+      line-height: 1.6;
+      margin-top: 4px;
+    }
+    .section-data-note {
+      margin: 10px 0 14px;
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fafafa;
+      font-size: 12px;
+      color: #374151;
+    }
+    .section-data-note__title {
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+    .trust-muted { color: #6b7280; }
+
     /* 免责声明 */
     .disclaimer {
       margin-top: 32px;
@@ -708,32 +845,413 @@
 
     function formatResult(data) {
       if (typeof data === 'string') {
-        return `<div>${marked.parse(data)}</div>`;
+        return `<div>${sanitizeRenderedHtml(marked.parse(sanitizeTrustText(data)))}</div>` + renderTrustPresentation(null);
       }
 
-      const md = data.result || data.content || '';
+      const md = applyReportBodyCompliance(data.result || data.content || '', data);
       const sources = data.sources || [];
 
       let html = '';
 
       if (md) {
-        html += marked.parse(md);
+        html += injectSectionDataNotes(sanitizeRenderedHtml(marked.parse(sanitizeTrustText(md))), data);
       } else {
-        html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        html += `<pre>${sanitizeTrustText(JSON.stringify(data, trustJsonReplacer, 2))}</pre>`;
       }
 
-      if (sources.length > 0) {
-        html += `<div class="sources-section">
-          <div class="sources-title">数据来源</div>`;
-        sources.forEach((s, i) => {
-          const title = s.title || s.url || `来源${i + 1}`;
-          const url = s.url || '#';
-          html += `<div class="source-item">【来源${i + 1}】<a href="${url}" target="_blank" rel="noopener">${title}</a></div>`;
-        });
-        html += `</div>`;
-      }
+      html += renderTrustPresentation(data, sources);
 
       return html;
+    }
+
+    function trustJsonReplacer(key, value) {
+      return normalizeDisplayValue(value);
+    }
+
+    function normalizeDisplayValue(value) {
+      if (value === null || value === undefined) return '暂不可用';
+      if (typeof value === 'number' && Number.isNaN(value)) return '暂不可用';
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed || /^(nan|null|none|n\/a)$/i.test(trimmed)) return '暂不可用';
+      }
+      return value;
+    }
+
+    function sanitizeTrustText(text) {
+      return String(text ?? '暂不可用')
+        .replace(/\b(?:nan|null|none|n\/a)\b/gi, '暂不可用');
+    }
+
+    function applyReportBodyCompliance(markdown, data) {
+      let text = String(markdown || '');
+      if (!text) return text;
+
+      const availability = availabilityMap(data);
+      const sources = Array.isArray(data?.sources) ? data.sources : [];
+      const sourceQuality = String(data?.source_quality || data?._qc?.source_quality || '').toLowerCase();
+      const sourcePolluted = sourceQuality === 'partial' || sourceQuality === 'failure' || hasPollutedSources(sources);
+
+      if (sourcePolluted) {
+        text = replaceChineseSection(text, '一、核心结论', '二、财报与基本面', [
+          '### 一、核心结论',
+          '',
+          '信源质量：PARTIAL / POLLUTED',
+          '',
+          '当前仅能形成研究边界，不能形成强态势、资金、估值、技术或交易结论。',
+          '',
+          '可保留观察方向：后续需先核验有效公告、财报、业务订单、行业证据和非污染新闻源，再判断是否具备继续研究价值。'
+        ].join('\n'));
+      }
+
+      if (availability.capital_flow === 'unavailable') {
+        text = replaceLinesContaining(text, /(主力|游资|北向|资金流入|资金流出|资金情绪|出货|放量|缩量|量能|龙虎榜|快进快出)/, '资金流数据暂不可用，无法判断资金结构、参与方结构、量能结构与持仓风险。');
+        text = replaceChineseSection(text, '四、资金与技术面', '五、近期重要新闻', [
+          '### 四、资金与技术面',
+          '',
+          '资金流数据暂不可用，无法判断资金结构、参与方结构、量能结构与持仓风险。',
+          '',
+          '技术面如需判断，必须等待结构化 K 线、成交量、换手率和资金流数据返回后再补充。'
+        ].join('\n'));
+      }
+
+      if (availability.valuation === 'unavailable') {
+        text = replaceChineseSection(text, '三、估值定位', '四、资金与技术面', [
+          '### 三、估值数据空缺说明',
+          '',
+          '估值数据暂不可用，无法形成估值结论。',
+          '',
+          '后续需补齐 PE、PB、ROE、行业均值或历史分位等结构化估值数据。'
+        ].join('\n'));
+        text = replaceLinesContaining(text, /(估值触发|目标价|股价参考区间|参考区间|内在价值|安全边际|价格区间|上行空间|下行风险)/, '估值数据暂不可用，无法形成估值结论或价格区间。');
+      }
+
+      if (availability.realtime === 'unavailable') {
+        text = replaceLinesContaining(text, /(盘中强弱|技术位|支撑位|压力位|突破|破位|追高|止损|止盈|短线交易|短期动作|融资买入)/, '实时行情暂不可用，无法判断实时交易状态、价格结构与短线市场表现。');
+      }
+
+      if (availability.capital_flow === 'unavailable' || availability.valuation === 'unavailable' || availability.realtime === 'unavailable') {
+        text = replaceChineseSection(text, '八、三大情景推演', '九、操作参考', [
+          '### 八、三大情景推演',
+          '',
+          '关键数据不完整，暂不输出概率权重、股价参考区间或交易触发条件。',
+          '',
+          '| 情景 | 后续验证条件 | 当前状态 |',
+          '|---|---|---|',
+          '| 观察改善 | 有效财报、真实业务订单、非污染新闻源、资金流和实时行情补齐 | 待验证 |',
+          '| 维持观察 | 仍缺少财报、估值、资金流或实时行情证据 | 证据不足 |',
+          '| 风险扩大 | 污染源、监管风险、财务异常或业务证据继续缺失 | 待验证 |'
+        ].join('\n'));
+        text = replaceChineseSection(text, '九、操作参考', null, [
+          '### 九、研究边界 / 观察条件 / 后续验证项',
+          '',
+          '- **研究边界**：资金流、估值或实时行情存在不可用项，不能形成交易动作、价格结构、资金结构或价格区间结论。',
+          '- **观察条件**：补齐有效财报、业务订单、行业证据、非污染新闻源、结构化资金流、估值和实时行情。',
+          '- **后续验证项**：公告、定期报告、资金流、估值、实时行情、监管信息和可信新闻源。',
+          '',
+          '> 以上内容仅为研究边界说明，不构成投资建议。'
+        ].join('\n'));
+      }
+
+      text = text
+        .replace(/坚决观望/g, '证据不足，暂不形成动作建议')
+        .replace(/禁止融资买入/g, '融资相关风险需另行核验')
+        .replace(/禁止追高/g, '追高风险需另行核验')
+        .replace(/买入|卖出|加仓|减仓/g, '动作建议已屏蔽');
+
+      return text;
+    }
+
+    function availabilityMap(data) {
+      const items = normalizeAvailabilityItems(getTrustMeta(data));
+      const out = {};
+      items.forEach((item) => {
+        const status = String(item.status || '').toLowerCase();
+        out[item.key] = status || 'unknown';
+        if (item.missing?.includes(item.key) || status === 'missing' || status === 'not_connected') out[item.key] = 'unavailable';
+      });
+      return out;
+    }
+
+    function hasPollutedSources(sources) {
+      return sources.some((source) => {
+        const raw = `${source?.title || ''} ${source?.url || ''}`.toLowerCase();
+        return /招嫖|按摩|高级资源|电话v|modrinth|collection|dkdud|cdtmq/.test(raw);
+      });
+    }
+
+    function replaceLinesContaining(text, pattern, replacement) {
+      const seen = new Set();
+      return text.split('\n').map((line) => {
+        if (!pattern.test(line)) return line;
+        if (seen.has(replacement)) return '';
+        seen.add(replacement);
+        const prefix = /^\s*[-*•]\s*/.test(line) ? '- ' : '';
+        return `${prefix}${replacement}`;
+      }).join('\n').replace(/\n{3,}/g, '\n\n');
+    }
+
+    function replaceChineseSection(text, startTitle, nextTitle, replacement) {
+      const start = text.indexOf(startTitle);
+      if (start === -1) return text;
+      const before = text.slice(0, start);
+      const afterStart = text.slice(start);
+      let end = -1;
+      if (nextTitle) {
+        const explicit = afterStart.indexOf(nextTitle);
+        if (explicit > 0) end = start + explicit;
+      }
+      if (end === -1) {
+        const match = afterStart.slice(startTitle.length).match(/\n###?\s*[一二三四五六七八九十]+、/);
+        if (match?.index !== undefined) end = start + startTitle.length + match.index;
+      }
+      const after = end > -1 ? text.slice(end) : '';
+      return `${before}${replacement}\n\n${after}`.replace(/\n{3,}/g, '\n\n');
+    }
+
+    function sanitizeRenderedHtml(html) {
+      return String(html)
+        .replace(/>\s*(?:nan|null|None|N\/A)\s*</g, '>暂不可用<')
+        .replace(/<td>\s*<\/td>/g, '<td>暂不可用</td>');
+    }
+
+    function getTrustMeta(data) {
+      if (!data || typeof data !== 'object') return {};
+      return data.trust_presentation || data.presentation || data.data_availability || data._qc?.data_availability || {};
+    }
+
+    function normalizeAvailabilityItems(meta) {
+      const source = meta?.data_availability || meta?.availability || meta;
+      if (!source || typeof source !== 'object' || Array.isArray(source)) return [];
+      return Object.keys(source).map((key) => {
+        const raw = source[key] || {};
+        if (typeof raw === 'string') return { key, label: key, status: raw };
+        return {
+          key,
+          label: raw.label || raw.name || key,
+          status: raw.status || raw.availability || 'unknown',
+          available: Array.isArray(raw.available) ? raw.available : [],
+          missing: Array.isArray(raw.missing) ? raw.missing : [],
+          note: raw.note || raw.message || ''
+        };
+      });
+    }
+
+    function renderTrustPresentation(data, sources = []) {
+      const meta = getTrustMeta(data);
+      const items = normalizeAvailabilityItems(meta);
+      const availabilitySummary = renderAvailabilitySummary(items);
+      const availabilityBody = items.length
+        ? `<div class="availability-grid">${items.map(renderAvailabilityItem).join('')}</div>`
+        : '<div class="trust-muted">数据完整性状态暂未提供。报告正文仅展示已返回内容，不由界面推导数据状态。</div>';
+      const sourceSummary = renderSourceSummary(data, sources);
+      const sourceBody = renderSourceDetails(data, sources);
+      const qcSummary = renderQcSummary(data);
+      const qcBody = renderQcDetails(data);
+
+      return `
+        <div class="trust-disclosure-stack">
+          <div class="trust-panel">
+            <div class="trust-panel__title">可信度说明</div>
+            <div class="trust-panel__text">
+              本报告仅基于已获取的数据生成。暂不可用的数据不会参与任何分析结论。
+              部分章节基于不完整数据生成，请结合其他信息综合判断。
+            </div>
+          </div>
+          <details class="trust-disclosure">
+            <summary>
+              <span>${availabilitySummary}</span>
+              <span class="trust-disclosure__hint">查看详情</span>
+            </summary>
+            <div class="trust-disclosure__body">${availabilityBody}</div>
+          </details>
+          <details class="trust-disclosure">
+            <summary>
+              <span>${sourceSummary}</span>
+              <span class="trust-disclosure__hint">查看详情</span>
+            </summary>
+            <div class="trust-disclosure__body">${sourceBody}</div>
+          </details>
+          <details class="trust-disclosure">
+            <summary>
+              <span>${qcSummary}</span>
+              <span class="trust-disclosure__hint">查看详情</span>
+            </summary>
+            <div class="trust-disclosure__body">${qcBody}</div>
+          </details>
+        </div>`;
+    }
+
+    function renderAvailabilitySummary(items) {
+      if (!items.length) return '数据完整性摘要：状态暂未提供';
+      const availableCount = items.filter((item) => {
+        const status = String(item.status || '').toLowerCase();
+        return status === 'complete' || status === 'partial' || item.available.length > 0;
+      }).length;
+      const unavailableCount = items.filter((item) => {
+        const status = String(item.status || '').toLowerCase();
+        return status === 'unavailable' || status === 'missing' || status === 'not_connected' || item.missing.length > 0;
+      }).length;
+      const hasUnavailable = items.some((item) => String(item.status || '').toLowerCase() === 'unavailable' || item.missing.length > 0);
+      const hasPartial = items.some((item) => String(item.status || '').toLowerCase() === 'partial');
+      const overall = hasUnavailable || hasPartial || availableCount < items.length ? 'Partial' : 'Complete';
+      const missingText = unavailableCount ? `，${unavailableCount} 项暂不可用` : '';
+      return `数据完整性摘要：${overall}，已获取 ${availableCount}/${items.length}${missingText}`;
+    }
+
+    function renderAvailabilityItem(item) {
+      const status = String(item.status || 'unknown').toLowerCase();
+      const statusText = status === 'complete' ? 'Complete'
+        : status === 'partial' ? 'Partial'
+        : status === 'unavailable' ? '暂不可用'
+        : '状态暂未提供';
+      const statusClass = status === 'complete' ? 'availability-status--complete'
+        : status === 'partial' ? 'availability-status--partial'
+        : status === 'unavailable' ? 'availability-status--unavailable'
+        : '';
+      return `<div class="availability-item">
+        <div class="availability-item__head">
+          <span class="availability-item__name">${escapeHtml(item.label)}</span>
+          <span class="availability-status ${statusClass}">${escapeHtml(statusText)}</span>
+        </div>
+        ${item.available.length ? `<div class="availability-detail">已获取：${item.available.map(escapeHtml).join('、')}</div>` : ''}
+        ${item.missing.length ? `<div class="availability-detail">暂不可用：${item.missing.map(escapeHtml).join('、')}</div>` : ''}
+        ${item.note ? `<div class="availability-detail">${escapeHtml(item.note)}</div>` : ''}
+      </div>`;
+    }
+
+    function renderSourceSummary(data, sources = []) {
+      const sourceKeys = detectedSourceKeys(data);
+      const got = [];
+      if (sources.length) got.push(`sources(${sources.length})`);
+      got.push(...sourceKeys);
+      return got.length
+        ? `信源检索情况：已获取 ${got.map(escapeHtml).join(' / ')}`
+        : '信源检索情况：未提供结构化信源明细';
+    }
+
+    function renderSourceDetails(data, sources = []) {
+      const rows = [];
+      const sourceKeys = detectedSourceKeys(data);
+      if (sources.length) {
+        rows.push(`<div class="trust-detail-row"><strong>sources</strong>${sources.map((s, i) => {
+          const title = escapeHtml(s?.title || s?.url || `来源${i + 1}`);
+          const url = s?.url ? escapeHtml(s.url) : '';
+          return url
+            ? `【来源${i + 1}】<a href="${url}" target="_blank" rel="noopener">${title}</a>`
+            : `【来源${i + 1}】${title}`;
+        }).join('<br>')}</div>`);
+      }
+      sourceKeys.forEach((key) => {
+        rows.push(renderTrustDetailRow(key, readNestedTrustValue(data, key)));
+      });
+      return rows.length
+        ? `<div class="trust-detail-list">${rows.join('')}</div>`
+        : '<div class="trust-muted">未返回 search_sources / report_context / structured_financial_or_kline 等结构化信源明细。</div>';
+    }
+
+    function renderQcSummary(data) {
+      const qc = data?._qc || {};
+      const status = qc.status || data?.status || '状态暂未提供';
+      const blockedFields = Array.isArray(qc.blocked_fields) ? qc.blocked_fields : (Array.isArray(data?.blocked_fields) ? data.blocked_fields : []);
+      const allowedUse = Array.isArray(qc.allowed_use) ? qc.allowed_use : (Array.isArray(data?.allowed_use) ? data.allowed_use : []);
+      const blocked = blockedFields.length;
+      const allowed = allowedUse.length;
+      if (blocked) return `Trust Gate：已启用，${blocked} 个字段被阻断`;
+      if (allowed) return `Trust Gate：已启用，${allowed} 条允许用途`;
+      return `Trust Gate：${escapeHtml(status)}`;
+    }
+
+    function renderQcDetails(data) {
+      const qc = data?._qc || {};
+      const rows = [];
+      ['status', 'source_type', 'runtime_state', 'reason', 'message'].forEach((key) => {
+        if (qc[key] !== undefined) rows.push(renderTrustDetailRow(`_qc.${key}`, qc[key]));
+      });
+      ['blocked_fields', 'allowed_use', 'forbidden_use', 'missing_dimensions', 'data_availability', 'section_data_usage'].forEach((key) => {
+        if (qc[key] !== undefined) rows.push(renderTrustDetailRow(`_qc.${key}`, qc[key]));
+      });
+      ['blocked_fields', 'allowed_use', 'forbidden_use', 'data_availability', 'section_data_usage'].forEach((key) => {
+        if (data?.[key] !== undefined) rows.push(renderTrustDetailRow(key, data[key]));
+      });
+      return rows.length
+        ? `<div class="trust-detail-list">${rows.join('')}</div>`
+        : '<div class="trust-muted">未返回结构化 QC / Trust Gate 详情。</div>';
+    }
+
+    function detectedSourceKeys(data) {
+      const keys = ['search_sources', 'report_context', 'structured_financial_or_kline'];
+      return keys.filter((key) => readNestedTrustValue(data, key) !== undefined);
+    }
+
+    function readNestedTrustValue(data, key) {
+      if (!data || typeof data !== 'object') return undefined;
+      if (data[key] !== undefined) return data[key];
+      if (data._qc && data._qc[key] !== undefined) return data._qc[key];
+      if (data.context && data.context[key] !== undefined) return data.context[key];
+      if (data.result && typeof data.result === 'object' && data.result[key] !== undefined) return data.result[key];
+      return undefined;
+    }
+
+    function renderTrustDetailRow(label, value) {
+      return `<div class="trust-detail-row"><strong>${escapeHtml(label)}</strong>${escapeHtml(formatTrustDetailValue(value))}</div>`;
+    }
+
+    function formatTrustDetailValue(value) {
+      if (Array.isArray(value)) {
+        if (!value.length) return '[]';
+        return value.map((item) => typeof item === 'object'
+          ? JSON.stringify(item, trustJsonReplacer, 2)
+          : sanitizeTrustText(item)).join('、');
+      }
+      if (value && typeof value === 'object') {
+        return JSON.stringify(value, trustJsonReplacer, 2);
+      }
+      return sanitizeTrustText(value);
+    }
+
+    function getSectionUsage(data) {
+      const meta = getTrustMeta(data);
+      return meta.section_data_usage || data?.section_data_usage || data?._qc?.section_data_usage || {};
+    }
+
+    function injectSectionDataNotes(html, data) {
+      const usage = getSectionUsage(data);
+      if (!usage || typeof usage !== 'object' || !Object.keys(usage).length) return html;
+      return html.replace(/<h([1-3])>(.*?)<\/h\1>/g, (match, level, title) => {
+        const key = stripHtml(title).trim();
+        const entry = usage[key] || usage[normalizeSectionKey(key)];
+        if (!entry) return match;
+        return match + renderSectionDataNote(entry);
+      });
+    }
+
+    function renderSectionDataNote(entry) {
+      const used = Array.isArray(entry.used) ? entry.used : [];
+      const missing = Array.isArray(entry.missing) ? entry.missing : [];
+      if (!used.length && !missing.length) return '';
+      return `<div class="section-data-note">
+        <div class="section-data-note__title">本章节使用的数据</div>
+        ${used.map(item => `<div>✓ ${escapeHtml(item)}</div>`).join('')}
+        ${missing.map(item => `<div>✗ ${escapeHtml(item)}</div>`).join('')}
+      </div>`;
+    }
+
+    function stripHtml(value) {
+      return String(value).replace(/<[^>]+>/g, '');
+    }
+
+    function normalizeSectionKey(value) {
+      return String(value).replace(/[一二三四五六七八九十、.．\s]/g, '');
+    }
+
+    function escapeHtml(value) {
+      return sanitizeTrustText(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     // Pre-fill from sessionStorage (from workbench hot click) or URL param
