@@ -35,8 +35,8 @@ echo "  ✓ workbench-config.html"
 
 # 拉取首页
 curl -sL "https://raw.githubusercontent.com/jinny280401-glitch/finance-suite/main/index.html" \
-  -o /home/ubuntu/finance-suite-web/static/index.html
-echo "  ✓ index.html (首页)"
+  -o /home/ubuntu/finance-suite-web/templates/index.html
+echo "  ✓ index.html (首页模板)"
 
 echo ""
 echo "===== 2. 验证文件 ====="
