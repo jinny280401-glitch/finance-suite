@@ -35,6 +35,138 @@
   - Do not generate a complete due-diligence card.
   - Do not describe the PPT Demo as real integration.
 
+## 2026-07-03: Realtime Quote Integration local source gate
+
+- Engram lesson written: `6c1c6c9ecc31`.
+- Realtime Quote Integration status: `PASS WITH DEGRADATION / LOCAL SOURCE`.
+- Scope: local Finance Suite source only; this is not a production capability claim.
+- Implemented local source path:
+  - `scripts/stock_data.py` now calls the quote gateway via `finance_data_gateway.get_finance_data("quote")` instead of relying only on an empty in-memory cache.
+  - `mcp_server.py` exposes realtime `data_availability`, `allowed_use`, and `blocked_fields`.
+  - `smoke_realtime_quote_integration.py` covers the local quote Trust Gate behavior.
+- Local verification:
+  - `compileall` passed for `scripts/stock_data.py`, `mcp_server.py`, and `smoke_realtime_quote_integration.py`.
+  - `smoke_realtime_quote_integration.py`: PASS.
+  - `smoke_trust_gate_runtime_v0.py`: PASS.
+- Observed local quote mode:
+  - `realtime.status = partial`.
+  - source observed as `tushare`.
+  - freshness is daily / reference data, not intraday realtime.
+  - `allowed_use = [daily_reference, historical_context]`.
+  - blocked fields include price / volume / amount and short-term or intraday judgement fields.
+- Boundaries:
+  - No deploy.
+  - No push.
+  - Production `/api/analyze` wrapper is not claimed integrated.
+  - Realtime production ready is not claimed.
+  - Intraday realtime capability is not claimed.
+- Next legal window: `Realtime Quote Production Acceptance Window`.
+
+## 2026-06-30: Engram timeline stale note
+
+- Engram Timeline is currently `STALE` for Finance Suite status reconstruction.
+- Observed gap: Engram recent lessons do not include reliable post-2026-06-24 project-state lessons, while Memory / Plans / current-session lockboards contain Day 10 / Day 11 / Day 12 window records.
+- Interpretation: this is an Engram lesson-sync gap, not evidence that the project stopped progressing.
+- Current factual source order for Day 11 / Day 12 status:
+  1. Current-session lockboard.
+  2. Project Memory.
+  3. Active Plans / handoff boards, after checking for historical-status conflicts.
+- Engram recent_lessons must not be used as the current SSOT for Day 11 / Day 12.
+- Do not reopen or roll back already accepted windows solely because Engram lacks matching recent lessons.
+- Current guardrails remain:
+  - Production Ready: NOT CLAIMED.
+  - Deploy Authorization: NOT GRANTED unless explicitly authorized.
+  - Acceptance PASS: NOT CLAIMED unless the active acceptance window explicitly passes.
+
+## 2026-06-25: THS Runtime Resolution closed and credential rotation P0
+
+- Engram lesson written: `9cd2cf8aa04d`.
+- Supersedes earlier 2026-06-25 THS runtime gate wording that still used `FAIL / UNKNOWN`.
+- THS Theme Attribution Runtime Resolution is CLOSED.
+- Final runtime verdict: `MISSING / NOT IMPLEMENTED`.
+- Evidence chain:
+  - Route: Missing.
+  - Provider Generic: Exists.
+  - Provider Specific: Missing / Not Implemented.
+  - Config: Exists.
+  - Therefore no THS Theme Attribution runtime object exists.
+- Security state:
+  - THS credential exposure containment: PASS.
+  - THS credential rotation: REQUIRED.
+  - Rotation status: RECORDED / NOT ROTATED.
+  - Do not write raw THS credential values in chat, Memory, Engram, reports, or terminal evidence.
+- Current SSOT SOP: `/Users/Zhuanz/Documents/New project 6/docs/ths_credential_rotation_sop_v0.md`.
+- Contract Proof state: READY / NOT ACTIVE / BLOCKED BY P0 CREDENTIAL ROTATION.
+- Legal next sequence:
+  1. G rotates THS credentials in the iFinD admin surface.
+  2. CC/CA updates production `.env`.
+  3. Restart `finance-suite.service`.
+  4. Run `ifind_data.py` reconnect smoke.
+  5. Close P0.
+  6. Start THS Theme Attribution Contract v0.
+- Sidebar line remains separate: Phase 1 PASS WITH FINDING; transparency hotfix committed and push verified; deploy still waiting for explicit authorization.
+
+## 2026-06-25: THS Theme Attribution runtime gate before value proof
+
+- Engram lesson written: `ae5bc3e61f2f`.
+- Rule: Provider value proof requires runtime samples; `UNKNOWN` is not `FAIL` and not low value.
+- Current THS Theme Attribution status:
+  - Discovery: PASS.
+  - Smoke: PASS.
+  - Runtime Proof: FAIL / UNKNOWN.
+  - Value Proof: UNKNOWN.
+  - Narrative Quality Proof: UNKNOWN.
+  - Contract Proof: DESIGN READY.
+  - Integration: NOT STARTED.
+  - Production: UNPROVEN.
+- Blocking facts:
+  - Production Route: MISSING.
+  - Provider: UNAVAILABLE.
+  - `/api/intel/ths-theme-attribution` returns 404.
+  - `/api/intel/theme-attribution` returns 404.
+  - `/api/intel/ths-theme` returns 404.
+- Day 7 P0: THS Theme Attribution Runtime Resolution.
+- CA owns the only active line and must classify the runtime state as exactly one of:
+  - `Missing`
+  - `Disconnected`
+  - `Implemented`
+- CB is paused because Narrative Quality Proof has no `reason_type` sample.
+- CC should keep Contract Proof as `READY`, not executed, because no runtime object exists yet.
+- Reporting guardrail: do not call THS Theme Attribution `Provider Valuable`, `Provider Low Value`, or `Narrative Quality FAIL` until runtime samples exist.
+
+## 2026-06-24: release gates must stay separated
+
+- Engram lesson written: `93b46783c35c`.
+- Rule: commit, push, deploy, and production smoke are separate release gates and must be reported separately.
+- Sidebar partial release current state:
+  - Release branch: `release/sidebar-workbench-20260623`.
+  - Remote push verification: PASS.
+  - Remote commit: `ede98c0`.
+  - Scope: `app/market-temperature-mini.js` only; market-temperature fallback transparency.
+  - Deploy: NOT AUTHORIZED.
+  - Production status: NOT UPDATED by this release until a controlled deploy window runs and production smoke verifies served assets.
+- Reporting guardrail: do not say production is updated just because a scoped commit or remote release branch exists.
+
+## 2026-06-21: P1-001 RCA suspended after evidence exhaustion
+
+- P1-001 Stock Analysis Repeatability is archived as `RCA SUSPENDED`, not `RESOLVED` and not `FAILED`.
+- Final reason: evidence exhausted. Root Cause remains `UNKNOWN`; Closure remains `NOT ELIGIBLE`.
+- Proven:
+  - PASS path reused browser connection `connectionId=89`.
+  - RETRY PASS used fresh browser connection `connectionId=235`.
+  - PASS / RETRY path traverses `Browser -> 127.0.0.1:7897 (mihomo) -> upstream HTTPS`.
+  - `002493` success path is repeatable.
+  - Cookie serialization failure is not supported by CDP evidence.
+  - HAR failed-entry Cookie absence can be an artifact.
+- Still unknown:
+  - FAIL attempted connection.
+  - Browser layer ownership.
+  - Proxy layer ownership.
+  - Upstream TLS ownership.
+  - Root cause.
+- Canonical description: an intermittently degraded connection path occasionally hangs for about 49 seconds and fails with `ERR_SSL_PROTOCOL_ERROR`; a fresh connection immediately restores normal operation. The ownership layer of that degradation has not been proven.
+- Governance lesson: `Path Participant != Fault Owner`; `Evidence Exhausted = SUSPEND`, not forced root-cause assignment.
+- Reopen conditions: stable reproduction with proxy logs retained, or new telemetry such as connection tracing, proxy connection-pool metrics, or persistent debug logs.
 
 ## 2026-05-12: deep-research unknown skill production fix
 
@@ -308,6 +440,119 @@ Usage notes:
 - Acceptance doc: `docs/research_runtime_v0_2_acceptance.md`.
 - Not included: production router, frontend UI, new data_type, new provider, LLM calls.
 - Next phase: v0.3 — not started, scope TBD.
+
+## 2026-06-19: deep-research PDF Button hotfix ready, deploy blocked
+
+- Status board:
+  - Code Readiness: READY.
+  - Local Validation: PASS.
+  - Deployment Channel: BLOCKED.
+  - Production Status: NOT FIXED YET.
+  - Classification: Blocked by Infrastructure.
+- Local patch: `/Users/Zhuanz/finance-suite/app/deep-research.html`.
+- Local SHA-256: `688dcfe055d64157704bcb4177d25e2fd093a7d7dc25c6a66aeb18c7e83ab3f9`.
+- Local size: `16428` bytes.
+- Production SHA-256 observed from `https://www.touziagent.com/app/deep-research.html`: `a076d06472fde0591f52455ea73ed6ba5be4f6f9cd3bf5fb324f568be3682e3a`.
+- Production size: `12216` bytes.
+- Local adds PDF frontend loop to `deep-research.html`: `pdfActionBar`, `exportPdfBtn`, `exportPdfBtnText`, `currentReportHtml`, `exportToPdf()`, `POST /api/export-pdf`, and `导出PDF` button text.
+- Production still lacks the PDF markers above, so the fix is not deployed.
+- Unique deploy target: `/home/ubuntu/finance-suite-web/static/app/deep-research.html`.
+- Unique source file: `/Users/Zhuanz/finance-suite/app/deep-research.html`.
+- Accepted deployment paths:
+  - Restore SSH permission for `ubuntu@119.28.156.125`.
+  - Use Tencent Cloud browser terminal.
+  - Ask an authorized operator to upload the single file.
+- Do not continue code changes for this issue until a deployment channel is available. Other pages remain P2 and are out of scope.
+
+## 2026-06-21: Mac Wind Alice Desktop Provider Harness frozen
+
+- State: `FROZEN`.
+- Current verdict: `Lab Verified / Production Unproven`.
+- Governance: `7-Gate Locked`; no skip-level promotion.
+- Provider metadata for future Finance Suite wiring:
+  - `provider_tier = desktop`
+  - `provider_mode = real`
+  - `provider_class = wind_alice_harness`
+- Name discipline: call it `Lab Verified Desktop Harness`, not `Production Wind Provider`.
+- New-Mac migration entry point: start from `./wind_focus geom`, then follow the 7-Gate chain in `scripts/alice_poc/MIGRATION.md`.
+- Gate discipline: `Geom PASS != Provider PASS`; Gate 4 is the first proof of `Prompt -> Alice -> Capture -> Structured Output`; Gate 7 is required before `Candidate Real Provider`.
+- Failure attribution: route Wind/Alice UI, macOS permission, focus, sleep, or desktop automation failures to `Desktop Harness Layer`, not Research Runtime, Trust Gate, or Data Gateway.
+- Local evidence chain remains local-only and ignored by git: `scripts/alice_poc/data/01.json`, `03.json`, `04.json`, `05.json`, and `capture_verify.json`.
+- Commit state recorded by CC: `5b0fda3` capture harness, `78cba49` migration guide; branch `feature/session-1-validation-outcomes`, ahead and not pushed.
+
+## 2026-06-25: 信源评估三证模板 (THS Theme Attribution 跑通)
+
+- 状态: 三证未齐,Integration / Deploy / Production 全部维持冻结。
+- 决策顺序(强制):
+  `Runtime Proof (CA)` + `Value Proof (CB)` → `Integration Authorization Review` → `Implementation / Integration` → `Contract Requirements Closure` → `Deploy Review` → `Production Evaluation`。
+- 可复用信源模板(所有新数据源/Agent Skill 通用):
+  `Candidate Discovery` → `Smoke` → `Runtime Proof` → `Value Proof` → `Contract Proof` → `Integration Authorization` → `Deploy` → `Production`。
+- 关键反模式(明确禁止):
+  - `Discovery PASS + Smoke PASS` ≠ 任何后续状态升级依据。
+  - "代码里没实现" → "功能失败" → "项目失败" 是跳跃式降级,实际只能得到"已审计路径未发现实现"(证据结论,不是产品结论)。
+  - `Contract Findings Logged` ≠ `Contract Proof Completed`,前者只是识别未来契约条件。
+- 适用场景示例: THS Theme Attribution / mootdx 五档盘口 / 巨潮公告 / Wind Alice Provider / 未来新 Agent Skill。
+- Engram 教训 ID: `ce949d1fe279`(domain=finance-suite,retention=long_term)。
+
+## 2026-06-29: Analyze Trust Presentation Windows final locked state
+
+- Final state:
+  - Window 1 Reality -> Presentation: `CLOSED / ACCEPTED WITH FINDINGS`.
+  - Window 2 Presentation -> Acceptance: `CLOSED / ACCEPTED WITH FINDINGS`.
+  - Production Ready: `NOT CLAIMED`.
+  - Deploy Authorization: `NOT GRANTED`.
+  - Acceptance PASS: `NOT CLAIMED`.
+  - Runtime Full Recovered: `NOT CLAIMED`.
+  - Window 3 Decision -> Production Drill: `NOT STARTED / WAITING`.
+- Evidence already established:
+  - Three authenticated cases produced raw Trust Data and rendered Trust Presentation:
+    - `600519.SH` 贵州茅台.
+    - `600036.SH` 招商银行.
+    - `600710.SH` 苏美达.
+  - Raw `/api/analyze` response includes `data_availability`, `_qc.data_availability`, `section_data_usage`, and `_qc.section_data_usage`.
+  - Rendered pages show `可信度说明` and `数据完整性摘要`.
+  - Visible raw leak check found no `nan/null/None/N/A` leak in the checked render outputs.
+- Findings remain as risk records and do not trigger automatic remediation:
+  1. `section_data_usage` is still a minimum explicit structure (`{}`); section-level evidence display is not yet mature.
+  2. `cached=true` trust fields are protected by return-time wrapper; do not claim old cache entries were originally complete.
+  3. `600710.SH` current name is `苏美达`; `常林股份` is historical name. Resolver / source coverage risk remains.
+  4. `600036 / 600710` have data quality weakness, action-like wording risk, and incomplete full-body evidence tracing.
+  5. Production Ready is outside Window 2 proof scope.
+- Governance rule:
+  - Do not automatically enter Window 3.
+  - Do not fix findings unless a separate remediation window is explicitly opened.
+  - Do not expand Framework, authorize deploy, or promote Production Ready from Window 1/2 results.
+- Engram lesson written:
+  - `38fd53011f42` — conclusion must not exceed its directly supported evidence layer.
+
+## 2026-06-30: Presentation local patch and live target proof lock
+
+- Final accepted state:
+  - Presentation Truth Guard: `LOCAL PATCH REPORTED / LIVE TARGET UNVERIFIED`.
+  - Data Transparency Collapse: `PASS / LOCAL SOURCE`.
+  - Live Target Proof: `NOT ESTABLISHED`.
+  - Live Presentation: `NOT ESTABLISHED`.
+  - Reality -> Presentation Window: `HOLD / FAIL`.
+  - Raw Source Mapping 6 Items: `LOCKED / UNKNOWN`.
+  - Live Page: `NOT UPDATED with local guard/collapse patch`.
+  - Production Ready: `NOT CLAIMED`.
+  - Window 1: `CLOSED / ACCEPTED WITH FINDINGS`.
+  - Presentation Guard Patch: `NOT UPGRADED TO LIVE PROOF`.
+  - Window 2: `CLOSED / ACCEPTED WITH FINDINGS / ARCHIVED`.
+  - Window 3: `NOT STARTED / REQUIRES EXPLICIT AUTHORIZATION`.
+- Docs Archive Maintenance: `PASS`.
+- Local UX Patch: `DONE`.
+- Next explicit entry points only:
+  1. Deploy local `app/*.html` to production `static/app/`.
+  2. Fix SSH path and read server target files first.
+- Recommended next entry: fix SSH / read server target files first, because live HTTP already proves production pages are not updated and direct deploy could carry uncommitted local HTML plus earlier `/api/analyze` changes.
+- Boundary:
+  - Do not modify `/api/analyze`, Auth, backend, contract, or deploy without explicit authorization.
+  - Do not continue `Plans.md` edits, CC status writing, or small UX follow-ups from this closed window.
+- Engram curl result:
+  - Attempted `POST /lessons` on local Engram API with `X-API-Token`.
+  - Engram rejected storing the status snapshot as a long-term lesson: `World State or Runtime State should not be stored as long-term Engram memory.`
+  - No Engram lesson ID was created for this state snapshot; the durable project record is this `MEMORY.md` entry.
 
 ## 2026-07-03: Report UX Folding Patch local-source lock
 
