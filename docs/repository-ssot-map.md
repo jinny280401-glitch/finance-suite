@@ -122,13 +122,22 @@
 
 ---
 
-## 4. 当前 Hero Live Patch Window 状态（branch/deploy-source mismatch）
+## 4. 当前 Hero Live Patch Window 状态（CLOSED / CANCELLED / NOT LIVE）
 
 ### 4.1 当前状态
 
 | 项 | 值 |
 |---|---|
+| Hero Live Patch | `CLOSED / CANCELLED` |
+| Production Status | `NOT LIVE` |
+| Reason | `source-target mismatch` |
+| Local Evidence | `PASS`（8 Verified / 0 Unknown）|
+| Production Evidence | `NOT ESTABLISHED` |
+| E2E | `GATED` |
+| Deploy | `NOT AUTHORIZED` |
 | Hero copy patch commit | `1a4e1e2` |
+| 本地 source | `finance-suite/index.html`（已改）|
+| 生产实际 target | `finance-suite-web/templates/index.html` |
 | 所在 branch | `feature/session-1-validation-outcomes` |
 | main HEAD | `d352b85`（`fix(deploy): add Sidebar P0 6 new assets to deploy curl list`）|
 | main:index.html md5 | `d889da26a38f843b5f6e0b0f3d6729b7` |
@@ -153,16 +162,27 @@
 
 ### 4.3 Hero Live Patch Window blocker
 
-**新结论**（取代 source/target mismatch）：
+**锁定结论**：
+- Finance Suite Hero 上线全流程不是"未完成"，而是 `CLOSED / CANCELLED / NOT LIVE`
+- 本地 `finance-suite/index.html` 证据只证明 local source patch，不证明生产上线
+- 生产实际目标是 `finance-suite-web/templates/index.html`
+- **source / target mismatch 成立**
 - 1a4e1e2 在 `feature/session-1-validation-outcomes` 分支
 - deploy.sh 写死从 `main` 分支拉取
 - **Hero copy patch 不会通过 deploy.sh 自动进入生产**
 - 即使合并到 main，deploy.sh 不会自动跑（生产需手动 ssh 触发 deploy.sh）
-- **blocker = branch/deploy-source mismatch**（不是 target path unknown）
+- 未 push / 未 deploy / 未 production claim
+- E2E gated
+
+**禁止升级**：
+- 不宣称 Hero 已上线
+- 不继续沿 `finance-suite/index.html` 路径 deploy
+- 不把本地证据升级为生产证据
+- 不 cherry-pick `1a4e1e2` 到生产
 
 ---
 
-## 5. Hero Copy 上线 4 条候选路径（**未授权，仅文档**）
+## 5. Hero Copy 上线候选路径（**已取消，仅历史记录**）
 
 | 路径 | 步骤 | 风险 | 状态 |
 |---|---|---|---|
@@ -171,7 +191,15 @@
 | C. 在 finance-suite-web 仓库独立打 patch | 单独 commit finance-suite-web/index.html，绕过 deploy.sh | 偏离 SSOT，引入第二个 source of truth | 🔴 未授权 |
 | D. 改 deploy.sh 加 multi-branch 支持 | 改 deploy.sh，加 `BRANCH=${BRANCH:-main}` 变量 | 改 deploy.sh（G 禁止）| 🔴 禁止 |
 
-**当前 G 决策**：都不动，1a4e1e2 留本地，等 finance-suite-web production patch window 新窗口。
+**当前 G 决策**：Hero Live Patch Window 已 `CLOSED / CANCELLED`。都不动，`1a4e1e2` 留本地，不 push、不 deploy、不 cherry-pick 到生产。
+
+若未来重开，必须另开 **Hero SSOT Remap Window**，并在 `finance-suite-web` 仓库完成六项入场检查：
+1. source file
+2. target template
+3. backup
+4. checksum
+5. sync command
+6. rollback
 
 ---
 
