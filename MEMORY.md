@@ -1,5 +1,41 @@
 # Memory
 
+## 2026-07-08: Company Panorama -> Vera candidate pre-integration gate
+
+- Engram curl result: `FAILED / DEFERRED` (`http_code=000`; local Engram API unreachable). Do not retry until Engram service is restored.
+- Window intent: open a future `Company Panorama -> Vera Candidate Skill Pre-Integration Window`, not Vera Runtime integration.
+- Current locked status:
+  - Company Panorama: `PPT Demo Skill -> Candidate Skill` path only.
+  - Vera Runtime Integration: `NOT STARTED`.
+  - OpenClaw Gateway Registration: `NOT AUTHORIZED`.
+  - Production Claim: `FORBIDDEN`.
+- Execution order for the future window:
+  1. P0 Company Identification Adapter.
+     - Use `mx_ashare_finance_data` / `mx_comprehensive_finance_data` for subject resolution.
+     - Output `company_name_normalized`, `stock_code`, and `entity_type`.
+     - Define `company_match_confidence`.
+     - Apply `company_match_filter` before notice/news records enter Trust Gate.
+     - LOW or missing confidence defaults to `REJECT_BEFORE_TRUST_GATE`.
+  2. P1 Real Evidence Adapter v0.
+     - Replace `resolve_company()`, `fetch_announcements()`, and `fetch_news()`.
+     - Only connect announcements + news.
+     - Do not connect工商, litigation, or financial estimation.
+  3. P2 Local Real Evidence Smoke.
+     - Local samples: 宁德时代 / `300750`, one non-listed company, and one bond issuer.
+     - Output a Local Real Evidence Smoke Report.
+- Governance rule:
+  - Announcements/news field mapping alone is not enough for real evidence integration.
+  - A company name appearing in a title is not proof that the record subject is that company.
+  - `company_match_confidence` is required before Trust Gate input.
+  - Local Smoke must not be described as Vera PASS or Production Ready.
+- Forbidden until explicitly reopened:
+  - Do not connect Vera Runtime.
+  - Do not register OpenClaw gateway.
+  - Do not claim production readiness.
+  - Do not generate a complete due-diligence card.
+  - Do not describe the PPT Demo as real integration.
+
+
 ## 2026-05-12: deep-research unknown skill production fix
 
 - User reported the message/analyze flow broke after market intel routing changes.
