@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vera 架构图演示套件</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  body{flex-direction:column; gap:18px; padding:24px 20px}
+  .bar{
+    width:min(1280px,100%); display:flex; align-items:center; gap:14px; z-index:5;
+    color:var(--sub); font-size:14px;
+  }
+  .bar .title{font-size:18px; font-weight:800; color:var(--ink)}
+  .bar .spacer{flex:1}
+  .btn{
+    padding:8px 16px; border-radius:10px; cursor:pointer; font-size:14px; font-weight:600;
+    background:var(--glass); border:1px solid var(--stroke); color:var(--ink); user-select:none;
+  }
+  .btn:hover{background:rgba(255,255,255,.12)}
+  .dots{display:flex; gap:8px}
+  .dot{width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,.2); cursor:pointer; transition:.2s}
+  .dot.on{background:linear-gradient(90deg,var(--cyan),var(--violet)); box-shadow:0 0 10px rgba(120,180,255,.7); transform:scale(1.25)}
+  .frame{
+    width:min(1280px,100%); aspect-ratio:16/9; border-radius:28px; overflow:hidden;
+    border:1px solid var(--stroke); box-shadow:0 40px 120px rgba(0,0,0,.55);
+    background:#0a0e1a;
+  }
+  .frame iframe{width:100%; height:100%; border:0; display:block}
+  .hint{color:var(--sub); font-size:12.5px}
+  kbd{background:rgba(255,255,255,.1); border:1px solid var(--stroke); border-radius:5px; padding:1px 7px; font-size:12px}
+  @media (max-width:720px){.frame{aspect-ratio:auto; height:60vh}}
+</style>
+</head>
+<body>
+  <div class="bar">
+    <div class="title">Vera 架构图演示套件</div>
+    <div class="spacer"></div>
+    <span class="hint"><kbd>←</kbd> <kbd>→</kbd> 翻页 · <kbd>F</kbd> 全屏</span>
+    <div class="dots" id="dots"></div>
+    <div class="btn" id="prev">‹ 上一张</div>
+    <div class="btn" id="next">下一张 ›</div>
+    <div class="btn" id="full">⛶ 全屏</div>
+  </div>
+  <div class="frame" id="frame">
+    <iframe id="view" src="fig1-vera-overall-architecture.html" title="slide"></iframe>
+  </div>
+
+  <!-- loading 遮罩:iframe 切换时短暂出现,挡住切换空窗 -->
+  <div id="loadingmask" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#0a0e1a;z-index:50;pointer-events:none">
+    <div style="width:42px;height:42px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--cyan);border-radius:50%;animation:spin 1s linear infinite"></div>
+  </div>
+  <style>
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  </style>
+
+<script>
+  const slides = [
+    {src:"fig0-multichannel-touch.html",        name:"多端触达"},
+    {src:"fig-cover-vera-portraits.html",       name:"Vera 三视图"},
+    {src:"fig1-cover.html",                     name:"封面 天玑"},
+    {src:"fig2-vera-overall-architecture.html", name:"图1 整体架构"},
+    {src:"fig3-trust-gate-flow.html",           name:"图2 Trust Gate"},
+    {src:"fig4-research-runtime.html",          name:"图3 Research Runtime"},
+    {src:"fig5-skill-ecosystem.html",           name:"图4 Skill 生态"},
+    {src:"fig6-vera-vs-doubao.html",            name:"图5 Vera vs 豆包"},
+    {src:"fig-company-panorama.html",          name:"Company Panorama"},
+    {src:"fig7-closing.html",                    name:"收官金句"},
+  ];
+  let i = 0;
+  const view = document.getElementById('view');
+  const dots = document.getElementById('dots');
+  const frame = document.getElementById('frame');
+
+  /* PNG 预加载 — 防止 iframe 切换时空白 */
+  const imgPreload = [];
+  slides.forEach(s=>{
+    /* 通过 fetch 触发 SVG/CSS 缓存 (PNG 已 inline 预加载) */
+    const p = fetch(s.src, {credentials:'same-origin'}).then(r=>r.text()).catch(()=>null);
+    imgPreload.push(p);
+  });
+
+  slides.forEach((s,idx)=>{
+    const d = document.createElement('div');
+    d.className = 'dot' + (idx===0?' on':'');
+    d.title = s.name;
+    d.onclick = ()=>go(idx);
+    dots.appendChild(d);
+  });
+
+  function go(n){
+    i = (n + slides.length) % slides.length;
+    /* 切换时显式重置 + loading mask,避免空窗 */
+    const mask = document.getElementById('loadingmask');
+    mask.style.display = 'flex';
+    view.src = 'about:blank';
+    requestAnimationFrame(()=>{
+      view.src = slides[i].src;
+      view.onload = ()=>{
+        /* 额外 80ms 让 SVG/CSS 动画稳定,再撤遮罩,避免一帧空白 */
+        setTimeout(()=>{ mask.style.display = 'none'; }, 80);
+      };
+    });
+    [...dots.children].forEach((d,idx)=>d.classList.toggle('on', idx===i));
+  }
+  document.getElementById('prev').onclick = ()=>go(i-1);
+  document.getElementById('next').onclick = ()=>go(i+1);
+  document.getElementById('full').onclick = ()=>{
+    if(frame.requestFullscreen) frame.requestFullscreen();
+  };
+  document.addEventListener('keydown', e=>{
+    if(e.key==='ArrowRight'||e.key===' ') go(i+1);
+    else if(e.key==='ArrowLeft') go(i-1);
+    else if(e.key==='f'||e.key==='F'){ if(frame.requestFullscreen) frame.requestFullscreen(); }
+  });
+</script>
+</body>
+</html>
