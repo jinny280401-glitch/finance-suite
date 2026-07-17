@@ -76,10 +76,10 @@ def write_loop_state(state: dict) -> None:
     LOOP_STATE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def run_render(handoff_path: Path) -> int:
-    """Call render-d13-brief.py with --handoff. Exit code: 0=ok, 1=missing, 2=invalid."""
+def run_render(handoff_path: Path, window: str = "morning") -> int:
+    """Call render-d13-brief.py with --handoff and --window. Exit code: 0=ok, 1=missing, 2=invalid."""
     result = subprocess.run(
-        [sys.executable, str(RENDER_SCRIPT), "--handoff", str(handoff_path)],
+        [sys.executable, str(RENDER_SCRIPT), "--handoff", str(handoff_path), "--window", window],
         capture_output=True, text=True, timeout=30,
     )
     if result.stderr:
@@ -158,7 +158,7 @@ def window_midday() -> int:
         log("midday handoff not yet generated — Codex may still be working")
         return 1
 
-    rc = run_render(handoff)
+    rc = run_render(handoff, window="midday")
     if rc != 0:
         log(f"render failed with exit code {rc}")
         return rc
@@ -183,7 +183,7 @@ def window_close() -> int:
         log("close handoff not yet generated — Codex may still be working")
         return 1
 
-    rc = run_render(handoff)
+    rc = run_render(handoff, window="close")
     if rc != 0:
         log(f"render failed with exit code {rc}")
         return rc
@@ -192,6 +192,18 @@ def window_close() -> int:
     log(f"hydration: {hyd['status']} (exit {hyd['exit_code']})")
 
     # Merge feedback for tomorrow's morning brief.
+    # Codex close automation (16:00) may have already written detailed
+    # feedback into loop_state.json — preserve those fields and only
+    # add the CC-side completion metadata.
+    existing_feedback = state.get("close_feedback", {})
+    cc_meta = {
+        "completed_at": now_cst().isoformat(),
+        "midday_verified": state.get("midday_verified", False),
+    }
+    # Codex fields take precedence; CC metadata fills in gaps.
+    state["close_feedback"] = {**cc_meta, **existing_feedback}
+    write_loop_state(state)
+    log("close feedback captured for next morning brief")
     # Codex close automation (16:00) may have already written detailed
     # feedback into loop_state.json — preserve those fields and only
     # add the CC-side completion metadata.

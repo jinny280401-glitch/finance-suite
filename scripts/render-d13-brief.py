@@ -51,9 +51,16 @@ _OBS_TAGS = {"OBS-01", "OBS-02", "OBS-03"}
 
 
 # ── Validation ───────────────────────────────────────────────────────────
-def validate(data: Any) -> list[str]:
-    """Return a list of human-readable error strings. Empty list = valid."""
+def validate(data: Any, window: str = "morning") -> list[str]:
+    """Return a list of human-readable error strings. Empty list = valid.
+
+    window='morning': strict 4/3/3/3/3 counts (existing contract).
+    window='midday'|'close': relaxed minimums (1 per array), caps at template max.
+    """
     errors: list[str] = []
+    strict = window == "morning"
+    min_sections = 3 if strict else 1
+    min_drivers = 4 if strict else 1
 
     def require_str(obj: dict, key: str, allow_empty: bool = False, parent: str = "") -> None:
         path = f"{parent}.{key}" if parent else key
@@ -83,12 +90,14 @@ def validate(data: Any) -> list[str]:
         require_str(data, key)
     require_str(data, "h1_line_b", allow_empty=True)
 
-    # drivers: exactly 4 (template has 4 hardcoded .driver seats, frozen CSS grid)
+    # drivers: 4 for morning, 1–4 for midday/close (template has max 4 seats)
     drivers = data.get("drivers")
     if not isinstance(drivers, list):
         errors.append("drivers: must be an array")
-    elif len(drivers) != 4:
-        errors.append(f"drivers: must have exactly 4 items, got {len(drivers)}")
+    elif len(drivers) < min_drivers:
+        errors.append(f"drivers: must have at least {min_drivers} item(s), got {len(drivers)}")
+    elif len(drivers) > 4:
+        errors.append(f"drivers: at most 4 items (template seats), got {len(drivers)}")
     else:
         for i, d in enumerate(drivers, start=1):
             p = f"drivers[{i}]"
@@ -104,14 +113,17 @@ def validate(data: Any) -> list[str]:
                 if d.get("tone") not in _TONES:
                     errors.append(f"{p}.tone: required when delta is non-empty, must be one of {sorted(_TONES)}")
 
-    # impact / opportunities / risks / watchlist: exactly 3 each
-    def require_triplet(field: str, item_fields: dict[str, bool]) -> None:
+    # impact / opportunities / risks / watchlist: exactly 3 for morning, 1–3 for midday/close
+    def require_section(field: str, item_fields: dict[str, bool]) -> None:
         items = data.get(field)
         if not isinstance(items, list):
             errors.append(f"{field}: must be an array")
             return
-        if len(items) != 3:
-            errors.append(f"{field}: must have exactly 3 items, got {len(items)}")
+        if len(items) < min_sections:
+            errors.append(f"{field}: must have at least {min_sections} item(s), got {len(items)}")
+            return
+        if len(items) > 3:
+            errors.append(f"{field}: at most 3 items, got {len(items)}")
             return
         for i, item in enumerate(items, start=1):
             p = f"{field}[{i}]"
@@ -121,16 +133,20 @@ def validate(data: Any) -> list[str]:
             for fkey, allow_empty in item_fields.items():
                 require_str(item, fkey, allow_empty=allow_empty, parent=p)
 
-    require_triplet("impact", {"target": False, "body": False})
-    require_triplet("opportunities", {"title": False, "driver": False, "observe": False})
-    require_triplet("risks", {"title": False, "body": False})
-    require_triplet("watchlist", {"text": False, "tag": False})
+    require_section("impact", {"target": False, "body": False})
+    require_section("opportunities", {"title": False, "driver": False, "observe": False})
+    require_section("risks", {"title": False, "body": False})
+    require_section("watchlist", {"text": False, "tag": False})
 
     watchlist = data.get("watchlist")
     if isinstance(watchlist, list):
         for i, item in enumerate(watchlist, start=1):
-            if isinstance(item, dict) and item.get("tag") not in _OBS_TAGS:
-                errors.append(f"watchlist[{i}].tag: must be one of {sorted(_OBS_TAGS)}, got {item.get('tag')!r}")
+            if isinstance(item, dict):
+                tag = item.get("tag", "")
+                if strict and tag not in _OBS_TAGS:
+                    errors.append(f"watchlist[{i}].tag: must be one of {sorted(_OBS_TAGS)}, got {tag!r}")
+                elif not strict and not tag.strip():
+                    errors.append(f"watchlist[{i}].tag: must not be empty")
 
     ticker = data.get("ticker_items")
     if not isinstance(ticker, list) or len(ticker) < 1:
@@ -210,6 +226,32 @@ def render(data: dict, template: str) -> str:
     ticker_html = "\n        ".join(f'<span class="tk">{_esc(t)}</span>' for t in data["ticker_items"])
     slots["TICKER_ITEMS"] = ticker_html
 
+    # Pad driver slots — template has 4 seats, but midday/close may use fewer
+    for i in range(len(data["drivers"]) + 1, 5):
+        slots[f"DRIVER_{i}_KEY"] = ""
+        slots[f"DRIVER_{i}_VAL"] = ""
+        slots[f"DRIVER_{i}_DESC"] = ""
+        slots[f"DRIVER_{i}_UNIT_SPAN"] = ""
+        slots[f"DRIVER_{i}_DELTA_SPAN"] = ""
+
+    # Pad section slots — template has 3 seats each
+    for field, prefix in [("impact", "IMPACT"), ("opportunities", "OPP"), ("risks", "RISK"), ("watchlist", "WATCH")]:
+        items = data.get(field, [])
+        for i in range(len(items) + 1, 4):
+            if field == "impact":
+                slots[f"{prefix}_{i}_TARGET"] = ""
+                slots[f"{prefix}_{i}_BODY"] = ""
+            elif field == "opportunities":
+                slots[f"{prefix}_{i}_TITLE"] = ""
+                slots[f"{prefix}_{i}_DRIVER"] = ""
+                slots[f"{prefix}_{i}_OBSERVE"] = ""
+            elif field == "risks":
+                slots[f"{prefix}_{i}_TITLE"] = ""
+                slots[f"{prefix}_{i}_BODY"] = ""
+            elif field == "watchlist":
+                slots[f"{prefix}_{i}_TEXT"] = ""
+                slots[f"{prefix}_{i}_TAG"] = ""
+
     out = template
     # Driver unit/delta spans are hardcoded in the template as
     # <span class="unit">{{DRIVER_n_UNIT}}</span><span class="delta {{DRIVER_n_TONE}}">{{DRIVER_n_DELTA}}</span>
@@ -220,7 +262,7 @@ def render(data: dict, template: str) -> str:
         out = re.sub(
             r'<span class="unit">\{\{DRIVER_' + str(i) + r'_UNIT\}\}</span>'
             r'<span class="delta \{\{DRIVER_' + str(i) + r'_TONE\}\}">\{\{DRIVER_' + str(i) + r'_DELTA\}\}</span>',
-            slots.pop(f"DRIVER_{i}_UNIT_SPAN") + slots.pop(f"DRIVER_{i}_DELTA_SPAN"),
+            slots.pop(f"DRIVER_{i}_UNIT_SPAN", "") + slots.pop(f"DRIVER_{i}_DELTA_SPAN", ""),
             out,
         )
 
@@ -239,12 +281,18 @@ def strip_comment_header(html_text: str) -> str:
 def main() -> int:
     global HANDOFF_PATH
 
-    parser = argparse.ArgumentParser(description="Render D13 morning brief from handoff JSON")
+    parser = argparse.ArgumentParser(description="Render D13 brief from handoff JSON")
     parser.add_argument(
         "--handoff",
         type=Path,
         default=_DEFAULT_HANDOFF,
         help=f"Path to handoff JSON (default: {_DEFAULT_HANDOFF})",
+    )
+    parser.add_argument(
+        "--window",
+        choices=["morning", "midday", "close"],
+        default="morning",
+        help="Window: morning (strict 4/3/3/3/3), midday/close (relaxed 1–4/1–3)",
     )
     args = parser.parse_args()
     HANDOFF_PATH = args.handoff
@@ -259,7 +307,7 @@ def main() -> int:
         print(f"[render-d13-brief] handoff is not valid JSON: {e}", file=sys.stderr)
         return 2
 
-    errors = validate(data)
+    errors = validate(data, window=args.window)
     if errors:
         print(f"[render-d13-brief] handoff failed validation ({len(errors)} error(s)):", file=sys.stderr)
         for e in errors:
