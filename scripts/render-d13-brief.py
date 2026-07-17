@@ -391,9 +391,16 @@ def map_contract(data: dict, window: str) -> dict:
         fb_close = data.get("feedback", {}) if isinstance(data.get("feedback"), dict) else {}
         tc = fb_close.get("tomorrow_context", [])
         if isinstance(tc, list) and len(tc) > 0:
-            out["watchlist"] = [{"text": str(t), "tag": f"CLS-{i+1:02d}"} for i, t in enumerate(tc[:3])]
+            # Flatten: each item may itself be a string or a list of strings
+            flat: list[str] = []
+            for item in tc:
+                if isinstance(item, str):
+                    flat.append(item)
+                elif isinstance(item, list):
+                    flat.extend(str(x) for x in item)
+            out["watchlist"] = [{"text": t, "tag": f"CLS-{i+1:02d}"} for i, t in enumerate(flat[:3])]
         elif isinstance(tc, str) and tc.strip():
-            out["watchlist"] = [{"text": tc, "tag": "CLS-01"}]
+            out["watchlist"] = [{"text": tc.strip(), "tag": "CLS-01"}]
         else:
             out["watchlist"] = []
     else:
