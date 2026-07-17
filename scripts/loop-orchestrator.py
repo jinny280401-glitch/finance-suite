@@ -77,9 +77,9 @@ def write_loop_state(state: dict) -> None:
 
 
 def run_render(handoff_path: Path) -> int:
-    """Call render-d13-brief.py. Exit code: 0=ok, 1=missing, 2=invalid."""
+    """Call render-d13-brief.py with --handoff. Exit code: 0=ok, 1=missing, 2=invalid."""
     result = subprocess.run(
-        [sys.executable, str(RENDER_SCRIPT)],
+        [sys.executable, str(RENDER_SCRIPT), "--handoff", str(handoff_path)],
         capture_output=True, text=True, timeout=30,
     )
     if result.stderr:
@@ -191,11 +191,18 @@ def window_close() -> int:
     hyd = run_hydration()
     log(f"hydration: {hyd['status']} (exit {hyd['exit_code']})")
 
-    # Write feedback for tomorrow's morning brief
-    state["close_feedback"] = {
+    # Merge feedback for tomorrow's morning brief.
+    # Codex close automation (16:00) may have already written detailed
+    # feedback into loop_state.json — preserve those fields and only
+    # add the CC-side completion metadata.
+    existing_feedback = state.get("close_feedback", {})
+    cc_meta = {
         "completed_at": now_cst().isoformat(),
         "midday_verified": state.get("midday_verified", False),
     }
+    # Codex fields (keys unknown a priori) take precedence; CC metadata
+    # fills in what Codex didn't set.
+    state["close_feedback"] = {**cc_meta, **existing_feedback}
     write_loop_state(state)
     log("close feedback captured for next morning brief")
 

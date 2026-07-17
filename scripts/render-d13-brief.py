@@ -1,0 +1,289 @@
+#!/usr/bin/env python3
+"""
+render-d13-brief
+================
+
+CC-side half of the DRIFT-01 fix (2026-07-16/17): Codex (Intelligence Layer)
+writes docs/d13_handoff_latest.json; this script (Display Layer) validates
+it against the v1 schema and, only if valid, renders
+d13_morning_brief.template.html into d13_morning_brief.html.
+
+Schema doc: docs/d13_handoff_schema_v1.md
+Design basis: project_intelligence_loop_v1 — "Codex 产 handoff.json,
+CC 做 Trust Check + Template Render (schema 不合格拒渲染,不修内容)".
+
+On validation failure: do NOT render, do NOT guess-fill, do NOT touch
+yesterday's d13_morning_brief.html. Print every failing field to stderr
+and exit non-zero. This mirrors brief-payload-builder.py's fail-safe
+exit-code contract (0/1/2) with its own codes below.
+
+Exit codes:
+    0  rendered fresh handoff
+    1  handoff missing (no JSON found)
+    2  handoff invalid (schema violation — see stderr for details)
+
+No network access. No third-party dependencies. Stdlib only — this
+project intentionally avoids adding jsonschema as a dependency for a
+single-file validator.
+"""
+
+from __future__ import annotations
+
+import argparse
+import html
+import json
+import re
+import sys
+from pathlib import Path
+from typing import Any
+
+PROJECT_ROOT = Path.home() / "Documents" / "New project 6"
+_DEFAULT_HANDOFF = PROJECT_ROOT / "docs" / "d13_handoff_latest.json"
+TEMPLATE_PATH = PROJECT_ROOT / "d13_morning_brief.template.html"
+OUTPUT_PATH = PROJECT_ROOT / "d13_morning_brief.html"
+
+# Resolved at runtime — may be overridden via --handoff
+HANDOFF_PATH = _DEFAULT_HANDOFF
+
+_TONES = {"up", "down", "flat"}
+_CONFIDENCE = {"HIGH", "MEDIUM", "PARTIAL"}
+_OBS_TAGS = {"OBS-01", "OBS-02", "OBS-03"}
+
+
+# ── Validation ───────────────────────────────────────────────────────────
+def validate(data: Any) -> list[str]:
+    """Return a list of human-readable error strings. Empty list = valid."""
+    errors: list[str] = []
+
+    def require_str(obj: dict, key: str, allow_empty: bool = False, parent: str = "") -> None:
+        path = f"{parent}.{key}" if parent else key
+        if key not in obj:
+            errors.append(f"missing required field: {path}")
+            return
+        v = obj[key]
+        if not isinstance(v, str):
+            errors.append(f"{path}: expected string, got {type(v).__name__}")
+        elif not allow_empty and v.strip() == "":
+            errors.append(f"{path}: must not be empty")
+
+    if not isinstance(data, dict):
+        return [f"handoff root must be an object, got {type(data).__name__}"]
+
+    require_str(data, "date")
+    if isinstance(data.get("date"), str) and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", data["date"]):
+        errors.append("date: must match YYYY-MM-DD")
+
+    require_str(data, "generated_at")
+    require_str(data, "confidence")
+    if data.get("confidence") not in _CONFIDENCE:
+        errors.append(f"confidence: must be one of {sorted(_CONFIDENCE)}, got {data.get('confidence')!r}")
+
+    for key in ("eyebrow_mode", "time_cst", "use_tag", "drivers_label",
+                "h1_line_a", "h1_accent", "header_sub", "verdict", "footer_use"):
+        require_str(data, key)
+    require_str(data, "h1_line_b", allow_empty=True)
+
+    # drivers: exactly 4 (template has 4 hardcoded .driver seats, frozen CSS grid)
+    drivers = data.get("drivers")
+    if not isinstance(drivers, list):
+        errors.append("drivers: must be an array")
+    elif len(drivers) != 4:
+        errors.append(f"drivers: must have exactly 4 items, got {len(drivers)}")
+    else:
+        for i, d in enumerate(drivers, start=1):
+            p = f"drivers[{i}]"
+            if not isinstance(d, dict):
+                errors.append(f"{p}: must be an object")
+                continue
+            require_str(d, "key", parent=p)
+            require_str(d, "value", parent=p)
+            require_str(d, "unit", allow_empty=True, parent=p)
+            require_str(d, "delta", allow_empty=True, parent=p)
+            require_str(d, "desc", parent=p)
+            if d.get("delta", "").strip():
+                if d.get("tone") not in _TONES:
+                    errors.append(f"{p}.tone: required when delta is non-empty, must be one of {sorted(_TONES)}")
+
+    # impact / opportunities / risks / watchlist: exactly 3 each
+    def require_triplet(field: str, item_fields: dict[str, bool]) -> None:
+        items = data.get(field)
+        if not isinstance(items, list):
+            errors.append(f"{field}: must be an array")
+            return
+        if len(items) != 3:
+            errors.append(f"{field}: must have exactly 3 items, got {len(items)}")
+            return
+        for i, item in enumerate(items, start=1):
+            p = f"{field}[{i}]"
+            if not isinstance(item, dict):
+                errors.append(f"{p}: must be an object")
+                continue
+            for fkey, allow_empty in item_fields.items():
+                require_str(item, fkey, allow_empty=allow_empty, parent=p)
+
+    require_triplet("impact", {"target": False, "body": False})
+    require_triplet("opportunities", {"title": False, "driver": False, "observe": False})
+    require_triplet("risks", {"title": False, "body": False})
+    require_triplet("watchlist", {"text": False, "tag": False})
+
+    watchlist = data.get("watchlist")
+    if isinstance(watchlist, list):
+        for i, item in enumerate(watchlist, start=1):
+            if isinstance(item, dict) and item.get("tag") not in _OBS_TAGS:
+                errors.append(f"watchlist[{i}].tag: must be one of {sorted(_OBS_TAGS)}, got {item.get('tag')!r}")
+
+    ticker = data.get("ticker_items")
+    if not isinstance(ticker, list) or len(ticker) < 1:
+        errors.append("ticker_items: must be a non-empty array of strings")
+    elif not all(isinstance(t, str) and t.strip() for t in ticker):
+        errors.append("ticker_items: every item must be a non-empty string")
+
+    return errors
+
+
+# ── Content formatting ──────────────────────────────────────────────────
+def _inline_format(text: str) -> str:
+    """Escape HTML, then apply the two allowed minimal-markdown marks.
+
+    Escaping first means **/* typed by Codex can't smuggle real markup —
+    only the exact **bold** / *italic* patterns this function re-adds
+    produce tags.
+    """
+    escaped = html.escape(text, quote=False)
+    escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
+    escaped = re.sub(r"\*(.+?)\*", r"<em>\1</em>", escaped)
+    return escaped
+
+
+def _esc(text: str) -> str:
+    return html.escape(text, quote=False)
+
+
+# ── Rendering ────────────────────────────────────────────────────────────
+def render(data: dict, template: str) -> str:
+    slots: dict[str, str] = {
+        "DATE": _esc(data["date"]),
+        "TIME_CST": _esc(data["time_cst"]),
+        "EYEBROW_MODE": _esc(data["eyebrow_mode"]),
+        "H1_LINE_A": _esc(data["h1_line_a"]),
+        "H1_ACCENT": _esc(data["h1_accent"]),
+        "H1_LINE_B": _esc(data["h1_line_b"]),
+        "HEADER_SUB": _esc(data["header_sub"]),
+        "CONFIDENCE": _esc(data["confidence"]),
+        "USE_TAG": _esc(data["use_tag"]),
+        "VERDICT": _esc(data["verdict"]),
+        "DRIVERS_LABEL": _esc(data["drivers_label"]),
+        "FOOTER_USE": _esc(data["footer_use"]),
+    }
+
+    for i, d in enumerate(data["drivers"], start=1):
+        slots[f"DRIVER_{i}_KEY"] = _esc(d["key"])
+        slots[f"DRIVER_{i}_VAL"] = _esc(d["value"])
+        slots[f"DRIVER_{i}_DESC"] = _esc(d["desc"])
+        # Empty unit/delta -> drop the whole inner span, not just the token
+        # (matches template's own authoring rule: never leave an empty tag).
+        slots[f"DRIVER_{i}_UNIT_SPAN"] = (
+            f'<span class="unit">{_esc(d["unit"])}</span>' if d.get("unit", "").strip() else ""
+        )
+        slots[f"DRIVER_{i}_DELTA_SPAN"] = (
+            f'<span class="delta {_esc(d.get("tone", "flat"))}">{_esc(d["delta"])}</span>'
+            if d.get("delta", "").strip() else ""
+        )
+
+    for i, item in enumerate(data["impact"], start=1):
+        slots[f"IMPACT_{i}_TARGET"] = _inline_format(item["target"])
+        slots[f"IMPACT_{i}_BODY"] = _inline_format(item["body"])
+
+    for i, item in enumerate(data["opportunities"], start=1):
+        slots[f"OPP_{i}_TITLE"] = _inline_format(item["title"])
+        slots[f"OPP_{i}_DRIVER"] = _inline_format(item["driver"])
+        slots[f"OPP_{i}_OBSERVE"] = _inline_format(item["observe"])
+
+    for i, item in enumerate(data["risks"], start=1):
+        slots[f"RISK_{i}_TITLE"] = _inline_format(item["title"])
+        slots[f"RISK_{i}_BODY"] = _inline_format(item["body"])
+
+    for i, item in enumerate(data["watchlist"], start=1):
+        slots[f"WATCH_{i}_TEXT"] = _inline_format(item["text"])
+        slots[f"WATCH_{i}_TAG"] = _esc(item["tag"])
+
+    ticker_html = "\n        ".join(f'<span class="tk">{_esc(t)}</span>' for t in data["ticker_items"])
+    slots["TICKER_ITEMS"] = ticker_html
+
+    out = template
+    # Driver unit/delta spans are hardcoded in the template as
+    # <span class="unit">{{DRIVER_n_UNIT}}</span><span class="delta {{DRIVER_n_TONE}}">{{DRIVER_n_DELTA}}</span>
+    # — replace each *whole* span pair via the _SPAN slots computed above,
+    # rather than filling {{DRIVER_n_UNIT}}/{{DRIVER_n_TONE}}/{{DRIVER_n_DELTA}}
+    # individually, so an empty unit/delta drops the tag instead of leaving it blank.
+    for i in range(1, 5):
+        out = re.sub(
+            r'<span class="unit">\{\{DRIVER_' + str(i) + r'_UNIT\}\}</span>'
+            r'<span class="delta \{\{DRIVER_' + str(i) + r'_TONE\}\}">\{\{DRIVER_' + str(i) + r'_DELTA\}\}</span>',
+            slots.pop(f"DRIVER_{i}_UNIT_SPAN") + slots.pop(f"DRIVER_{i}_DELTA_SPAN"),
+            out,
+        )
+
+    for key, value in slots.items():
+        out = out.replace("{{" + key + "}}", value)
+
+    return out
+
+
+def strip_comment_header(html_text: str) -> str:
+    """Drop the build-time <!-- ... --> guidance block right after <!DOCTYPE html>."""
+    return re.sub(r"(<!DOCTYPE html>\s*)<!--.*?-->\s*", r"\1", html_text, count=1, flags=re.DOTALL)
+
+
+# ── Entry ────────────────────────────────────────────────────────────────
+def main() -> int:
+    global HANDOFF_PATH
+
+    parser = argparse.ArgumentParser(description="Render D13 morning brief from handoff JSON")
+    parser.add_argument(
+        "--handoff",
+        type=Path,
+        default=_DEFAULT_HANDOFF,
+        help=f"Path to handoff JSON (default: {_DEFAULT_HANDOFF})",
+    )
+    args = parser.parse_args()
+    HANDOFF_PATH = args.handoff
+
+    if not HANDOFF_PATH.is_file():
+        print(f"[render-d13-brief] handoff missing: {HANDOFF_PATH}", file=sys.stderr)
+        return 1
+
+    try:
+        data = json.loads(HANDOFF_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        print(f"[render-d13-brief] handoff is not valid JSON: {e}", file=sys.stderr)
+        return 2
+
+    errors = validate(data)
+    if errors:
+        print(f"[render-d13-brief] handoff failed validation ({len(errors)} error(s)):", file=sys.stderr)
+        for e in errors:
+            print(f"  - {e}", file=sys.stderr)
+        print("[render-d13-brief] REFUSING to render. Yesterday's d13_morning_brief.html left untouched.", file=sys.stderr)
+        return 2
+
+    if not TEMPLATE_PATH.is_file():
+        print(f"[render-d13-brief] template missing: {TEMPLATE_PATH}", file=sys.stderr)
+        return 1
+
+    template = strip_comment_header(TEMPLATE_PATH.read_text(encoding="utf-8"))
+    rendered = render(data, template)
+
+    remaining = re.findall(r"\{\{[A-Z0-9_]+\}\}", rendered)
+    if remaining:
+        print(f"[render-d13-brief] internal error: unfilled slots remain: {sorted(set(remaining))}", file=sys.stderr)
+        print("[render-d13-brief] REFUSING to write partially-rendered output.", file=sys.stderr)
+        return 2
+
+    OUTPUT_PATH.write_text(rendered, encoding="utf-8")
+    print(f"[render-d13-brief] rendered {HANDOFF_PATH.name} -> {OUTPUT_PATH}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
