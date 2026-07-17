@@ -133,8 +133,10 @@ def validate(data: Any, window: str = "morning") -> list[str]:
             for fkey, allow_empty in item_fields.items():
                 require_str(item, fkey, allow_empty=allow_empty, parent=p)
 
+    # For non-morning windows, opportunity driver/observe may be auto-filled
+    opp_allow_empty = not strict
     require_section("impact", {"target": False, "body": False})
-    require_section("opportunities", {"title": False, "driver": False, "observe": False})
+    require_section("opportunities", {"title": False, "driver": opp_allow_empty, "observe": opp_allow_empty})
     require_section("risks", {"title": False, "body": False})
     require_section("watchlist", {"text": False, "tag": False})
 
@@ -277,6 +279,123 @@ def strip_comment_header(html_text: str) -> str:
     return re.sub(r"(<!DOCTYPE html>\s*)<!--.*?-->\s*", r"\1", html_text, count=1, flags=re.DOTALL)
 
 
+# ── Contract mapping (midday/close → template slots) ────────────────────
+def map_contract(data: dict, window: str) -> dict:
+    """Map window-specific handoff contracts to template-compatible structure.
+
+    Morning v1 passes through unchanged (it already matches the template).
+    Midday (d13-midday-handoff-v1) and Close (d13-close-handoff-v1) use
+    different field names — this function translates them so the existing
+    render() engine can fill the same template slots.
+    """
+    if window == "morning":
+        return data
+
+    # ── Shared derived fields ──────────────────────────────────────────
+    eyeborw = {"midday": "午间验证", "close": "收盘验证"}.get(window, "")
+    qc = data.get("qc", {})
+    freshness = qc.get("freshness", "")
+    sources = ", ".join(qc.get("sources", [])) if isinstance(qc.get("sources"), list) else ""
+    actuals = data.get("actuals", []) if isinstance(data.get("actuals"), list) else []
+    comparisons = data.get("comparisons", []) if isinstance(data.get("comparisons"), list) else []
+
+    out: dict = {
+        "date": data.get("date", ""),
+        "generated_at": data.get("generated_at", ""),
+        "confidence": data.get("confidence", "MEDIUM"),
+        "time_cst": data.get("as_of", data.get("time_cst", "")),
+        "eyebrow_mode": eyeborw,
+        "use_tag": f"数据源: {sources}" if sources else "Loop验证",
+        "drivers_label": f"· {window} snapshot · {freshness}" if freshness else f"· {window} snapshot",
+        "h1_line_a": data.get("market_summary", data.get("day_summary", "")),
+        "h1_accent": data.get("deviation_summary", "")
+                     or (f"{sum(1 for c in comparisons if isinstance(c, dict) and c.get('result') == 'DEVIATED')}项偏差"
+                         if isinstance(comparisons, list) and any(isinstance(c, dict) and c.get("result") == "DEVIATED" for c in comparisons)
+                         else ""),
+        "h1_line_b": "",
+        "header_sub": f"QC: {qc.get('status', 'unknown')} · 置信度: {data.get('confidence', 'MEDIUM')}",
+        "verdict": data.get("deviation_summary", data.get("day_summary", "")),
+        "footer_use": data.get("allowed_use", "仅用于宏观观察，不构成交易建议"),
+    }
+
+    # ── actuals → drivers ──────────────────────────────────────────────
+    drivers = []
+    for a in actuals if isinstance(actuals, list) else []:
+        if not isinstance(a, dict):
+            continue
+        tone = "flat"
+        change = a.get("actual_change", "")
+        if isinstance(change, str):
+            if change.startswith("+") or "涨" in change or "up" in change.lower():
+                tone = "up"
+            elif change.startswith("-") or "跌" in change or "down" in change.lower():
+                tone = "down"
+        drivers.append({
+            "key": a.get("key", ""),
+            "value": str(a.get("actual_value", "")),
+            "unit": "",
+            "delta": change,
+            "tone": tone,
+            "desc": f"预期: {a.get('expected_value', '')} ({a.get('expected_tone', '')}), 来源: {a.get('source', '')}",
+        })
+    out["drivers"] = drivers
+
+    # ── comparisons → impact ───────────────────────────────────────────
+    impacts = []
+    for c in comparisons if isinstance(comparisons, list) else []:
+        if not isinstance(c, dict):
+            continue
+        result = c.get("result", "INCONCLUSIVE")
+        emoji = {"CONFIRMED": "✓", "DEVIATED": "⚠", "INCONCLUSIVE": "?"}.get(result, "")
+        impacts.append({
+            "target": f"{emoji} {c.get('key', '')} — {result}",
+            "body": c.get("reason", ""),
+        })
+    out["impact"] = impacts
+
+    # ── window-specific → opportunities / risks ────────────────────────
+    if window == "midday":
+        ops = []
+        rs = []
+        for c in comparisons if isinstance(comparisons, list) else []:
+            if not isinstance(c, dict):
+                continue
+            if c.get("result") == "CONFIRMED":
+                ops.append({"title": c.get("key", ""), "driver": c.get("reason", ""), "observe": "预期验证通过"})
+            elif c.get("result") == "DEVIATED":
+                rs.append({"title": c.get("key", ""), "body": c.get("reason", "")})
+        out["opportunities"] = ops
+        out["risks"] = rs
+
+    elif window == "close":
+        fb = data.get("feedback", {}) if isinstance(data.get("feedback"), dict) else {}
+        patterns = fb.get("confirmed_patterns", [])
+        out["opportunities"] = [
+            {"title": p, "driver": p, "observe": "全天验证确认"}
+            for p in (patterns if isinstance(patterns, list) else [])
+        ]
+        missed = fb.get("missed_assumptions", [])
+        unresolved = fb.get("unresolved_items", [])
+        all_risks = (missed if isinstance(missed, list) else []) + (unresolved if isinstance(unresolved, list) else [])
+        out["risks"] = [{"title": r, "body": r} for r in all_risks[:3]]  # template max 3 seats
+
+    # ── watchlist ──────────────────────────────────────────────────────
+    wl = data.get("watchlist", [])
+    if wl and isinstance(wl, list) and isinstance(wl[0], str):
+        out["watchlist"] = [{"text": w, "tag": f"{'MID' if window == 'midday' else 'CLS'}-{i+1:02d}"} for i, w in enumerate(wl)]
+    else:
+        out["watchlist"] = wl if isinstance(wl, list) else []
+
+    # ── ticker ─────────────────────────────────────────────────────────
+    ticker = []
+    for a in actuals if isinstance(actuals, list) else []:
+        if isinstance(a, dict):
+            ticker.append(f"{a.get('key','')} {a.get('actual_value','')}")
+    out["ticker_items"] = ticker if ticker else ["数据待更新"]
+
+    return out
+
+
 # ── Entry ────────────────────────────────────────────────────────────────
 def main() -> int:
     global HANDOFF_PATH
@@ -302,10 +421,13 @@ def main() -> int:
         return 1
 
     try:
-        data = json.loads(HANDOFF_PATH.read_text(encoding="utf-8"))
+        raw = json.loads(HANDOFF_PATH.read_text(encoding="utf-8"))
     except json.JSONDecodeError as e:
         print(f"[render-d13-brief] handoff is not valid JSON: {e}", file=sys.stderr)
         return 2
+
+    # Map window-specific contracts to template-compatible structure
+    data = map_contract(raw, window=args.window)
 
     errors = validate(data, window=args.window)
     if errors:

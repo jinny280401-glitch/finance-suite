@@ -204,19 +204,6 @@ def window_close() -> int:
     state["close_feedback"] = {**cc_meta, **existing_feedback}
     write_loop_state(state)
     log("close feedback captured for next morning brief")
-    # Codex close automation (16:00) may have already written detailed
-    # feedback into loop_state.json — preserve those fields and only
-    # add the CC-side completion metadata.
-    existing_feedback = state.get("close_feedback", {})
-    cc_meta = {
-        "completed_at": now_cst().isoformat(),
-        "midday_verified": state.get("midday_verified", False),
-    }
-    # Codex fields (keys unknown a priori) take precedence; CC metadata
-    # fills in what Codex didn't set.
-    state["close_feedback"] = {**cc_meta, **existing_feedback}
-    write_loop_state(state)
-    log("close feedback captured for next morning brief")
 
     return 0
 
