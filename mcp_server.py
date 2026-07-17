@@ -165,9 +165,34 @@ def _qc_auction(data: dict) -> dict:
         "top_gainers": "涨幅排行",
     }
     critical_keys = {"zt_pool", "hot_rank", "top_gainers"}
+    meta = data.get("_meta") or {}
+    phase = meta.get("market_phase") or "unknown"
+    auction_results_ready = meta.get("auction_results_ready") is True
+
+    def _number(value) -> float:
+        try:
+            return float(value or 0)
+        except (TypeError, ValueError):
+            return 0.0
+
+    def _all_zero_liquidity(rows) -> bool:
+        if not isinstance(rows, list) or not rows:
+            return False
+        records = [row for row in rows if isinstance(row, dict)]
+        if not records:
+            return False
+        return all(
+            _number(row.get("成交额")) <= 0 and _number(row.get("换手率")) <= 0
+            for row in records
+        )
+
+    invalid_dimensions = []
+    for key in ("zt_pool", "strong_pool", "previous_zt"):
+        if _all_zero_liquidity(data.get(key)):
+            invalid_dimensions.append(key)
 
     def _present(key: str) -> bool:
-        return data.get(key) not in (None, [], {})
+        return data.get(key) not in (None, [], {}) and key not in invalid_dimensions
 
     missing = [key for key in dimension_labels if not _present(key)]
     missing_critical = [key for key in critical_keys if not _present(key)]
@@ -182,6 +207,8 @@ def _qc_auction(data: dict) -> dict:
 
     if completeness <= 0:
         status = "failure"
+    elif not auction_results_ready or invalid_dimensions:
+        status = "partial"
     elif completeness == 1.0:
         status = "success"
     elif missing_critical:
@@ -190,6 +217,24 @@ def _qc_auction(data: dict) -> dict:
         status = "success"
     else:
         status = "partial"
+
+    blocked_fields = []
+    gate_reason = None
+    if not auction_results_ready:
+        blocked_fields.extend([
+            "auction_result",
+            "market_sentiment",
+            "limit_up_ranking",
+            "quant_signals",
+        ])
+        gate_reason = "auction_not_complete_before_09_25"
+    if invalid_dimensions:
+        blocked_fields.extend([
+            "market_sentiment",
+            "liquidity_assessment",
+            "quant_signals",
+        ])
+        gate_reason = gate_reason or "zero_liquidity_rows"
 
     return {
         "status": status,
@@ -204,6 +249,13 @@ def _qc_auction(data: dict) -> dict:
         "dimension_labels": dimension_labels,
         "missing_dimensions": missing,
         "missing_critical_dimensions": missing_critical,
+        "invalid_dimensions": invalid_dimensions,
+        "market_phase": phase,
+        "as_of": meta.get("as_of"),
+        "auction_results_ready": auction_results_ready,
+        "gate_reason": gate_reason,
+        "allowed_use": ["pre_auction_observation"] if not auction_results_ready else ["auction_analysis"],
+        "blocked_fields": sorted(set(blocked_fields)),
         "stale_data": [],
     }
 
@@ -394,6 +446,7 @@ async def market_pulse() -> str:
 
         data = await auction_data.get_auction_data()
         qc = _qc_auction(data)
+        data["_qc"] = qc
         formatted = auction_data.format_auction_data(data)
         return _wrap_response(qc, formatted)
 

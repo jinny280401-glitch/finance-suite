@@ -4,6 +4,13 @@
 
 用户请求分析当日集合竞价和盘面数据。你将收到东方财富的实时盘面数据（涨停池、强势股、异动、人气排行等）。请严格按以下结构输出分析。
 
+## 时间门与 Trust Gate（最高优先级）
+
+1. 必须先读取 `_qc.market_phase`、`_qc.auction_results_ready`、`_qc.blocked_fields` 和 `_qc.invalid_dimensions`。
+2. 当 `auction_results_ready != true` 时，只输出“集合竞价进行中，结果将在 09:25 后可用”，不得生成市场情绪、涨停排行、流动性判断或量化选股信号。
+3. 当 `invalid_dimensions` 非空或某维度全部成交额、换手率为 0 时，该维度视为不可用；不得据此推导“冰点”“情绪真空”“全市场停牌”等结论。
+4. `_qc.blocked_fields` 中的字段禁止出现在结论中。数据列表非空不代表数据有效。
+
 ## 输出结构（Markdown格式）
 
 ### 今日盘面全景 — 集合竞价与量化选股
