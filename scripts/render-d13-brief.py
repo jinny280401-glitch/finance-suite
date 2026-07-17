@@ -389,8 +389,10 @@ def map_contract(data: dict, window: str) -> dict:
     elif window == "close":
         # Close contract: watchlist optional; fallback to tomorrow_context
         fb_close = data.get("feedback", {}) if isinstance(data.get("feedback"), dict) else {}
-        tc = fb_close.get("tomorrow_context", "")
-        if tc:
+        tc = fb_close.get("tomorrow_context", [])
+        if isinstance(tc, list) and len(tc) > 0:
+            out["watchlist"] = [{"text": str(t), "tag": f"CLS-{i+1:02d}"} for i, t in enumerate(tc[:3])]
+        elif isinstance(tc, str) and tc.strip():
             out["watchlist"] = [{"text": tc, "tag": "CLS-01"}]
         else:
             out["watchlist"] = []
