@@ -59,7 +59,7 @@ def validate(data: Any, window: str = "morning") -> list[str]:
     """
     errors: list[str] = []
     strict = window == "morning"
-    min_sections = 3 if strict else 1
+    min_sections = 3 if strict else 0  # midday/close: empty sections OK
     min_drivers = 4 if strict else 1
 
     def require_str(obj: dict, key: str, allow_empty: bool = False, parent: str = "") -> None:
@@ -310,11 +310,14 @@ def map_contract(data: dict, window: str) -> dict:
         "h1_line_a": data.get("market_summary", data.get("day_summary", "")),
         "h1_accent": data.get("deviation_summary", "")
                      or (f"{sum(1 for c in comparisons if isinstance(c, dict) and c.get('result') == 'DEVIATED')}项偏差"
-                         if isinstance(comparisons, list) and any(isinstance(c, dict) and c.get("result") == "DEVIATED" for c in comparisons)
-                         else ""),
+                         if any(isinstance(c, dict) and c.get("result") == 'DEVIATED' for c in comparisons)
+                         else "验证中"),
         "h1_line_b": "",
         "header_sub": f"QC: {qc.get('status', 'unknown')} · 置信度: {data.get('confidence', 'MEDIUM')}",
-        "verdict": data.get("deviation_summary", data.get("day_summary", "")),
+        "verdict": data.get("deviation_summary", data.get("day_summary", data.get("market_summary", "")))
+                   or (f"{sum(1 for c in comparisons if isinstance(c, dict) and c.get('result') == 'CONFIRMED')}确认/{sum(1 for c in comparisons if isinstance(c, dict) and c.get('result') == 'DEVIATED')}偏差"
+                       if len(comparisons) > 0
+                       else "验证完成"),
         "footer_use": data.get("allowed_use", "仅用于宏观观察，不构成交易建议"),
     }
 
@@ -381,8 +384,16 @@ def map_contract(data: dict, window: str) -> dict:
 
     # ── watchlist ──────────────────────────────────────────────────────
     wl = data.get("watchlist", [])
-    if wl and isinstance(wl, list) and isinstance(wl[0], str):
+    if wl and isinstance(wl, list) and len(wl) > 0 and isinstance(wl[0], str):
         out["watchlist"] = [{"text": w, "tag": f"{'MID' if window == 'midday' else 'CLS'}-{i+1:02d}"} for i, w in enumerate(wl)]
+    elif window == "close":
+        # Close contract: watchlist optional; fallback to tomorrow_context
+        fb_close = data.get("feedback", {}) if isinstance(data.get("feedback"), dict) else {}
+        tc = fb_close.get("tomorrow_context", "")
+        if tc:
+            out["watchlist"] = [{"text": tc, "tag": "CLS-01"}]
+        else:
+            out["watchlist"] = []
     else:
         out["watchlist"] = wl if isinstance(wl, list) else []
 
