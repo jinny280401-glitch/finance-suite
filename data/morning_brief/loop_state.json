@@ -1,0 +1,31 @@
+{
+  "morning_expectations": {
+    "date": "2026-07-17",
+    "verdict": "国内增长分化与隔夜科技回撤压制风险偏好，但央行大额净投放和稳定汇率锚为A股开盘提供缓冲；今日先看防守是否转为企稳，而非预设反弹。",
+    "drivers": [
+      {
+        "key": "GDP · 二季度",
+        "value": "4.3",
+        "tone": "down"
+      },
+      {
+        "key": "央行净投放 · 7月17日",
+        "value": "4305",
+        "tone": "up"
+      },
+      {
+        "key": "USD/CNY 中间价",
+        "value": "6.7934",
+        "tone": "down"
+      },
+      {
+        "key": "上证指数 · 前收",
+        "value": "3882.41",
+        "tone": "down"
+      }
+    ],
+    "generated_at": "2026-07-17T09:23:00+08:00"
+  },
+  "midday_verified": false,
+  "close_feedback": {}
+}
