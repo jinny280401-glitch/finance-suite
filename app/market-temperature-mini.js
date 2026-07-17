@@ -2,9 +2,9 @@
   'use strict';
 
   // ── B Line Market Temperature Mini Card ────────────────────────
-  // 最小适配：保留原 mt-mini-* 结构与静态 fixture，不接 API / Runtime / Router，
-  // 不新增数据源、不改展示规格。仅把渲染逻辑暴露为可被 Sidebar Registry 调用的
-  // Renderer（html + hydrate）。
+  // 最小适配：保留原 mt-mini-* 结构，不新增 Runtime / Router。
+  // Sidebar 内优先消费 /api/intel/market-context；fallback/non-success 时只展示透明空态，
+  // 不混入 fixture 数字。仅把渲染逻辑暴露为可被 Sidebar Registry 调用的 Renderer。
 
   // 卡片外壳（与原 market-temperature-mini.html 的 .mt-mini-card 结构一致）。
   // 挂 data-sidebar-card 供 Registry hydrate 阶段定位。
@@ -25,7 +25,10 @@
       '  </div>',
       '  <div class="mt-mini-footer">',
       '    <span class="mt-mini-risk" data-mt-risk>--</span>',
-      '    <a class="mt-mini-link" href="#" aria-label="查看市场画像">查看市场画像 →</a>',
+      '    <div class="mt-mini-links">',
+      '      <a class="mt-mini-link" href="/app/weekly-recap.html" target="_self" aria-label="本周复盘">📋 本周复盘</a>',
+      '      <a class="mt-mini-link" href="/app/market-snapshot.html" target="_self" aria-label="查看市场画像">查看市场画像 →</a>',
+      '    </div>',
       '  </div>',
       '</section>'
     ].join('');
@@ -38,6 +41,8 @@
     var context = payload.context || {};
     var themes = Array.isArray(payload.themes) ? payload.themes : [];
     var qc = payload._qc || {};
+    var qcStatus = String(qc.status || payload.status || '').toLowerCase();
+    var isTrustedPayload = qcStatus === 'success' || qcStatus === 'ok' || qcStatus === 'partial';
 
     function pickValue() {
       for (var i = 0; i < arguments.length; i += 1) {
@@ -45,6 +50,10 @@
         if (value !== undefined && value !== null && value !== '') return value;
       }
       return '--';
+    }
+
+    if (!isTrustedPayload) {
+      return emptyFallbackState(payload);
     }
 
     var metricItems = [
@@ -69,27 +78,27 @@
       title: payload.title || '市场温度',
       status: payload.status || payload.conclusion || context.market_preference || '降级显示',
       metrics: metricItems,
-      themes: themeItems.length ? themeItems : (global.marketTemperatureFixture || {}).themes || [],
-      riskNote: qc.status === 'success' ? '仅市场结构，不含操作建议' : '降级显示，仅作入口占位'
+      themes: themeItems.length ? themeItems : [{ name: '暂无主线', count: '--' }],
+      riskNote: qcStatus === 'partial' ? '部分实时维度降级，缺失项不参与判断' : (isTrustedPayload ? '仅市场结构，不含操作建议' : '降级显示，仅作入口占位')
     };
   }
 
-  function withFallbackNote(data) {
+  function emptyFallbackState(data) {
     var fallback = data || {};
     return {
       title: fallback.title || '市场温度',
-      status: fallback.status || '降级显示',
-      metrics: Array.isArray(fallback.metrics) ? fallback.metrics : [],
-      themes: Array.isArray(fallback.themes) ? fallback.themes : [],
+      status: fallback.status || fallback.conclusion || '降级显示',
+      metrics: [],
+      themes: [{ name: '暂无主线', count: '--' }],
       riskNote: '降级显示，仅作入口占位'
     };
   }
 
   function hydrateMarketTemperature(el) {
-    renderMarketTemperature(withFallbackNote(global.marketTemperatureFixture), el);
+    renderMarketTemperature(emptyFallbackState(), el);
 
     if (!global.fetch) {
-      renderMarketTemperature(withFallbackNote(global.marketTemperatureFixture), el);
+      renderMarketTemperature(emptyFallbackState(), el);
       return;
     }
     fetch('/api/intel/market-context', { credentials: 'include' })
@@ -102,7 +111,7 @@
         if (normalized) renderMarketTemperature(normalized, el);
       })
       .catch(function () {
-        renderMarketTemperature(withFallbackNote(global.marketTemperatureFixture), el);
+        renderMarketTemperature(emptyFallbackState(), el);
       });
   }
 

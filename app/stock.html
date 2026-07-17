@@ -117,6 +117,24 @@
       color: var(--text-secondary);
       line-height: 1.5;
     }
+    .truth-guard {
+      margin-bottom: 22px;
+      padding: 14px 16px;
+      border: 1px solid #f59e0b;
+      border-radius: var(--radius-sm);
+      background: #fffbeb;
+      color: #78350f;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .truth-guard__title {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .truth-guard__status {
+      color: #92400e;
+      font-weight: 600;
+    }
 
     /* Input Form */
     .analyze-form {
@@ -186,6 +204,19 @@
       padding: 40px 20px;
       color: var(--text-secondary);
     }
+    .loading-stage {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .loading-timeout-note {
+      display: none;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #92400e;
+    }
+    .loading-timeout-note.show { display: block; }
     .result-loading__spinner {
       width: 40px;
       height: 40px;
@@ -636,6 +667,12 @@
   </header>
 
   <main class="main-container">
+    <div class="truth-guard" role="status" aria-live="polite">
+      <div class="truth-guard__title">Presentation Truth Guard</div>
+      <div>/api/analyze authenticated 3-case evidence is blocked. Current page is a presentation shell, not verified live proof.</div>
+      <div class="truth-guard__status">Live Presentation: NOT ESTABLISHED · Reality → Presentation: HOLD / FAIL · Production Ready: NOT CLAIMED</div>
+    </div>
+
     <div class="page-head">
       <h1 class="page-head__title">看票分析</h1>
       <p class="page-head__desc">个股短平快交易视角，9 章报告 + 4 位大师视角</p>
@@ -656,7 +693,9 @@
     <div class="result-container" id="resultContainer">
       <div class="result-loading" id="resultLoading">
         <div class="result-loading__spinner"></div>
-        <div>正在分析中，请稍候...</div>
+        <div class="loading-stage" id="loadingStage">正在匹配股票</div>
+        <div>请稍候，系统会优先生成已获取数据部分。</div>
+        <div class="loading-timeout-note" id="loadingTimeoutNote">部分数据获取较慢，系统将先生成可用部分。</div>
       </div>
       <div class="result-content" id="resultContent"></div>
       <div class="watchlist-bar" id="watchlistBar">
@@ -679,6 +718,8 @@
     const submitBtn = document.getElementById('submitBtn');
     const resultContainer = document.getElementById('resultContainer');
     const resultLoading = document.getElementById('resultLoading');
+    const loadingStage = document.getElementById('loadingStage');
+    const loadingTimeoutNote = document.getElementById('loadingTimeoutNote');
     const resultContent = document.getElementById('resultContent');
     const watchlistBar = document.getElementById('watchlistBar');
     const watchlistBtn = document.getElementById('watchlistBtn');
@@ -689,13 +730,119 @@
 
     let currentQuery = '';
     let currentReportHtml = '';
+    let inFlight = false;
+    let loadingStageTimer = null;
+    let loadingTimeoutTimer = null;
+    const loadingStages = [
+      '正在匹配股票',
+      '正在获取财报',
+      '正在获取资金流',
+      '正在分析新闻',
+      '正在生成报告'
+    ];
+
+    function startLoadingStages() {
+      stopLoadingStages();
+      let idx = 0;
+      loadingStage.textContent = loadingStages[idx];
+      loadingTimeoutNote.classList.remove('show');
+      loadingStageTimer = setInterval(() => {
+        idx = Math.min(idx + 1, loadingStages.length - 1);
+        loadingStage.textContent = loadingStages[idx];
+      }, 7000);
+      loadingTimeoutTimer = setTimeout(() => {
+        loadingTimeoutNote.classList.add('show');
+      }, 25000);
+    }
+
+    function stopLoadingStages() {
+      if (loadingStageTimer) clearInterval(loadingStageTimer);
+      if (loadingTimeoutTimer) clearTimeout(loadingTimeoutTimer);
+      loadingStageTimer = null;
+      loadingTimeoutTimer = null;
+    }
+
+    // ===== 网络层修复 (2026-06-19 应对 Failed to fetch / 后端短暂卡顿) =====
+    // 关键变更:
+    //   1. apiFetch: 包一层 fetch,带 60-90s 超时 + 一次自动重试(只针对瞬时错误)
+    //   2. cache: no-store: 避免浏览器返回陈旧 304 / cached body
+    //   3. explainError: 把 Failed to fetch / AbortError / NetworkError 转成可执行的中文提示
+    //   4. showError + retryLast: 出错时给用户一个手动重试按钮,而不是只能重新输入
+    async function apiFetch(url, options = {}, { retries = 1, timeout = 90000 } = {}) {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), timeout);
+      try {
+        return await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          credentials: 'include',
+          cache: 'no-store'
+        });
+      } catch (err) {
+        const msg = (err && err.message) || '';
+        const transient = err.name === 'AbortError'
+          || /Failed to fetch|NetworkError|network|ERR_/i.test(msg);
+        if (retries > 0 && transient) {
+          console.warn(`[apiFetch] ${url} 瞬时失败 (${err.name}: ${msg}),800ms 后重试...`);
+          await new Promise(r => setTimeout(r, 800));
+          return apiFetch(url, options, { retries: retries - 1, timeout });
+        }
+        throw err;
+      } finally {
+        clearTimeout(tid);
+      }
+    }
+
+    function explainError(err) {
+      const msg = (err && err.message) || String(err || '');
+      if (err && err.name === 'AbortError') {
+        return '请求超时(>90 秒),可能是后端繁忙或网络太慢,请稍后重试。';
+      }
+      if (/Failed to fetch/i.test(msg)) {
+        return [
+          '网络请求失败 (Failed to fetch)。常见原因:',
+          '1. 浏览器扩展/广告拦截/代理 (Clash/Tailscale/VPN) 拦截 — 试关闭后重试',
+          '2. 浏览器缓存了旧错误 — Mac ⌘⇧R / Win Ctrl+Shift+R 硬刷新',
+          '3. DNS 被劫持到假 IP — 终端 `dig www.touziagent.com +short` 应返回 119.28.156.125',
+          '4. 后端短暂卡顿 — 已自动重试 1 次仍失败,请等 30 秒再试'
+        ].join('\n');
+      }
+      if (/NetworkError|ERR_INTERNET|ERR_CONNECTION/i.test(msg)) {
+        return '网络连接中断,请检查网络后重试。';
+      }
+      if (/JSON/.test(msg)) {
+        return '返回数据不是合法 JSON: ' + msg;
+      }
+      return msg || '未知错误';
+    }
+
+    function showError(text) {
+      resultLoading.style.display = 'none';
+      resultContent.style.display = 'block';
+      resultContent.innerHTML =
+        '<div class="result-error">'
+        + '<div style="white-space:pre-wrap;margin-bottom:12px;">错误:' + text + '</div>'
+        + '<button type="button" onclick="retryLast()" style="font-size:13px;padding:6px 14px;border:1px solid #dc2626;color:#dc2626;background:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">↻ 重试</button>'
+        + '</div>';
+      watchlistBar.classList.add('show');
+    }
+
+    function retryLast() {
+      if (currentQuery) {
+        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      } else {
+        location.reload();
+      }
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const query = queryInput.value.trim();
       if (!query) return;
+      if (inFlight) return;  // 防止重复提交
 
       currentQuery = query;
+      inFlight = true;
       watchlistBar.classList.remove('show');
       watchlistBtn.classList.remove('added');
       watchlistBtnText.textContent = '加入自选';
@@ -705,24 +852,24 @@
       resultLoading.style.display = 'block';
       resultContent.style.display = 'none';
       submitBtn.disabled = true;
-      submitBtn.textContent = '分析中...';
+      submitBtn.textContent = '分析中…';
+      startLoadingStages();
 
       try {
-        const response = await fetch('/api/analyze', {
+        const response = await apiFetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ skill_type: 'stock', query }),
-          credentials: 'include'
-        });
+          body: JSON.stringify({ skill_type: 'stock', query })
+        }, { retries: 1, timeout: 90000 });
 
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
         if (response.status === 401) {
           localStorage.removeItem('fs_auth');
           alert('登录已过期，请重新登录');
           location.replace('/?redirect=/app/stock.html');
           return;
         }
-        if (!response.ok) throw new Error(data.detail || '分析失败');
+        if (!response.ok) throw new Error(data.detail || data.message || '分析失败');
 
         resultLoading.style.display = 'none';
         resultContent.style.display = 'block';
@@ -731,11 +878,11 @@
         watchlistBar.classList.add('show');
 
       } catch (error) {
-        resultLoading.style.display = 'none';
-        resultContent.style.display = 'block';
-        resultContent.innerHTML = `<div class="result-error">错误：${error.message}</div>`;
-        watchlistBar.classList.add('show');
+        console.error('[analyze] error:', error);
+        showError(explainError(error));
       } finally {
+        stopLoadingStages();
+        inFlight = false;
         submitBtn.disabled = false;
         submitBtn.textContent = '开始分析';
       }
@@ -859,6 +1006,7 @@
         html += `<pre>${sanitizeTrustText(JSON.stringify(data, trustJsonReplacer, 2))}</pre>`;
       }
 
+      html += renderPEBandChart(data);
       html += renderTrustPresentation(data, sources);
 
       return html;
@@ -1265,5 +1413,6 @@
       if (preQuery) queryInput.value = preQuery;
     }
   </script>
+  <script src="./pe-band-chart.js"></script>
 </body>
 </html>

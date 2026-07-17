@@ -1,0 +1,112 @@
+{
+  "generated_at": "2026-07-17T16:33:00+08:00",
+  "period": "2026-07-13 至 2026-07-17",
+  "market_summary": "本周A股全线重挫，五大指数周线集体收跌。周五（7/17）出现恐慌性杀跌，上证指数单日跌3.05%收报3764点，跌破3800关口。创业板指全周暴跌10.78%，创年内最大单周跌幅。本周仅周一（7/14）出现反弹，其余四个交易日均收跌。市场呈现普跌格局，周五上涨家数仅191家，下跌2004家。短线情绪极端恶化，高位连板股集中退潮。",
+  "index_performance": [
+    {
+      "name": "上证指数",
+      "code": "000001.SH",
+      "change_pct": -5.81,
+      "weekly_range": "3745-3967",
+      "close": 3764.15,
+      "open": 3966.02,
+      "volume": "1.246万亿（周五）",
+      "note": "周五跌破3800，五连阴后仅一日反弹即续跌，BOLL下轨3830被击穿，支撑位3745"
+    },
+    {
+      "name": "深证成指",
+      "code": "399001.SZ",
+      "change_pct": -8.9,
+      "weekly_range": "13586-14971",
+      "close": 13706.88,
+      "open": 14908.98,
+      "volume": "1.409万亿（周五）",
+      "note": "周五暴跌5.4%，一周跌去近1500点，跌破BOLL下轨13990"
+    },
+    {
+      "name": "创业板指",
+      "code": "399006.SZ",
+      "change_pct": -10.78,
+      "weekly_range": "3387-3880",
+      "close": 3428.63,
+      "open": 3809.86,
+      "volume": "6863亿（周五）",
+      "note": "全周暴跌超10%，周五单日跌7.15%，为本周跌幅最大指数，科技成长股遭重创"
+    },
+    {
+      "name": "沪深300",
+      "code": "000300.SH",
+      "change_pct": -5.26,
+      "weekly_range": "4492-4798",
+      "close": 4529.10,
+      "open": 4745.44,
+      "volume": "9208亿（周五）",
+      "note": "跌破BOLL下轨4594，权重股亦未能幸免，但跌幅相对中小盘较轻"
+    },
+    {
+      "name": "中证500",
+      "code": "000905.SH",
+      "change_pct": -9.0,
+      "weekly_range": "2113-2319",
+      "close": 2123.34,
+      "open": 2346.49,
+      "volume": "5120亿（周五）",
+      "note": "中小盘跌幅居前，跌破BOLL下轨2188，周五超八成成分股下跌"
+    }
+  ],
+  "top_movers": {
+    "gainers": [
+      {"name": "艾艾精工", "code": "603580", "change_pct": 46.4, "reason": "4连板，小盘妖股，市场情绪极端时短线资金抱团"},
+      {"name": "浙江美大", "code": "002677", "change_pct": 33.1, "reason": "3连板，家电以旧换新政策预期"},
+      {"name": "智度股份", "code": "000676", "change_pct": 33.1, "reason": "3连板，AI应用+数字营销概念"},
+      {"name": "信通电子", "code": "001388", "change_pct": 30.0, "reason": "电网设备概念，5日4板"},
+      {"name": "九安医疗", "code": "002432", "change_pct": 27.5, "reason": "医疗器械+海外业务，4日3板"},
+      {"name": "香江控股", "code": "600162", "change_pct": 27.0, "reason": "3连板，房地产政策松绑预期"},
+      {"name": "赤天化", "code": "600227", "change_pct": 25.0, "reason": "农化制品涨价预期"},
+      {"name": "道明光学", "code": "002632", "change_pct": 22.0, "reason": "2连板，光学膜+AI眼镜概念"},
+      {"name": "珍宝岛", "code": "603567", "change_pct": 20.0, "reason": "2连板，中药+医药防御属性"},
+      {"name": "贵绳股份", "code": "600992", "change_pct": 18.5, "reason": "通用设备+国企改革概念，7日4板"}
+    ],
+    "losers": [
+      {"name": "海南海药", "code": "000566", "change_pct": -28.5, "reason": "3连板后炸板暴跌，昨日打板资金被埋，高位连板退潮"},
+      {"name": "南华生物", "code": "000504", "change_pct": -22.0, "reason": "前期连板后连续杀跌，医疗服务板块回调"},
+      {"name": "天海电子", "code": "001365", "change_pct": -21.5, "reason": "次新股高位回落，汽车零部件板块资金流出"},
+      {"name": "沙河股份", "code": "000014", "change_pct": -19.8, "reason": "房地产板块周五冲高回落，涨停次日大跌"},
+      {"name": "欢瑞世纪", "code": "000892", "change_pct": -18.3, "reason": "影视院线概念退潮，前期炒作资金撤离"},
+      {"name": "天音控股", "code": "000829", "change_pct": -15.0, "reason": "专业连锁板块回调，涨停后持续走弱"},
+      {"name": "同飞股份", "code": "300990", "change_pct": -14.5, "reason": "尾盘大笔卖出，高位股集体回调"},
+      {"name": "涛涛车业", "code": "301345", "change_pct": -14.0, "reason": "次新股杀跌，市场风险偏好骤降"},
+      {"name": "川环科技", "code": "300547", "change_pct": -13.5, "reason": "汽车零部件板块回调，前期涨幅过大"},
+      {"name": "新赣江", "code": "920367", "change_pct": -13.0, "reason": "北交所个股流动性收缩，高位回落"}
+    ]
+  },
+  "north_flow": {
+    "net_flow": "暂不可用",
+    "avg_daily": "暂不可用",
+    "total_inflow": "暂不可用",
+    "top_sectors": ["暂不可用"],
+    "note": "东方财富北向资金接口本周数据缺失，仅获取到跨境理财通北向通数据（日均约2.45亿元），与沪深股通北向资金非同口径"
+  },
+  "events_calendar": [
+    {"date": "07-20 周一", "event": "7月LPR报价公布（1年期/5年期以上）", "impact": "high"},
+    {"date": "07-20 周一", "event": "2026世界人工智能大会（WAIC）最后一天", "impact": "mid"},
+    {"date": "07-21 周二", "event": "中国汽车论坛（聚焦整车智能化与新能源转型）", "impact": "mid"},
+    {"date": "07-22 周三", "event": "上海国际核能产业博览会", "impact": "mid"},
+    {"date": "07-22 周三", "event": "国际低空经济博览会", "impact": "mid"},
+    {"date": "07-20起", "event": "A股进入半年报常态化披露期（中船特气已率先披露）", "impact": "high"},
+    {"date": "07-22起", "event": "美股科技巨头（M7除英伟达外）集中披露Q2业绩", "impact": "high"},
+    {"date": "07-20前", "event": "长鑫科技IPO缴款（募资295亿元），资金面承压", "impact": "mid"},
+    {"date": "07-26 周六", "event": "芝商所（CME）推出7×24小时黄金期货交易", "impact": "low"},
+    {"date": "07-30 周三", "event": "美联储FOMC公布利率决议", "impact": "high"},
+    {"date": "07-31 周四", "event": "长鑫科技预计上市 + 7月PMI数据发布", "impact": "high"},
+    {"date": "07月下旬", "event": "中央政治局会议（定调下半年经济政策方向）", "impact": "high"}
+  ],
+  "_qc": {
+    "status": "partial",
+    "source_type": "mcp_automated",
+    "completeness": 0.75,
+    "missing_dimensions": ["north_flow_detail", "weekly_volume_aggregate", "sector_rotation_detail"],
+    "notes": "自动化生成，未人工复核。北向资金明细缺失（东方财富接口返回仅跨境理财通数据）。个股涨跌原因基于公开信息提取，部分标注'待核实'。下周事件日历来源：东方财富、21世纪经济报道、公开财经媒体。",
+    "generated_by": "Claude Code + finance-suite MCP"
+  }
+}

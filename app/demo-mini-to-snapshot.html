@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Card → 市场画像 跳转演示</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif; background: #101318; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+
+    .demo-nav { width: 100%; max-width: 800px; padding: 32px 24px 16px; text-align: center; }
+    .demo-nav h1 { color: white; font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+    .demo-nav p { color: #69717d; font-size: 13px; }
+
+    .stage-wrap { width: 100%; max-width: 800px; padding: 16px 24px 32px; }
+    .stage-badge { font-size: 11px; font-weight: 700; color: #69717d; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+
+    /* exact Mini Card copy */
+    .mt-mini-card { background: white; border-radius: 14px; padding: 20px; max-width: 380px; margin: 0 auto 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.24); }
+    .mt-mini-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+    .mt-mini-kicker { font-size: 10px; color: #69717d; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+    .mt-mini-title { font-size: 17px; font-weight: 700; color: #101318; }
+    .mt-mini-status { font-size: 12px; padding: 4px 10px; border-radius: 12px; background: #e9f8f0; color: #0aa66a; font-weight: 600; white-space: nowrap; }
+    .mt-mini-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .mt-mini-metric { padding: 8px 10px; border-radius: 9px; background: #f8f9fa; }
+    .mt-mini-metric-label { font-size: 10px; color: #69717d; display: block; margin-bottom: 2px; }
+    .mt-mini-metric-value { font-size: 15px; font-weight: 700; }
+    .mt-mini-metric-value--hot { color: #db3b31; }
+    .mt-mini-metric-value--positive { color: #0aa66a; }
+    .mt-mini-section-title { font-size: 11px; color: #69717d; margin-bottom: 8px; font-weight: 600; }
+    .mt-mini-theme { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px; }
+    .mt-mini-theme-name { color: #596271; }
+    .mt-mini-theme-count { font-weight: 700; color: #101318; }
+    .mt-mini-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid #eee; }
+    .mt-mini-risk { font-size: 11px; color: #ef8a25; }
+    .mt-mini-link { font-size: 13px; color: #2563eb; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 8px; background: #edf3ff; transition: background 0.15s; }
+    .mt-mini-link:hover { background: #dbe7ff; }
+
+    .divider { text-align: center; padding: 16px; }
+    .divider span { font-size: 28px; }
+
+    .back-link { display: inline-block; margin-top: 16px; color: #2563eb; font-size: 13px; font-weight: 600; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <div class="demo-nav">
+    <h1>Sidebar Mini Card → 今日市场画像</h1>
+    <p>点击下方 Mini Card 右下角的「查看市场画像 →」跳转到完整页面</p>
+  </div>
+
+  <div class="stage-wrap">
+    <div class="stage-badge">Stage 1 — Sidebar Mini Card</div>
+
+    <div class="mt-mini-card">
+      <div class="mt-mini-header">
+        <div>
+          <p class="mt-mini-kicker">Market Structure</p>
+          <h2 class="mt-mini-title">市场温度</h2>
+        </div>
+        <span class="mt-mini-status">活跃</span>
+      </div>
+
+      <div class="mt-mini-metrics">
+        <div class="mt-mini-metric">
+          <span class="mt-mini-metric-label">涨停</span>
+          <strong class="mt-mini-metric-value mt-mini-metric-value--hot">90只</strong>
+        </div>
+        <div class="mt-mini-metric">
+          <span class="mt-mini-metric-label">连板</span>
+          <strong class="mt-mini-metric-value">7</strong>
+        </div>
+        <div class="mt-mini-metric">
+          <span class="mt-mini-metric-label">溢价</span>
+          <strong class="mt-mini-metric-value mt-mini-metric-value--positive">2.8%</strong>
+        </div>
+      </div>
+
+      <div class="mt-mini-section-title">主线热度</div>
+      <div class="mt-mini-theme"><span class="mt-mini-theme-name">半导体</span><strong class="mt-mini-theme-count">≥12只涨停</strong></div>
+      <div class="mt-mini-theme"><span class="mt-mini-theme-name">光学光电</span><strong class="mt-mini-theme-count">批量20cm</strong></div>
+      <div class="mt-mini-theme"><span class="mt-mini-theme-name">汽车零部件</span><strong class="mt-mini-theme-count">3板标杆</strong></div>
+
+      <div class="mt-mini-footer">
+        <span class="mt-mini-risk">仅市场结构 · 不含操作建议</span>
+        <div class="mt-mini-links">
+          <a class="mt-mini-link" href="./weekly-recap.html">📋 本周复盘</a>
+          <a class="mt-mini-link" href="./market-snapshot.html">查看市场画像 →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"><span>⬇</span></div>
+    <div style="text-align:center;color:#69717d;font-size:13px;">点击后跳转到完整市场画像页面（含估值热力面板 14 行）</div>
+  </div>
+
+</body>
+</html>

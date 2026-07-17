@@ -26,13 +26,22 @@
 
       <div class="mt-mini-footer">
         <span class="mt-mini-risk" data-mt-risk>--</span>
-        <a class="mt-mini-link" href="#" aria-label="查看市场画像">查看市场画像 →</a>
+        <div class="mt-mini-links">
+          <a class="mt-mini-link" href="/app/weekly-recap.html" target="_self" aria-label="本周复盘">📋 本周复盘</a>
+          <a class="mt-mini-link" href="/app/market-snapshot.html" target="_self" aria-label="查看市场画像">查看市场画像 →</a>
+        </div>
       </div>
     </section>
   </aside>
 
   <script src="./market-temperature-fixture.js"></script>
   <script>
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
     function renderMarketTemperature(data) {
       const card = document.querySelector(".mt-mini-card");
       if (!card || !data) return;
@@ -40,19 +49,37 @@
       card.querySelector("[data-mt-status]").textContent = data.status;
       card.querySelector("[data-mt-risk]").textContent = data.riskNote;
 
-      card.querySelector("[data-mt-metrics]").innerHTML = data.metrics.map((item) => `
-        <div class="mt-mini-metric">
-          <span class="mt-mini-metric-label">${item.label}</span>
-          <strong class="mt-mini-metric-value ${item.tone ? `mt-mini-metric-value--${item.tone}` : ""}">${item.value}</strong>
-        </div>
-      `).join("");
+      const metricsContainer = card.querySelector("[data-mt-metrics]");
+      metricsContainer.innerHTML = '';
+      data.metrics.forEach((item) => {
+        const div = document.createElement('div');
+        div.className = 'mt-mini-metric';
+        const label = document.createElement('span');
+        label.className = 'mt-mini-metric-label';
+        label.textContent = item.label;
+        const value = document.createElement('strong');
+        value.className = 'mt-mini-metric-value' + (item.tone ? ` mt-mini-metric-value--${item.tone}` : '');
+        value.textContent = item.value;
+        div.appendChild(label);
+        div.appendChild(value);
+        metricsContainer.appendChild(div);
+      });
 
-      card.querySelector("[data-mt-themes]").innerHTML = data.themes.map((item) => `
-        <div class="mt-mini-theme">
-          <span class="mt-mini-theme-name">${item.name}</span>
-          <strong class="mt-mini-theme-count">${item.count}</strong>
-        </div>
-      `).join("");
+      const themesContainer = card.querySelector("[data-mt-themes]");
+      themesContainer.innerHTML = '';
+      data.themes.forEach((item) => {
+        const div = document.createElement('div');
+        div.className = 'mt-mini-theme';
+        const name = document.createElement('span');
+        name.className = 'mt-mini-theme-name';
+        name.textContent = item.name;
+        const count = document.createElement('strong');
+        count.className = 'mt-mini-theme-count';
+        count.textContent = item.count;
+        div.appendChild(name);
+        div.appendChild(count);
+        themesContainer.appendChild(div);
+      });
     }
 
     renderMarketTemperature(window.marketTemperatureFixture);
