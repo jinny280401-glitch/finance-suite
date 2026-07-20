@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图3 · Research Runtime Workflow</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  .head{display:grid;grid-template-columns:1fr;gap:8px}
+  .h-title{font-size:36px;line-height:1.2;white-space:nowrap}.h-sub{font-size:17px;line-height:1.5}
+  .body3{flex:1;min-height:0;margin-top:14px;z-index:2}
+  .states{height:100%;display:grid;grid-template-rows:repeat(7,minmax(0,1fr));gap:11px}
+  .st{display:flex;align-items:stretch;min-height:0}
+  .st .cap{flex:1;display:flex;align-items:center;gap:26px;padding:15px 24px}
+  .st .step{font-size:20px;font-weight:800;color:var(--cyan);width:240px;flex:none;letter-spacing:0}
+  .st .micro{margin-top:0;font-size:18px;color:#c5d0e5;font-weight:600}
+  .st.qc .cap{box-shadow:0 0 0 1px rgba(55,230,216,.3),0 14px 36px rgba(55,230,216,.25),inset 0 1px 0 rgba(255,255,255,.18); border-color:rgba(55,230,216,.5)}
+  .foot{padding-top:18px;justify-content:flex-start}.slogan{font-size:20px}
+  @media(max-width:900px){.h-title{white-space:normal}.st .step{width:180px;font-size:17px}.st .micro{font-size:15px}}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="h-title">为什么 Vera <span style="background:linear-gradient(110deg, var(--cyan), var(--blue), var(--violet)); -webkit-background-clip:text; background-clip:text; color:transparent">可以一分钟</span>完成分析？</div>
+    <div class="h-sub">研究引擎（Runtime）是原因。Vera = <span style="color:var(--orange); font-weight:700">研究员</span> · 状态机驱动，每步可解释、可中断、可证伪</div>
+  </div>
+
+  <div class="body3">
+    <div class="states">
+      <div class="st"><div class="cap"><span class="step">规划（PLAN）</span><div class="micro">列提纲 / 拆问题</div></div></div>
+      <div class="st"><div class="cap"><span class="step">检索（RETRIEVE）</span><div class="micro">四层降级：Wind → Tushare → JQ → 东财</div></div></div>
+      <div class="st"><div class="cap"><span class="step">证据组装（BUILD_CTX）</span><div class="micro">证据包组装 + 阻断字段剥离</div></div></div>
+      <div class="st"><div class="cap"><span class="step">分析（ANALYZE）</span><div class="micro">财务对比 + 估值计算</div></div></div>
+      <div class="st qc"><div class="cap"><span class="step">质量校验（QC）</span><div class="micro">完整性评分（completeness）+ 异常检测</div></div></div>
+      <div class="st"><div class="cap"><span class="step">报告生成（SYNTHESIZE）</span><div class="micro">11 章节结构化报告</div></div></div>
+      <div class="st"><div class="cap glow"><span class="step">完成（DONE）</span><div class="micro">每条结论关联证据编号（evidence_id）</div></div></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="slogan">数据 → 分析 → 验证 → 报告 → <span class="accent">一分钟</span>　·　<span class="accent">估值先行,理由跟上,跨源验证</span></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图1 · Vera Overall Architecture</title>
+<style>
+  :root{
+    --bg0:#0a0e1a; --bg1:#111827; --ink:#eef2ff; --sub:#9fb0d0;
+    --blue:#4ea8ff; --cyan:#37e6d8; --violet:#9b6bff; --magenta:#ff6bc1; --orange:#ffb056;
+    --glass:rgba(255,255,255,.06); --stroke:rgba(255,255,255,.14);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",-apple-system,system-ui,sans-serif;
+    background:
+      radial-gradient(1200px 700px at 18% -10%, rgba(78,168,255,.18), transparent 60%),
+      radial-gradient(1000px 600px at 110% 20%, rgba(155,107,255,.16), transparent 55%),
+      radial-gradient(900px 600px at 50% 120%, rgba(255,107,193,.12), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    color:var(--ink); min-height:100vh; display:flex; justify-content:center;
+    padding:32px 20px;
+  }
+  /* 16:9 演示画布 */
+  .slide{
+    width:min(1280px,100%); aspect-ratio:16/9; position:relative;
+    border-radius:28px; padding:40px 56px;
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+    border:1px solid var(--stroke);
+    box-shadow:0 40px 120px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(10px); overflow:hidden; display:flex; flex-direction:column;
+  }
+  .slide::before{
+    content:""; position:absolute; inset:0;
+    background:radial-gradient(700px 200px at 50% -40px, rgba(78,168,255,.25), transparent 70%);
+    pointer-events:none;
+  }
+  .head{display:flex; align-items:baseline; gap:16px; z-index:2}
+  .h-title{font-size:30px; font-weight:800; letter-spacing:.5px}
+  .h-sub{font-size:15px; color:var(--sub); font-weight:500}
+  .stack{flex:1; display:flex; flex-direction:column; gap:9px; margin-top:18px; z-index:2}
+
+  /* 玻璃层胶囊 */
+  .layer{
+    position:relative; border-radius:16px; padding:11px 20px;
+    display:flex; align-items:center; gap:18px;
+    background:linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.03));
+    border:1px solid var(--stroke);
+    box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.14);
+    flex:1;
+  }
+  .layer .idx{
+    width:30px; height:30px; flex:none; border-radius:50%;
+    display:grid; place-items:center; font-size:14px; font-weight:800;
+    background:rgba(255,255,255,.08); border:1px solid var(--stroke);
+  }
+  .layer .name{font-size:19px; font-weight:700; white-space:nowrap}
+  .layer .micro{font-size:13px; color:var(--sub); font-weight:500}
+  .layer .tag{
+    margin-left:auto; font-size:12px; padding:4px 12px; border-radius:999px;
+    background:rgba(255,255,255,.07); border:1px solid var(--stroke); color:var(--sub); white-space:nowrap;
+  }
+  /* 左侧霓虹光条 */
+  .layer::before{
+    content:""; position:absolute; left:0; top:14%; bottom:14%; width:4px; border-radius:4px;
+  }
+  .l-user::before{background:var(--cyan); box-shadow:0 0 16px var(--cyan)}
+  .l-agent::before{background:var(--blue); box-shadow:0 0 16px var(--blue)}
+  .l-evi::before{background:var(--violet); box-shadow:0 0 16px var(--violet)}
+  .l-rt::before{background:var(--magenta); box-shadow:0 0 16px var(--magenta)}
+  .l-skill::before{background:var(--orange); box-shadow:0 0 16px var(--orange)}
+  .l-out::before{background:var(--cyan); box-shadow:0 0 16px var(--cyan)}
+
+  /* Trust Gate 核心高亮层 */
+  .layer.core{
+    background:linear-gradient(180deg,rgba(78,168,255,.20),rgba(155,107,255,.12));
+    border:1.5px solid rgba(120,180,255,.55);
+    box-shadow:0 0 0 1px rgba(120,180,255,.25), 0 16px 46px rgba(78,168,255,.40),
+               inset 0 1px 0 rgba(255,255,255,.22);
+    flex:1.18;
+  }
+  .layer.core .name{font-size:21px}
+  .layer.core::before{background:linear-gradient(var(--blue),var(--violet)); box-shadow:0 0 22px var(--blue); width:5px}
+  .layer.core .moat{
+    margin-left:auto; font-size:12px; font-weight:700; padding:5px 13px; border-radius:999px;
+    color:#fff; background:linear-gradient(90deg,var(--blue),var(--violet));
+    box-shadow:0 6px 18px rgba(120,120,255,.5); white-space:nowrap;
+  }
+  .star{color:var(--orange); text-shadow:0 0 10px var(--orange)}
+
+  /* 层间下行箭头 */
+  .flow{height:3px; align-self:center; width:1px}
+  .arrow{align-self:center; color:rgba(255,255,255,.30); font-size:12px; line-height:1; margin:-3px 0}
+
+  .foot{
+    margin-top:16px; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:20px;
+  }
+  .slogan{font-size:17px; font-weight:700}
+  .slogan .accent{
+    background:linear-gradient(90deg,var(--cyan),var(--blue),var(--violet));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .brand{font-size:12px; color:var(--sub); text-align:right; line-height:1.5}
+  @media (max-width:720px){
+    .slide{aspect-ratio:auto; padding:24px}
+    .h-title{font-size:22px} .layer .name{font-size:16px} .layer .micro{font-size:11px}
+    .layer .tag,.layer.core .moat{display:none}
+    .foot{flex-direction:column; align-items:flex-start}
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="h-title">一分钟可信研报，<span style="background:linear-gradient(110deg, var(--cyan), var(--blue), var(--violet)); -webkit-background-clip:text; background-clip:text; color:transparent">是如何诞生的？</span></div>
+    <div class="h-sub">下面 7 层架构,只是证明这一句话的证据。Vera = <span style="color:var(--orange); font-weight:700">调度员</span>,把 12 大信源 + 包括 Claude Opus 4.8 在内的世界顶级模型,串成 1 分钟可信研报的产线</div>
+  </div>
+
+  <div class="stack">
+    <div class="layer l-user">
+      <div class="idx">1</div>
+      <div><div class="name">用户入口</div><div class="micro">微信 / 飞书 / 企微 / 网页端</div></div>
+      <div class="tag">入口（Entry）</div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="layer l-agent">
+      <div class="idx">2</div>
+      <div><div class="name">Vera 智能员工（Vera Agent）</div><div class="micro">意图识别 + 工作流编排</div></div>
+      <div class="tag">编排（Orchestration）</div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="layer core">
+      <div class="idx"><span class="star">★</span></div>
+      <div><div class="name">信任防守门（Trust Gate）</div><div class="micro">生产 / 降级 / 测试（PRODUCTION / FALLBACK / MOCK）＋ 阻断字段</div></div>
+      <div class="moat">核心护城河</div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="layer l-evi">
+      <div class="idx">4</div>
+      <div><div class="name">证据层（Evidence Layer）</div><div class="micro">证据包 / 引用 / 完整性</div></div>
+      <div class="tag">可追溯</div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="layer l-rt">
+      <div class="idx">5</div>
+      <div><div class="name">研究引擎（Research Runtime）</div><div class="micro">取数 → 质检 → 分析 → 建议 → 追踪</div></div>
+      <div class="tag">状态机</div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="layer l-skill">
+      <div class="idx">6</div>
+      <div><div class="name">业务技能（Skills）</div><div class="micro">业务推进表 / 报销 / 会议 / 董事会 / 写稿 / 研报 / 接住SKILL</div></div>
+      <div class="tag">生态</div>
+    </div>
+    <div class="arrow">▼</div>
+
+    <div class="layer l-out">
+      <div class="idx">7</div>
+      <div><div class="name">成果交付（Output）</div><div class="micro">合规研报 / 代劳任务完成 / 风险提示</div></div>
+      <div class="tag">交付</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="slogan">豆包能回答你问题，<span class="accent">Vera 能替你干活</span>。</div>
+    <div class="brand">Vera Agent v3<br>面向证券行业的金融投研数字员工</div>
+  </div>
+</div>
+</body>
+</html>

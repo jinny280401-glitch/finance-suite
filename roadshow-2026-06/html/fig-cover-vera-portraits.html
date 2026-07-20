@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Vera 三视图 · 你的智能伙伴</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:#000}
+  .stage{
+    position:relative; width:100%; min-height:100vh; overflow:hidden;
+    background: radial-gradient(ellipse 80% 70% at 50% 50%, #1a1a2e 0%, #0a0a14 60%, #050510 100%);
+    display:flex; flex-direction:column; align-items:center;
+    padding: 40px 40px 60px;
+    gap: 30px;
+  }
+  .stage::before{
+    content:""; position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 15% 30%, rgba(78,168,255,.12) 0%, transparent 35%),
+      radial-gradient(circle at 85% 30%, rgba(255,107,193,.10) 0%, transparent 35%),
+      radial-gradient(circle at 50% 90%, rgba(155,107,255,.08) 0%, transparent 50%);
+    pointer-events:none;
+  }
+
+  /* 顶部标题 */
+  .title-bar{
+    position:relative; z-index:5; text-align:center;
+  }
+  .title-bar .eyebrow{
+    font-size:13px; color: var(--cyan);
+    font-weight:700; letter-spacing:6px; margin-bottom:10px;
+  }
+  .title-bar h1{
+    font-size:42px; font-weight:800; color: var(--ink);
+    margin:0; letter-spacing:2px;
+  }
+  .title-bar h1 .accent{
+    background: linear-gradient(135deg, #4ea8ff 0%, #9b6bff 60%, #ff6bc1 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .title-bar .sub{
+    font-size:14px; color: var(--sub);
+    letter-spacing: 3px; margin-top:8px;
+  }
+
+  /* 背景:叠 Vera 持笔记本照片(呼应 PPT 第 1 页) */
+  .bg-photo{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover;
+    opacity:.12;             /* 极淡,做底纹 */
+    filter: blur(8px);
+    z-index:0;
+  }
+
+  /* 三视图:空间给多一点 */
+  .three-views{
+    position:relative; z-index:5;
+    width: min(1280px, 94vw);
+    height: 62vh;            /* 加大,从 42vh → 56vh → 62vh */
+    max-height: 700px;
+    min-height: 360px;
+    border-radius: 20px;
+    overflow:hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  }
+  .three-views img{
+    display:block; width:100%; height:100%; object-fit:cover; object-position: center 18%;
+  }
+
+  /* 文字标签:不要框,直接放在下面 */
+  .text-block{
+    position:relative; z-index:5;
+    text-align:center;
+    margin-top: 4px;
+  }
+  .text-block .line{
+    font-size:16px; color: var(--ink);
+    letter-spacing: 1.5px;
+    line-height: 1.9;
+  }
+  .text-block .line .k{ color: var(--sub); margin-right:8px; }
+  .text-block .line .v{
+    background: linear-gradient(90deg, #4ea8ff, #9b6bff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+  }
+  .text-block .line .v-pink{
+    background: linear-gradient(90deg, #ff6bc1, #ffb056);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+  }
+  .text-block .seal{
+    margin-top: 12px;
+    display:inline-block;
+    padding: 6px 20px;
+    background: rgba(78,168,255,.10);
+    border-radius: 999px;
+    font-size: 13px; color: var(--cyan);
+    letter-spacing: 2px;
+  }
+
+  @media (max-width:860px){
+    .title-bar h1{ font-size:26px; }
+    .three-views{ height: 50vh; }
+    .text-block .line{ font-size:13px; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- 背景:叠 Vera 持笔记本照片(极淡) -->
+  <img class="bg-photo" src="assets/vera-ppt-first-page.png" alt="" />
+
+  <div class="title-bar">
+    <div class="eyebrow">VERA · YOUR INTELLIGENT PARTNER</div>
+    <h1>三视图 · <span class="accent">Vera 你的智能伙伴</span></h1>
+    <div class="sub">天玑·金融数据全景分析引擎  ·  Vera Agent v3</div>
+  </div>
+
+  <div class="three-views">
+    <img src="assets/vera-portrait-tri-view.png" alt="Vera 三视图：正视图 / 侧视图 / 后视图" />
+  </div>
+
+  <!-- 文字直接放下面,不要框 -->
+  <div class="text-block">
+    <div class="line">
+      <span class="k">姓名</span><span class="v">Vera</span>
+      <span class="k">　年龄</span><span class="v">27岁</span>
+      <span class="k">　职位</span><span class="v">金融投研数字员工</span>
+    </div>
+    <div class="line">
+      <span class="k">性格</span><span class="v">专业 · 智慧 · 亲和</span>
+      <span class="k">　核心能力</span><span class="v-pink">数据洞察 · 研究分析 · 报告生成 · 趋势追踪</span>
+    </div>
+    <div class="seal">"足够多的真相，方可触达天机"</div>
+  </div>
+
+</div>
+</body>
+</html>
