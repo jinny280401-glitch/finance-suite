@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vera V4 · 行业痛点</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#070b16;color:#f5f7ff;font-family:"PingFang SC","Microsoft YaHei",sans-serif;padding:0;display:block;overflow:hidden}
+  .slide{width:100vw;height:100vh;min-height:650px;padding:2.5vh 6vw;display:flex;flex-direction:column;overflow:hidden;background:#070b16}
+  .eyebrow{font-size:16px;color:#ff8aa3;font-weight:700;margin-bottom:8px}h1{font-size:clamp(38px,4vw,62px);line-height:1.12}.en{color:#8ea6c9;font-size:20px;margin-top:6px}
+  .challenge-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:14px;flex:1;min-height:0;margin-top:2vh}
+  .pain{background:rgba(255,255,255,.065);border:1px solid rgba(255,255,255,.13);padding:18px 24px;min-width:0;min-height:0;overflow:hidden}
+  .pain.time{border-top:4px solid #34c7f3}.pain.risk{border-top:4px solid #ffbd59;background:rgba(255,189,89,.075)}.pain.cost{border-top:4px solid #ff718b}
+  .label{font-size:27px;font-weight:750;margin-bottom:14px}.label small{display:block;font-size:13.5px;color:#8ea6c9;margin-top:5px;font-weight:600}
+  ul{list-style:none;display:grid;gap:10px;color:#dbe4f4;font-size:18px;line-height:1.45}li:before{content:"•";color:#55d9ff;margin-right:10px}.risk li:before{color:#ffbd59}.cost li:before{color:#ff718b}
+  .visual{position:relative;min-width:0;min-height:0;overflow:hidden;border:1px solid rgba(255,255,255,.13);background:#0b1830}
+  .visual img{width:100%;height:100%;display:block;object-fit:cover}
+  .visual.ai-analysis img{object-position:center}.visual.ai-interface img{object-position:center 42%}.visual.team{background:#e8edf2}.visual.team img{object-position:center}
+  .visual:after{content:"";position:absolute;inset:0;border-top:3px solid rgba(85,217,255,.72);pointer-events:none}.visual.ai-interface:after{border-color:rgba(255,113,139,.78)}.visual.team:after{border-color:rgba(255,189,89,.78)}
+  .takeaway{text-align:center;border-top:1px solid rgba(255,255,255,.14);padding-top:10px;margin-top:10px;font-size:clamp(24px,2.1vw,32px);font-weight:750}.takeaway span{color:#ff718b}
+  @media(max-width:900px){.challenge-grid{grid-template-columns:1fr;grid-template-rows:none;overflow:auto}.visual{min-height:220px}.slide{min-height:1500px}}
+</style>
+</head>
+<body>
+<main class="slide">
+  <div class="eyebrow">VERA V4 · 金融 AI 的三重困境</div>
+  <h1>证券行业 AI 应用的三重困境</h1>
+  <div class="en">信息爆炸 / AI 难证明 / 决策须追责</div>
+
+  <section class="challenge-grid">
+    <figure class="visual ai-analysis"><img src="assets/pain-ai-analysis.png" alt="人工智能分析金融数据"></figure>
+    <article class="pain risk"><div class="label">AI 难证明<small>风险（RISK）</small></div><ul><li>虚假数据导致决策失误</li><li>数据来源无法追溯</li><li>缺少审计证据链</li></ul></article>
+    <figure class="visual ai-interface"><img src="assets/pain-ai-interface.png" alt="人工智能交互界面"></figure>
+    <article class="pain time"><div class="label">信息爆炸<small>时间（TIME）</small></div><ul><li>海量研报、公告、新闻与数据源</li><li>市场机会转瞬即逝</li><li>人力无法规模化</li></ul></article>
+    <figure class="visual team"><img src="assets/pain-financial-team.png" alt="团队分析金融数据"></figure>
+    <article class="pain cost"><div class="label">决策须追责<small>成本（COST）</small></div><ul><li>专业数据采购成本高</li><li>人工尽调周期长</li><li>同样问题反复查</li></ul></article>
+  </section>
+
+  <div class="takeaway">需要 AI 效率，<span>但不敢用 AI 决策</span></div>
+</main>
+</body>
+</html>

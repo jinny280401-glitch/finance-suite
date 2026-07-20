@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>fig3 · 为什么我愿意相信 Vera</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  /* 整页叙事优先:大标题 → 一句记忆点 → 证据 → 金句 */
+  .hero-title{
+    text-align:center; margin-top:18px; z-index:3; position:relative;
+  }
+  .hero-title .eyebrow{
+    font-size:12px; color:var(--cyan); font-weight:700; letter-spacing:2px; margin-bottom:10px;
+  }
+  .hero-title h1{
+    font-size:38px; font-weight:800; color:var(--ink);
+    margin:0; letter-spacing:2px; line-height:1.25;
+  }
+  .hero-title h1 .accent{
+    background:linear-gradient(110deg, var(--cyan) 0%, var(--blue) 50%, var(--violet) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero-title .sub{
+    margin-top:12px; font-size:17px; color:var(--sub); letter-spacing:0;
+  }
+
+  /* 整页论证 3 块 */
+  .proof{
+    display:grid; grid-template-columns:1fr 1.12fr; gap:18px; flex:1; min-height:0; margin-top:18px; z-index:2;
+  }
+  .card{
+    display:flex; flex-direction:column; min-height:0;
+    background:var(--glass); border:1px solid var(--stroke); border-radius:14px; padding:22px 24px;
+  }
+  .card .ct{font-size:18px; font-weight:800; color:var(--cyan); margin-bottom:14px; letter-spacing:0}
+  .card .cb{flex:1; display:flex; flex-direction:column; justify-content:space-between; font-size:16px; color:var(--ink); line-height:1.72}
+  .card .cb b{color:var(--orange); font-weight:700}
+
+  /* 流程图(从用户提问 → BLOCKED / ALLOWED,叙事) */
+  .flow{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;
+    margin-top:14px;
+  }
+  .flow .chip{
+    padding:13px 16px; border-radius:10px; font-size:15px;
+    background:rgba(255,255,255,.05); border:1px solid var(--stroke); color:var(--ink);
+  }
+  .flow .chip.glow{background:linear-gradient(90deg, rgba(78,168,255,.22), rgba(155,107,255,.22)); border-color:rgba(140,170,255,.55); font-weight:700}
+  .flow .chip.danger{background:rgba(255,107,107,.20); border-color:rgba(255,107,107,.55); color:#ffd2d2; font-weight:700}
+  .flow .arr{color:rgba(255,255,255,.3); font-size:14px}
+
+  /* 契约表(数据可信度 → 能力) */
+  table.gtable{
+    width:100%; border-collapse:collapse; font-size:15.5px;
+  }
+  table.gtable th{
+    text-align:left; color:var(--sub); font-weight:600; padding:8px 10px;
+    border-bottom:1px solid var(--stroke); font-size:14px;
+  }
+  table.gtable td{
+    padding:18px 10px; color:var(--ink);
+    border-bottom:1px solid rgba(255,255,255,.05);
+  }
+  table.gtable td.ok{color:var(--cyan); font-weight:700}
+  table.gtable td.hl{color:var(--orange); font-weight:700}
+
+  .concept-loop{
+    display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center;
+    gap:16px; margin:14px auto 0; width:min(760px,84%); z-index:3;
+  }
+  .concept{text-align:center; padding:11px 14px; border-top:3px solid var(--cyan); color:var(--ink); font-size:16px; font-weight:800}
+  .concept:nth-of-type(2){border-color:var(--blue)}.concept:nth-of-type(3){border-color:var(--violet)}
+  .concept small{display:block; color:var(--sub); font-size:11px; font-weight:600; margin-top:3px}
+  .concept-arr{color:rgba(255,255,255,.38); font-size:20px}
+
+  /* 整页金句底 */
+  .takeaway{
+    text-align:center; margin-top:10px; z-index:3; position:relative;
+    padding:8px 20px 4px;
+  }
+  .takeaway .pill{
+    display:inline-block; padding:9px 22px; border-radius:999px;
+    background:linear-gradient(135deg, rgba(78,168,255,.18), rgba(155,107,255,.18));
+    border:1px solid rgba(255,255,255,.20);
+    font-size:15px; color:var(--ink); letter-spacing:0;
+  }
+  .takeaway .pill b{
+    background:linear-gradient(90deg, var(--cyan), var(--violet));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    font-weight:800;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <!-- 整页顶部:价值标题 -->
+  <div class="hero-title">
+    <div class="eyebrow">VERA · 为什么可信（WHY TRUST）</div>
+    <h1>为什么我愿意 <span class="accent">相信 Vera</span>？</h1>
+    <div class="sub">金融 AI 的核心不是生成更多答案，而是保证每个答案都有边界。</div>
+  </div>
+
+  <!-- 主体两列:左边流程+拒答实例,右边三档契约 -->
+  <div class="proof">
+    <!-- 左:Trust Gate 流程 + 拒答实例 -->
+    <div class="card">
+      <div class="ct">① 回答之前，先验证可信边界</div>
+      <div class="cb">
+        <div class="flow">
+          <span class="chip">用户需求</span>
+          <span class="arr">→</span>
+          <span class="chip">证据检查</span>
+          <span class="arr">→</span>
+          <span class="chip glow">可信校验（Trust Gate）</span>
+          <span class="arr">→</span>
+          <span class="chip">能力边界判断</span>
+          <span class="arr">→</span>
+          <span class="chip">可信回答</span>
+        </div>
+        <div style="margin-top:15px; font-size:15px; color:var(--sub)">
+          谨从合规要求 ⟶ <span class="chip danger" style="display:inline-block; padding:5px 11px; font-size:14px">自动拦截</span>
+        </div>
+        <div style="margin-top:12px; padding:14px 15px; background:rgba(255,107,107,.08); border-left:3px solid #ff6b6b; border-radius:6px; font-size:15px; color:var(--ink); line-height:1.68">
+          <b style="color:#ffb0b0">谨从合规要求</b><br>
+          用户：“现在能买吗？给仓位建议。”<br>
+          <b style="color:#ff6b6b">Vera：</b>拒绝生成交易建议<br>
+          原因：当前证据不足，不支持投资决策。
+        </div>
+      </div>
+    </div>
+
+    <!-- 右:三档契约 -->
+    <div class="card">
+      <div class="ct">② 数据可信等级，决定 AI 的表达边界</div>
+      <div class="cb">
+        <table class="gtable">
+          <thead><tr><th>数据等级</th><th>AI 行为</th></tr></thead>
+          <tbody>
+            <tr><td>测试数据</td><td>仅功能验证</td></tr>
+            <tr><td>降级命中</td><td>仅基础信息</td></tr>
+            <tr><td class="hl">真实生产</td><td class="hl">深度分析与生产级研究</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:15px; font-size:15px; color:var(--ink); line-height:1.9">
+          <b style="color:var(--orange)">禁止回答:</b>
+          短线建议 · 仓位建议 · 交易建议 · 资金流推断<br>
+          <b style="color:var(--cyan)">可答:</b>
+          客观估值定位 · 行业分析 · 年报字段验证 · 跨源对比
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="concept-loop" aria-label="可信决策闭环">
+    <div class="concept">证据<small>Evidence</small></div>
+    <div class="concept-arr">→</div>
+    <div class="concept">边界<small>Boundary</small></div>
+    <div class="concept-arr">→</div>
+    <div class="concept">决策<small>Decision</small></div>
+  </div>
+
+  <!-- 整页金句底 -->
+  <div class="takeaway">
+    <span class="pill">可信，<b>不来自模型</b>，而来自<b>可验证的数据与流程</b>。</span>
+  </div>
+
+</div>
+</body>
+</html>

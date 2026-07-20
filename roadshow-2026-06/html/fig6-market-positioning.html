@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vera V4 · 市场定位</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#070b16;color:#f5f7ff;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+  .slide{width:100vw;height:100vh;min-height:650px;padding:5vh 5.5vw;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(circle at 55% 0,rgba(62,101,181,.2),transparent 45%),#070b16}
+  .eyebrow{font-size:14px;color:#55d9ff;font-weight:700;margin-bottom:10px}h1{font-size:clamp(34px,3.8vw,58px);line-height:1.16}.sub{font-size:18px;color:#a7b5cb;margin-top:10px}
+  .roles{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:5vh}
+  .role{background:rgba(255,255,255,.055);border-top:4px solid #4d9fff;padding:24px;min-height:250px}.role:nth-child(2){border-color:#63d49a}.role:nth-child(3){border-color:#ffbd59;background:rgba(255,189,89,.075)}
+  .tool{font-size:27px;font-weight:780}.analogy{color:#92a5c2;margin:6px 0 20px;font-size:15px}.job{font-size:20px;font-weight:700;margin-bottom:12px}.detail{color:#d2dbea;font-size:16px;line-height:1.65}
+  .flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:16px;margin-top:24px;padding:20px 24px;border:1px solid rgba(255,255,255,.13);background:rgba(0,0,0,.16)}
+  .flow b{font-size:18px}.flow span{display:block;color:#9eb0ca;font-size:14px;margin-top:5px}.arrow{font-size:25px;color:#55d9ff}
+  .takeaway{display:flex;justify-content:space-between;align-items:center;gap:26px;margin-top:auto;padding-top:23px;border-top:1px solid rgba(255,255,255,.14);font-size:clamp(18px,2vw,29px);font-weight:750}.takeaway strong{color:#ffbd59}.proof{font-size:15px;color:#a7b5cb;font-weight:500;text-align:right}
+  @media(max-width:900px){.roles{grid-template-columns:1fr}.role{min-height:0}.flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg);text-align:center}.slide{min-height:1100px}.takeaway{align-items:flex-start;flex-direction:column}.proof{text-align:left}}
+</style>
+</head>
+<body>
+<main class="slide">
+  <div class="eyebrow">VERA V4 · MARKET POSITIONING</div>
+  <h1>金融工作中，三种工具各司其职</h1>
+  <div class="sub">不是谁替代谁，而是谁擅长什么</div>
+
+  <section class="roles">
+    <article class="role"><div class="tool">Wind 万得</div><div class="analogy">食材供应商</div><div class="job">提供专业数据</div><div class="detail">股价 · 财报 · 新闻<br>专业数据库与信息来源</div></article>
+    <article class="role"><div class="tool">豆包</div><div class="analogy">聊天助手 / 全科医生</div><div class="job">回答通用问题</div><div class="detail">能对话 · 信息检索<br>面向通用场景</div></article>
+    <article class="role"><div class="tool">Vera Agent</div><div class="analogy">专业厨师 / 专科医生</div><div class="job">完成投研工作</div><div class="detail">验证数据来源 · 多维分析<br>生成可追溯研报</div></article>
+  </section>
+
+  <section class="flow" aria-label="Wind 与 Vera 的合作关系">
+    <div><b>Wind 提供数据</b><span>食材供应商</span></div><div class="arrow">→</div>
+    <div><b>Vera 处理流程</b><span>专业厨师</span></div><div class="arrow">→</div>
+    <div><b>研究报告</b><span>有来源 · 有逻辑 · 可追溯</span></div>
+  </section>
+
+  <div class="takeaway"><div>豆包能回答你问题，<strong>Vera 能替你干活</strong></div><div class="proof">Vera 不替代 Wind<br>而是让数据变成可用的研报</div></div>
+</main>
+</body>
+</html>

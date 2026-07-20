@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vera Agent · 天玑 · 封面</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#eef2f6;color:#0a467d;font-family:"PingFang SC","Microsoft YaHei",Arial,sans-serif}
+  .slide{position:relative;width:100vw;height:100vh;min-height:620px;overflow:hidden;background:#f7f9fb}
+
+  .top-rule{position:absolute;left:5.4vw;right:5.4vw;top:5.8vh;height:3px;background:#1b8bc5;z-index:5}
+  .top-rule:after{content:"";position:absolute;right:0;top:0;width:8.5vw;height:3px;background:#ef6c32}
+  .brand{position:absolute;right:5.4vw;top:8.1vh;z-index:5;text-align:right;color:#0b518a;font-size:13px;font-weight:700;letter-spacing:0}
+  .brand span{color:#ef6c32;margin-left:8px}
+
+  .portrait-panel{position:absolute;left:0;top:0;width:47vw;height:100vh;overflow:hidden;clip-path:polygon(0 0,72% 0,100% 100%,0 100%);background:#0b4a7f}
+  .portrait-panel img{width:100%;height:100%;display:block;object-fit:cover;object-position:56% 29%}
+  .portrait-panel:after{content:"";position:absolute;inset:0;background:rgba(5,64,112,.16)}
+  .blue-plane{position:absolute;left:0;bottom:0;width:32vw;height:48vh;background:rgba(5,71,124,.88);clip-path:polygon(0 18%,67% 0,100% 100%,0 100%);z-index:2}
+  .blue-plane:after{content:"VERA";position:absolute;left:5.5vw;bottom:7vh;color:rgba(255,255,255,.2);font-size:70px;font-weight:800;letter-spacing:10px}
+
+  .accent-corner{position:absolute;right:5.4vw;top:13vh;width:0;height:0;border-top:46px solid #ef6c32;border-left:46px solid transparent}
+  .mini-mark{position:absolute;left:5.4vw;top:8vh;z-index:6;width:35px;height:28px}
+  .mini-mark:before,.mini-mark:after{content:"";position:absolute;left:0;width:0;height:0}
+  .mini-mark:before{top:0;border-top:18px solid #0b518a;border-right:24px solid transparent}
+  .mini-mark:after{bottom:0;border-bottom:12px solid #ef6c32;border-left:16px solid transparent}
+
+  .content{position:absolute;left:49vw;right:8vw;top:24vh;z-index:4}
+  .eyebrow{font-size:16px;font-weight:750;color:#ef6c32;margin-bottom:18px}
+  h1{font-size:clamp(70px,8.2vw,126px);line-height:.92;color:#0a467d;font-weight:850;letter-spacing:0}
+  .subtitle{margin-top:28px;font-size:clamp(25px,3vw,43px);line-height:1.25;color:#153f63;font-weight:700}
+  .identity{margin-top:18px;font-size:20px;color:#56809f;font-weight:600}
+  .divider{width:112px;height:5px;background:#ef6c32;margin:34px 0 28px}
+  .tagline{font-size:clamp(20px,2.2vw,32px);line-height:1.45;color:#304e67;font-weight:600;max-width:680px}
+  .tagline strong{color:#0b70ae}
+
+  .footer{position:absolute;left:49vw;right:5.4vw;bottom:7vh;z-index:4;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #b8c7d3;padding-top:16px;color:#6b8193;font-size:13px}
+  .footer b{color:#0a467d}
+
+  @media(max-width:900px){
+    .portrait-panel{width:42vw}.blue-plane{width:36vw}.content,.footer{left:43vw}.content{right:5vw;top:21vh}.brand{display:none}
+    h1{font-size:70px}.subtitle{font-size:27px}.tagline{font-size:21px}.blue-plane:after{font-size:44px;left:4vw}
+  }
+</style>
+</head>
+<body>
+<main class="slide">
+  <div class="top-rule"></div>
+  <div class="mini-mark" aria-hidden="true"></div>
+  <div class="brand">VERA AGENT <span>2026</span></div>
+  <div class="accent-corner" aria-hidden="true"></div>
+
+  <div class="portrait-panel">
+    <img src="assets/vera-portrait-closeup.png" alt="Vera 可信金融研究智能体">
+  </div>
+  <div class="blue-plane" aria-hidden="true"></div>
+
+  <section class="content">
+    <div class="eyebrow">VERA AGENT · 证券行业可信研究智能体</div>
+    <h1>天玑</h1>
+    <div class="subtitle">可信金融研究智能体</div>
+    <div class="identity">面向证券行业的新一代 AI 研究伙伴</div>
+    <div class="divider"></div>
+    <div class="tagline">AI 能生成答案，<strong>Vera 让金融研究可信落地</strong></div>
+  </section>
+
+  <footer class="footer">
+    <span><b>Vera Agent v3</b></span>
+    <span>足够多的真相，方可触达天机</span>
+  </footer>
+</main>
+</body>
+</html>

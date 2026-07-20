@@ -43,7 +43,7 @@
     <div class="btn" id="full">⛶ 全屏</div>
   </div>
   <div class="frame" id="frame">
-    <iframe id="view" src="about:blank" title="slide"></iframe>
+    <iframe id="view" src="fig1-vera-overall-architecture.html" title="slide"></iframe>
   </div>
 
   <!-- loading 遮罩:iframe 切换时短暂出现,挡住切换空窗 -->
@@ -59,18 +59,12 @@
     {src:"fig0-multichannel-touch.html",        name:"多端触达"},
     {src:"fig-cover-vera-portraits.html",       name:"Vera 三视图"},
     {src:"fig1-cover.html",                     name:"封面 天玑"},
-    {src:"fig-era-opportunity.html",            name:"时代机会"},
-    {src:"fig-pain-triangle.html",              name:"行业痛点"},
     {src:"fig2-vera-overall-architecture.html", name:"图1 整体架构"},
     {src:"fig3-trust-gate-flow.html",           name:"图2 Trust Gate"},
     {src:"fig4-research-runtime.html",          name:"图3 Research Runtime"},
-    {src:"fig-vera-production-arch.html",       name:"生产部署架构"},
-    {src:"fig-hero-homepage.html",              name:"产品首页"},
-    {src:"fig-workbench.html",                  name:"投研工作台"},
-    {src:"fig-company-panorama.html",           name:"公司拜访速查卡"},
-    {src:"fig-enterprise-architecture-v1.html", name:"商业模式"},
-    {src:"fig6-market-positioning.html",        name:"市场定位"},
     {src:"fig5-skill-ecosystem.html",           name:"图4 Skill 生态"},
+    {src:"fig6-vera-vs-doubao.html",            name:"图5 Vera vs 豆包"},
+    {src:"fig-company-panorama.html",          name:"Company Panorama"},
     {src:"fig7-closing.html",                    name:"收官金句"},
   ];
   let i = 0;
@@ -119,9 +113,6 @@
     else if(e.key==='ArrowLeft') go(i-1);
     else if(e.key==='f'||e.key==='F'){ if(frame.requestFullscreen) frame.requestFullscreen(); }
   });
-
-  /* 初始化:加载首页,修复首屏空白(此前无 go(0),iframe 停在 about:blank) */
-  go(0);
 </script>
 </body>
 </html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vera V4 · 时代机会</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#070b16;color:#f5f7ff;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+  .slide{width:100vw;height:100vh;min-height:620px;padding:6vh 6vw;display:flex;flex-direction:column;overflow:hidden;background:#070b16}
+  .eyebrow{font-size:14px;letter-spacing:0;color:#55d9ff;font-weight:700;margin-bottom:14px}
+  h1{font-size:clamp(34px,4.2vw,64px);line-height:1.18;max-width:1100px}
+  h1 span{color:#ffbd59}
+  .en{margin-top:10px;color:#8ea6c9;font-size:18px}
+  .signals{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:7vh;flex:1;align-items:stretch}
+  .signal{border-top:3px solid #34c7f3;background:rgba(255,255,255,.055);padding:24px 22px;min-width:0}
+  .signal:nth-child(2){border-color:#63d49a}.signal:nth-child(3){border-color:#ffbd59}.signal:nth-child(4){border-color:#b795ff}
+  .num{font-size:13px;color:#7e91b0;margin-bottom:18px}.name{font-size:25px;font-weight:750;margin-bottom:10px}.sub{color:#a9b8d0;font-size:15px;margin-bottom:18px}.fact{font-size:18px;line-height:1.55;color:#eef3ff}
+  .conflict{display:flex;justify-content:center;align-items:center;gap:34px;border-top:1px solid rgba(255,255,255,.14);padding-top:28px;margin-top:28px;font-size:clamp(20px,2.2vw,32px);font-weight:750}
+  .neq{color:#ff6f7d;font-size:34px}.accent{color:#55d9ff}
+  @media(max-width:900px){.signals{grid-template-columns:1fr;margin-top:4vh}.slide{min-height:760px}.conflict{gap:14px}}
+</style>
+</head>
+<body>
+<main class="slide">
+  <div class="eyebrow">VERA V4 · ERA OPPORTUNITY</div>
+  <h1>2026 金融AI从生成内容进入<span>可信决策</span></h1>
+  <div class="en">Financial AI: From Content to Trust</div>
+
+  <section class="signals" aria-label="可信决策时代的核心变化">
+    <article class="signal"><div class="num">WHY NOW</div><div class="name">从生成内容到可信决策</div><div class="sub">From Content to Trust</div><div class="fact">金融 AI 的价值，不止是生成答案，更要让结论可验证、可追溯。</div></article>
+    <article class="signal"><div class="num">THE GAP</div><div class="name">能回答，不等于能决策</div><div class="sub">Answering Is Not Decision-Making</div><div class="fact">信息持续涌入，决策窗口缩短，可信成为 AI 进入金融工作流的前提。</div></article>
+  </section>
+
+  <div class="conflict"><span>生成答案</span><span class="neq">≠</span><span class="accent">可信决策</span><span>AI 能说</span><span class="neq">≠</span><span class="accent">决策可用</span></div>
+</main>
+</body>
+</html>

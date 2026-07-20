@@ -577,3 +577,23 @@ Usage notes:
   - Deploy window requires git diff review, selective `stock.html` commit/review, production target mapping, backup + checksum, smoke proof, and rollback path.
 - Engram lesson written:
   - `d707e07f43f7` — Report UX folding must preserve transparency and trust boundaries; local-source UX PASS is not live or production proof.
+
+## 2026-07-18: Valuation snapshot truthfulness review
+
+- Reviewed commit `7eddfc9` and the deployed valuation-table claims.
+- 2026-07-17 was a broad market selloff; valuation colors represent relative valuation, not daily price direction.
+- `app/market-valuation-snapshot.js` is a hard-coded single-day snapshot. No runtime provider request, persistent refresh job, raw response, or field-mapping evidence is present.
+- Truthful status: `STATIC SNAPSHOT / SOURCE ATTRIBUTED / AUTOMATION NOT ESTABLISHED`.
+- PE-derived earnings yields were arithmetically correct. PE/PB/ROE values lacked a committed raw-provider evidence bundle, so independent provenance remains incomplete.
+- The implementation has no historical percentile series or star-rating rules and must not be described as a complete replication of the Bank Luosiding method.
+- A `session-only cron` is not production scheduling and must not be represented as durable weekly automation.
+- Handoff to Claude Code is recorded in `docs/sync-to-c-valuation-automation-20260717.md` under `Codex 复核同步（2026-07-18）`.
+
+## 2026-07-21: Vera V4 roadshow visual and narrative closure
+
+- Runtime truth source: `roadshow-2026-06/html/index.html`; design drafts are not integration evidence.
+- Audience-language rule: Chinese explains the value first; English remains only where it identifies a necessary capability or product term.
+- Trust framing: the Trust Gate page presents compliance, evidence grading, and answer boundaries as the reason institutions can trust Vera, rather than as an internal engineering mechanism.
+- Visual verification rule: slide completion requires checking the actual rendered 16:9 viewport, including text legibility, overflow, image loading, and first-frame initialization.
+- Evidence boundary preserved: no invented market, revenue, customer, or production claims were added for presentation completeness.
+- Engram lesson written: `b51126ea8465`.

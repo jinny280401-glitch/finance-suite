@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图4 · Skill Ecosystem</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  .grow{flex:1; display:flex; flex-direction:column; gap:14px; margin-top:20px; z-index:2; justify-content:center}
+  .tier{padding:22px 30px}
+  .tier .tname{font-size:19px; font-weight:800; margin-bottom:14px; display:flex; align-items:center; gap:10px}
+  .chips{display:flex; flex-wrap:wrap; gap:14px}
+  .chip{font-size:17px; padding:10px 22px; border-radius:999px; background:rgba(255,255,255,.07); border:1px solid var(--stroke); font-weight:600}
+  .up{align-self:center; display:flex; align-items:center; gap:10px; color:var(--sub); font-size:14px; font-weight:600}
+  .up .a{color:var(--cyan); font-size:18px; text-shadow:0 0 10px var(--cyan)}
+  /* 底层=已落地 绿青 */
+  .t-done{background:linear-gradient(180deg,rgba(55,230,216,.16),rgba(55,230,216,.05)); border-color:rgba(55,230,216,.4)}
+  .t-done .tname{color:var(--cyan)}
+  /* 中层=规划中 蓝 */
+  .t-plan{background:linear-gradient(180deg,rgba(78,168,255,.15),rgba(78,168,255,.05)); border-color:rgba(78,168,255,.4)}
+  .t-plan .tname{color:var(--blue)}
+  /* 顶层=愿景 紫 */
+  .t-vision{background:linear-gradient(180deg,rgba(155,107,255,.18),rgba(155,107,255,.06)); border-color:rgba(155,107,255,.45); text-align:center}
+  .t-vision .tname{color:var(--violet); justify-content:center}
+  .t-vision .v{font-size:19px; color:var(--ink); font-weight:600}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="h-title">为什么 Vera 会 <span style="background:linear-gradient(110deg, var(--cyan), var(--blue), var(--violet)); -webkit-background-clip:text; background-clip:text; color:transparent">越来越懂证券</span>？</div>
+    <div class="h-sub">Skill 是能力来源。Vera = <span style="color:var(--orange); font-weight:700">学生+老师</span> · 4 类成长能力可持续积累,越用越懂你</div>
+  </div>
+
+  <div class="grow">
+    <!-- 顶层 愿景 -->
+    <div class="cap tier t-vision">
+      <div class="tname">💡 AI 员工数字团队</div>
+      <div class="v">每一个高频痛点 → 一个 Skill</div>
+    </div>
+    <div class="up"><span class="a">▲</span> 业务深水区</div>
+
+    <!-- 中层 规划中 -->
+    <div class="cap tier t-plan">
+      <div class="tname">⚠️ 规划中 Skill</div>
+      <div class="chips">
+        <span class="chip">业务线索挖掘</span>
+        <span class="chip">客户跟进</span>
+        <span class="chip">合规审核</span>
+      </div>
+    </div>
+    <div class="up"><span class="a">▲</span> 痛点驱动</div>
+
+    <!-- 底层 已落地 -->
+    <div class="cap tier t-done">
+      <div class="tname">✅ 已落地 Skill</div>
+      <div class="chips">
+        <span class="chip">业务推进表</span>
+        <span class="chip">报销</span>
+        <span class="chip">会议记录</span>
+        <span class="chip">董事会</span>
+        <span class="chip">写稿</span>
+        <span class="chip">研报生成</span>
+        <span class="chip">JIEZHU 情绪价值</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="slogan"><span class="accent">投资方法论</span> · <span class="accent">行业知识</span> · <span class="accent">公司研究</span> · <span class="accent">可持续积累</span>　·　越用越懂你</div>
+    <div class="brand">Vera Agent v3<br>证券行业可信研究智能体</div>
+  </div>
+</div>
+</body>
+</html>

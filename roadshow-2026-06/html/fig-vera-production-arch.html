@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vera · 生产架构 · touziagent.com</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  .arch{flex:1; display:flex; flex-direction:column; gap:10px; margin-top:18px; z-index:2; justify-content:center}
+  .row{display:flex; gap:10px; align-items:stretch}
+  .box{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+       border-radius:14px; padding:14px 12px; border:1px solid var(--stroke);
+       background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.025));
+       min-height:68px}
+  .box .bl{font-size:18px; font-weight:750; color:var(--ink)}
+  .box .bs{font-size:12px; color:var(--sub); margin-top:3px; line-height:1.4}
+  .box.high{background:linear-gradient(180deg,rgba(78,168,255,.18),rgba(155,107,255,.08)); border-color:rgba(120,180,255,.5)}
+  .box.core{background:linear-gradient(180deg,rgba(55,230,216,.18),rgba(78,168,255,.10)); border-color:rgba(55,230,216,.5); min-height:90px}
+  .box.source{background:linear-gradient(180deg,rgba(255,176,86,.12),rgba(255,107,107,.05)); border-color:rgba(255,176,86,.4)}
+  .arrow-down{display:flex; justify-content:center; padding:2px 0}
+  .arrow-down span{color:rgba(255,255,255,.3); font-size:18px}
+  .tag-row{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:6px}
+  .tag{font-size:12px; padding:4px 10px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid var(--stroke); color:var(--ink); font-weight:600}
+  .tag.on{background:rgba(55,230,216,.16); border-color:rgba(55,230,216,.4); color:var(--cyan)}
+  .label{position:absolute; font-size:11px; color:var(--sub); font-weight:600; letter-spacing:.5px}
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <div class="head">
+    <div class="h-title">Vera × <span style="background:linear-gradient(110deg, var(--cyan), var(--blue)); -webkit-background-clip:text; background-clip:text; color:transparent">touziagent.com</span> · 生产部署架构</div>
+    <div class="h-sub">Vera 是<span style="color:var(--cyan);font-weight:700">可信研究智能引擎</span>，touziagent.com 是<span style="color:var(--blue);font-weight:700">生产交付与体验载体</span></div>
+  </div>
+
+  <div class="arch">
+    <!-- 用户入口 -->
+    <div class="row">
+      <div class="box">
+        <div class="bl">💬 微信</div>
+        <div class="bs">林妹妹 Bot</div>
+      </div>
+      <div class="box">
+        <div class="bl">📱 飞书</div>
+        <div class="bs">企业通讯</div>
+      </div>
+      <div class="box">
+        <div class="bl">🌐 Web</div>
+        <div class="bs">touziagent.com</div>
+      </div>
+    </div>
+
+    <div class="arrow-down"><span>▼</span></div>
+
+    <!-- OpenClaw 网关 -->
+    <div class="row">
+      <div class="box" style="flex:1; max-width:100%">
+        <div class="bl">🔀 OpenClaw 多渠道路由网关</div>
+        <div class="bs">统一接入 · 客户记忆隔离 · 消息路由 · 会话管理</div>
+      </div>
+    </div>
+
+    <div class="arrow-down"><span>▼</span></div>
+
+    <!-- Vera Agent 核心 -->
+    <div class="row">
+      <div class="box core" style="flex:2">
+        <div class="bl" style="font-size:20px">🧠 Vera Agent · 可信研究智能引擎</div>
+        <div class="bs" style="font-size:13px">Claude AI + Trust Gate + Evidence Chain + Research Runtime</div>
+        <div class="tag-row">
+          <span class="tag on">可信校验</span>
+          <span class="tag on">证据溯源</span>
+          <span class="tag on">研究流程</span>
+          <span class="tag">Skill 调度</span>
+        </div>
+      </div>
+      <div class="box" style="flex:1">
+        <div class="bl">🖥 touziagent.com</div>
+        <div class="bs">生产 Web 前端<br>13 页架构演示<br>市场情报看板<br>研究结果展示</div>
+      </div>
+    </div>
+
+    <div class="arrow-down"><span>▼</span></div>
+
+    <!-- MCP 工具层 -->
+    <div class="row">
+      <div class="box" style="flex:1">
+        <div class="bl">📊 Finance Suite MCP</div>
+        <div class="bs">12 金融数据工具<br>集合竞价 · 研报 · 估值 · 市场</div>
+      </div>
+      <div class="box" style="flex:1">
+        <div class="bl">📈 Trading System MCP</div>
+        <div class="bs">5 量化交易工具<br>因子扫描 · 黄金坑 · K 线</div>
+      </div>
+    </div>
+
+    <div class="arrow-down"><span>▼</span></div>
+
+    <!-- 数据源 -->
+    <div class="row">
+      <div class="box source" style="flex:1; max-width:100%">
+        <div class="bl" style="font-size:16px">🗄 四级数据源降级引擎</div>
+        <div class="bs" style="font-size:12px">Wind API → Tushare Pro → JoinQuant → AkShare · 自动切换 · &lt;2s 响应</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="slogan">从<span class="accent">用户触点</span>到<span class="accent">数据源</span>，Vera 是可信研究的<span class="accent">智能引擎</span>，touziagent.com 是<span class="accent">交付体验</span></div>
+    <div class="brand">生产环境 · 腾讯云 Lighthouse<br>119.28.156.125 · 连续运行稳定</div>
+  </div>
+
+</div>
+</body>
+</html>
