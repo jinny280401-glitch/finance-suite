@@ -6,6 +6,7 @@
   <meta name="robots" content="noindex">
   <title>工作台 — Finance Suite</title>
   <link rel="stylesheet" href="market-temperature-mini.css">
+  <link rel="stylesheet" href="morning-brief-mini.css">
   <!-- 登录守卫：未登录立即回跳，避免页面闪烁 -->
   <script>
     if (localStorage.getItem('fs_auth') !== 'ok') {
@@ -570,6 +571,26 @@
         <div id="sidebarCards"></div>
       </div>
     </aside>
+
+    <!-- ====== MODAL: D13 Morning Brief ====== -->
+    <div id="morningBriefModal" role="dialog" aria-modal="true"
+         aria-label="今日 D13 Morning Brief"
+         style="display:none;">
+      <div class="mb-modal__backdrop" data-mb-modal-close></div>
+      <div class="mb-modal__panel">
+        <header class="mb-modal__head">
+          <div>
+            <p class="mb-modal__kicker">D13 · Morning Brief</p>
+            <h2 class="mb-modal__title">今日完整简报</h2>
+          </div>
+          <button type="button" class="mb-modal__close" data-mb-modal-close aria-label="关闭">×</button>
+        </header>
+        <iframe class="mb-modal__frame" data-mb-modal-iframe
+                src="" loading="lazy" sandbox="allow-same-origin"
+                style="background:#05070A;"
+                title="今日 D13 Morning Brief 完整版"></iframe>
+      </div>
+    </div>
   </main>
 
   <div class="ws-toast" id="wsToast"></div>
@@ -578,6 +599,7 @@
   <script src="sidebar-registry.js"></script>
   <script src="market-temperature-fixture.js"></script>
   <script src="market-temperature-mini.js"></script>
+  <script src="morning-brief-mini.js"></script>
   <script>
     // 渲染用户名 + 问候语
     (function init(){
@@ -668,6 +690,88 @@
 
     renderSidebarCards();
     bindWorkspaceCards();
+
+    // ── D13 Morning Brief modal (pushState + popstate pattern, MDN 2026 推荐) ──
+    (function () {
+      var BRIEF_HASH = '#/morning-brief';
+      var BRIEF_SRC = '/data/morning_brief/latest.html';
+
+      function getModal() { return document.getElementById('morningBriefModal'); }
+      function getFrame() { return document.querySelector('[data-mb-modal-iframe]'); }
+
+      function showModal() {
+        var modal = getModal();
+        if (!modal) return;
+        var frame = getFrame();
+        if (frame && !frame.getAttribute('src')) {
+          frame.setAttribute('src', BRIEF_SRC);
+        }
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+
+      function hideModal() {
+        var modal = getModal();
+        if (!modal) return;
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+
+      function closeViaHistory() {
+        if (window.history && typeof window.history.back === 'function') {
+          if (location.hash === BRIEF_HASH) {
+            // Push a benign state first so history.back() actually pops our entry.
+            window.history.pushState({ modal: null }, '', location.pathname + location.search);
+            window.history.back();
+          }
+        } else {
+          location.hash = '';
+        }
+      }
+
+      // popstate: catch back/forward, plus pushState-triggered navigation
+      window.addEventListener('popstate', function () {
+        if (location.hash === BRIEF_HASH) {
+          showModal();
+        } else {
+          hideModal();
+        }
+      });
+
+      // hashchange fallback: user typed the hash directly into the URL bar
+      window.addEventListener('hashchange', function () {
+        if (location.hash === BRIEF_HASH) showModal();
+        else hideModal();
+      });
+
+      // Click delegation for any [data-mb-modal-close] (backdrop + close button)
+      document.addEventListener('click', function (event) {
+        var target = event.target;
+        if (target && target.getAttribute && target.getAttribute('data-mb-modal-close') !== null) {
+          if (location.hash === BRIEF_HASH) {
+            closeViaHistory();
+          } else {
+            hideModal();
+          }
+        }
+      });
+
+      // Escape key dismisses the modal
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && location.hash === BRIEF_HASH) {
+          closeViaHistory();
+        }
+      });
+
+      // Restore modal state on full reload (URL already has #/morning-brief)
+      if (location.hash === BRIEF_HASH) {
+        // Defer to next tick so DOM iframe can resolve the right src
+        setTimeout(showModal, 0);
+      }
+
+      // Expose globally so the mini card's open-brief handler can call directly
+      window.MorningBriefModal = { show: showModal, hide: hideModal };
+    })();
 
     function doLogout(){
       fetch('/api/logout', { method: 'POST', credentials: 'include' })

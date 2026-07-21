@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vera · Daily Research Loop · 全天研究闭环</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  .loop{flex:1;display:flex;align-items:stretch;gap:0;margin-top:16px;z-index:2}
+  .phase{flex:1;display:flex;flex-direction:column;border-radius:18px;overflow:hidden;
+         border:1px solid var(--stroke);background:var(--glass);position:relative}
+  .ph-top{text-align:center;padding:20px 14px 10px}
+  .ph-time{font-size:13px;color:var(--sub);font-weight:700;letter-spacing:2px}
+  .ph-icon{font-size:30px;margin:4px 0 2px}
+  .ph-title{font-size:22px;font-weight:800}
+  .ph-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 18px 14px}
+  .ph-hero{font-size:20px;font-weight:700;color:var(--ink);text-align:center;line-height:1.35}
+  .ph-stat{font-size:16px;color:var(--sub);text-align:center;line-height:1.6}
+  .ph-thumb{width:100%;max-height:130px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.12);margin-top:4px}
+  .ph-thumb img{width:100%;height:100%;object-fit:cover;object-position:top left;display:block}
+  .ph-status{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--sub);margin-top:2px}
+  .dot{width:7px;height:7px;border-radius:50%}
+  .dot.live{background:#37e6d8;box-shadow:0 0 8px #37e6d8}
+  .dot.partial{background:#ffb056;box-shadow:0 0 6px #ffb056}
+  /* 流程连接器 */
+  .flow-pipe{display:flex;align-items:center;justify-content:center;width:44px;flex-shrink:0;flex-direction:column;gap:2px}
+  .flow-pipe .pipe-line{width:2px;height:28px;background:rgba(255,255,255,.15)}
+  .flow-pipe .pipe-arr{color:rgba(255,255,255,.3);font-size:18px;line-height:1}
+  .oneliner{margin-top:14px;text-align:center;font-size:18px;font-weight:700;color:var(--ink);
+            padding:14px 24px;border-radius:14px;
+            background:linear-gradient(90deg,rgba(78,168,255,.10),rgba(155,107,255,.10));
+            border:1px solid rgba(120,180,255,.25)}
+  .morning .ph-title{color:var(--orange)}.morning .ph-top{background:linear-gradient(180deg,rgba(255,176,86,.18),transparent)}
+  .midday  .ph-title{color:var(--blue)} .midday  .ph-top{background:linear-gradient(180deg,rgba(78,168,255,.18),transparent)}
+  .close   .ph-title{color:var(--violet)}.close   .ph-top{background:linear-gradient(180deg,rgba(155,107,255,.18),transparent)}
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <div class="head">
+    <div class="h-title">Vera <span style="background:linear-gradient(110deg,var(--orange),var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent">Daily Research Loop</span> · 全天研究闭环</div>
+    <div class="h-sub">Vera 不只是一个回答，Vera 是<span style="color:var(--cyan);font-weight:700">全天持续工作的研究员</span></div>
+  </div>
+
+  <div class="loop">
+    <!-- Morning -->
+    <div class="phase morning">
+      <div class="ph-top">
+        <div class="ph-time">09:15</div>
+        <div class="ph-icon">&#x1F305;</div>
+        <div class="ph-title">Morning Brief</div>
+      </div>
+      <div class="ph-body">
+        <div class="ph-hero">发现今日机会</div>
+        <div class="ph-stat">46 涨停 · 7 连板<br>龙头立新能源 4 连板</div>
+        <div class="ph-thumb"><img src="assets/morning-brief.png" alt="Morning Brief"></div>
+        <div class="ph-status"><span class="dot live"></span>Live</div>
+      </div>
+    </div>
+
+    <div class="flow-pipe">
+      <div class="pipe-line"></div>
+      <div class="pipe-arr">&#x25B6;</div>
+      <div class="pipe-line"></div>
+    </div>
+
+    <!-- Midday -->
+    <div class="phase midday">
+      <div class="ph-top">
+        <div class="ph-time">11:30</div>
+        <div class="ph-icon">&#x2600;</div>
+        <div class="ph-title">Midday Pulse</div>
+      </div>
+      <div class="ph-body">
+        <div class="ph-hero">验证市场主线</div>
+        <div class="ph-stat">创业板 +5.20%<br>半导体 / AI 算力领涨</div>
+        <div class="ph-thumb"><img src="assets/midday-pulse.png" alt="Midday Pulse"></div>
+        <div class="ph-status"><span class="dot live"></span>Live</div>
+      </div>
+    </div>
+
+    <div class="flow-pipe">
+      <div class="pipe-line"></div>
+      <div class="pipe-arr">&#x25B6;</div>
+      <div class="pipe-line"></div>
+    </div>
+
+    <!-- Close -->
+    <div class="phase close">
+      <div class="ph-top">
+        <div class="ph-time">15:00</div>
+        <div class="ph-icon">&#x1F307;</div>
+        <div class="ph-title">Close Brief</div>
+      </div>
+      <div class="ph-body">
+        <div class="ph-hero">形成研究闭环</div>
+        <div class="ph-stat">资金复盘 · 板块热力图<br>次日观察清单</div>
+        <div class="ph-thumb"><img src="assets/close-brief.png" alt="Close Brief"></div>
+        <div class="ph-status"><span class="dot partial"></span>Partial</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="oneliner">
+    从<span style="color:var(--orange)">盘前机会发现</span>，到<span style="color:var(--blue)">盘中验证主线</span>，再到<span style="color:var(--violet)">盘后研究闭环</span>
+  </div>
+
+  <div class="foot">
+    <div class="slogan">让研究员<span class="accent">始终站在市场节奏之前</span></div>
+    <div class="brand">Vera Daily Research Loop<br>全天候 AI 研究闭环</div>
+  </div>
+
+</div>
+</body>
+</html>

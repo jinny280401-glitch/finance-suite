@@ -44,14 +44,17 @@ def _ensure_connection() -> bool:
         return False
 
     try:
-        import EmQuantAPI as em
-        ret = em.start(_EM_USERNAME, _EM_PASSWORD, "-I 0")
-        if ret.get("ErrorCode") == 0:
+        from EmQuantAPI import c
+
+        ret = c.start()
+        error_code = ret.get("ErrorCode") if isinstance(ret, dict) else ret.ErrorCode
+        error_message = ret.get("ErrorMsg", "") if isinstance(ret, dict) else ret.ErrorMsg
+        if error_code == 0:
             _em_connected = True
             logger.info("✅ EmQuantAPI 已连接")
             return True
         else:
-            logger.warning(f"⚠️ EmQuantAPI 登录失败: {ret.get('ErrorMsg')}")
+            logger.warning(f"⚠️ EmQuantAPI 登录失败: {error_message}")
             _em_connected = False
             return False
     except ImportError:

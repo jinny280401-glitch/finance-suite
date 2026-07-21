@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Vera vs 通用 Bot · 速度对比</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:#000}
+
+  .stage{
+    position:relative; width:100%; min-height:100vh; overflow-y:auto;
+    background: radial-gradient(ellipse 80% 70% at 50% 50%, #1a1a2e 0%, #0a0a14 60%, #050510 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    padding: 32px 48px 28px;
+  }
+  .stage::before{
+    content:""; position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 15% 30%, rgba(78,168,255,.10) 0%, transparent 35%),
+      radial-gradient(circle at 85% 30%, rgba(155,107,255,.06) 0%, transparent 35%);
+    pointer-events:none;
+  }
+
+  .header{
+    position:relative; z-index:3; text-align:center; margin-bottom:16px;
+  }
+  .header .eyebrow{
+    font-size:11pt; font-weight:700; color: var(--cyan); letter-spacing:5px; margin-bottom:6px;
+  }
+  .header h2{
+    font-size:clamp(24pt,2.6vw,32pt); font-weight:800; color: var(--ink); letter-spacing:2px; margin:0;
+  }
+  .header h2 .hl{
+    background: linear-gradient(135deg, #4ea8ff 0%, #9b6bff 50%, #ff6bc1 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* 对比双栏 */
+  .compare{
+    position:relative; z-index:3;
+    display:flex; gap:28px; align-items:flex-start;
+    width: min(1060px, 94vw);
+  }
+  .card{
+    flex:1; border-radius:16px; overflow:hidden;
+    background: rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .card .label{
+    text-align:center; padding:10px 0 8px;
+    font-size:13pt; font-weight:700; letter-spacing:1.5px;
+  }
+  .card.vera .label{color:#4ea8ff}
+  .card.doubao .label{color:#AEBBC1}
+  .card img{
+    width:100%; height:400px; display:block;
+    object-fit:cover; object-position:top;
+  }
+  .card .time-bar{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:8px 0 12px;
+  }
+  .card .time-bar .time{
+    font-size:22pt; font-weight:800;
+  }
+  .card.vera .time-bar .time{color:#4ea8ff}
+  .card.doubao .time-bar .time{color:#AEBBC1}
+  .card .time-bar .unit{font-size:11pt; color: var(--sub);}
+
+  /* 结论 */
+  .conclusion{
+    position:relative; z-index:3;
+    margin-top:14px; text-align:center;
+  }
+  .conclusion .line1{
+    font-size:14pt; color: var(--ink); letter-spacing:1.5px; font-weight:700;
+  }
+  .conclusion .line1 .win{
+    background: linear-gradient(135deg, #4ea8ff, #9b6bff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight:800;
+  }
+  .conclusion .line2{
+    margin-top:4px; font-size:11pt; color: var(--sub); letter-spacing:1px;
+  }
+
+  @media(max-width:780px){
+    .compare{flex-direction:column; gap:18px}
+    .stage{padding:28px 20px}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="header">
+    <div class="eyebrow">SPEED BENCHMARK</div>
+    <h2>同一问题，<span class="hl">Vera 更快更准</span></h2>
+  </div>
+
+  <div class="compare">
+    <div class="card vera">
+      <div class="label">Vera</div>
+      <img src="assets/vera-speed-test.png" alt="Vera 回答截图" />
+      <div class="time-bar"><span class="time">16</span><span class="unit">秒</span></div>
+    </div>
+    <div class="card doubao">
+      <div class="label">通用 Bot（豆包）</div>
+      <img src="assets/doubao-speed-test.png" alt="豆包回答截图" />
+      <div class="time-bar"><span class="time">22</span><span class="unit">秒</span></div>
+    </div>
+  </div>
+
+  <div class="conclusion">
+    <div class="line1">对比通用 Bot，<span class="win">Vera 更快，更准</span></div>
+    <div class="line2">直连金融数据库，无需搜索 → 解析 → 拼装，一步到位</div>
+  </div>
+
+</div>
+</body>
+</html>

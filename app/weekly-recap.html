@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
-  <title>本周市场复盘 - 投资Agent</title>
+  <title>本周市场复盘 · Vera 市场复盘</title>
   <style>
     :root {
       --bg: #f7f8fb; --panel: #fff; --ink: #101318; --muted: #69717d;
@@ -228,7 +228,7 @@ function renderNorthFlow(data) {
   var html = '<div class="flow-grid">';
   html += '<div class="flow-item"><div class="amount ' + (data.net_flow >= 0 ? 'inflow' : 'outflow') + '">' + (data.net_flow >= 0 ? '+' : '') + data.net_flow + '亿</div><div class="label">本周净流向</div></div>';
   html += '<div class="flow-item"><div class="amount" style="color:var(--ink)">' + data.avg_daily + '亿</div><div class="label">日均成交额</div></div>';
-  html += '<div class="flow-item"><div class="amount" style="color:var(--ink)">' + (data.total_inflow || '--') + '亿</div><div class="label">累计买入</div></div>';
+  html += '<div class="flow-item"><div class="amount" style="color:var(--ink)">' + (data.total_inflow || '--') + '亿</div><div class="label">累计买入额</div></div>';
   html += '</div>';
   if (data.top_sectors && data.top_sectors.length) {
     html += '<div style="margin-top:16px;font-size:13px;color:var(--muted)">偏好行业：';

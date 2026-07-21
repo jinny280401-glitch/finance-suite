@@ -4,40 +4,90 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vera V4 · 市场定位</title>
-<link rel="stylesheet" href="deck.css">
 <style>
+  :root{--bg:#070b16;--ink:#f5f7ff;--sub:#9fb0d0;--cyan:#37e6d8;--blue:#4ea8ff;--violet:#9b6bff;--orange:#ffb056;--stroke:rgba(255,255,255,.14)}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:#070b16;color:#f5f7ff;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
-  .slide{width:100vw;height:100vh;min-height:650px;padding:5vh 5.5vw;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(circle at 55% 0,rgba(62,101,181,.2),transparent 45%),#070b16}
-  .eyebrow{font-size:14px;color:#55d9ff;font-weight:700;margin-bottom:10px}h1{font-size:clamp(34px,3.8vw,58px);line-height:1.16}.sub{font-size:18px;color:#a7b5cb;margin-top:10px}
-  .roles{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:5vh}
-  .role{background:rgba(255,255,255,.055);border-top:4px solid #4d9fff;padding:24px;min-height:250px}.role:nth-child(2){border-color:#63d49a}.role:nth-child(3){border-color:#ffbd59;background:rgba(255,189,89,.075)}
-  .tool{font-size:27px;font-weight:780}.analogy{color:#92a5c2;margin:6px 0 20px;font-size:15px}.job{font-size:20px;font-weight:700;margin-bottom:12px}.detail{color:#d2dbea;font-size:16px;line-height:1.65}
-  .flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center;gap:16px;margin-top:24px;padding:20px 24px;border:1px solid rgba(255,255,255,.13);background:rgba(0,0,0,.16)}
-  .flow b{font-size:18px}.flow span{display:block;color:#9eb0ca;font-size:14px;margin-top:5px}.arrow{font-size:25px;color:#55d9ff}
-  .takeaway{display:flex;justify-content:space-between;align-items:center;gap:26px;margin-top:auto;padding-top:23px;border-top:1px solid rgba(255,255,255,.14);font-size:clamp(18px,2vw,29px);font-weight:750}.takeaway strong{color:#ffbd59}.proof{font-size:15px;color:#a7b5cb;font-weight:500;text-align:right}
-  @media(max-width:900px){.roles{grid-template-columns:1fr}.role{min-height:0}.flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg);text-align:center}.slide{min-height:1100px}.takeaway{align-items:flex-start;flex-direction:column}.proof{text-align:left}}
+  html,body{width:100%;height:100%;overflow:hidden}
+  body{background:var(--bg);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei",-apple-system,system-ui,sans-serif}
+  .slide{width:100vw;height:100vh;position:relative;overflow:hidden;display:grid;grid-template-columns:38% 62%;background:radial-gradient(760px 520px at 100% 0,rgba(155,107,255,.16),transparent 62%),linear-gradient(145deg,#070b16,#111827)}
+  .slide::after{content:"";position:absolute;inset:18px;border:1px solid var(--stroke);border-radius:26px;z-index:10;pointer-events:none}
+
+  .vera-hero{position:relative;overflow:hidden;background:#101827}
+  .vera-hero img{width:100%;height:100%;display:block;object-fit:cover;object-position:49% 30%;transform:scaleX(-1);filter:brightness(.78) saturate(.9) contrast(1.05)}
+  .vera-hero::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,rgba(7,11,22,.22),transparent 45%,rgba(7,11,22,.93)),linear-gradient(0deg,rgba(7,11,22,.94),transparent 50%)}
+  .vera-hero::after{content:"";position:absolute;right:0;top:0;bottom:0;width:3px;z-index:2;background:linear-gradient(180deg,transparent,var(--cyan) 20%,var(--blue) 52%,var(--violet) 82%,transparent);box-shadow:0 0 28px rgba(78,168,255,.55)}
+  .hero-copy{position:absolute;left:52px;right:46px;bottom:40px;z-index:3}
+  .hero-kicker{font-size:13px;font-weight:800;color:var(--orange);letter-spacing:.7px;margin-bottom:10px}
+  .hero-name{font-size:50px;line-height:1;font-weight:850}.hero-name span{color:var(--cyan)}
+  .hero-role{font-size:18px;font-weight:700;margin-top:14px;color:#e9effb}
+  .hero-proof{font-size:13.5px;line-height:1.55;color:#b7c5dc;margin-top:10px;max-width:390px}
+
+  .content{padding:46px 66px 34px 54px;display:flex;flex-direction:column;min-width:0;position:relative;z-index:2}
+  .eyebrow{font-size:13px;color:var(--cyan);font-weight:800;letter-spacing:.8px}
+  h1{font-size:42px;line-height:1.18;margin-top:12px;font-weight:850;letter-spacing:0}h1 span{background:linear-gradient(90deg,var(--cyan),var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{font-size:17px;color:var(--sub);margin-top:10px}
+
+  .supporting{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:27px}
+  .tool{position:relative;min-height:132px;padding:19px 21px;background:rgba(255,255,255,.055);border:1px solid var(--stroke);border-top:3px solid var(--tool)}
+  .tool-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.tool-name{font-size:24px;font-weight:800}.analogy{font-size:12px;color:var(--sub);font-weight:650}
+  .job{font-size:17px;font-weight:720;margin-top:17px}.detail{font-size:13px;line-height:1.5;color:#b7c5dc;margin-top:5px}
+
+  .relation{margin-top:16px;padding:18px 20px;border:1px solid rgba(55,230,216,.24);background:linear-gradient(90deg,rgba(55,230,216,.08),rgba(78,168,255,.045));display:grid;grid-template-columns:1fr auto 1.2fr auto 1fr;align-items:center;gap:13px}
+  .relation b{font-size:15px}.relation span{display:block;color:var(--sub);font-size:12px;margin-top:4px}.arrow{font-size:22px;color:var(--cyan)}
+
+  .position{margin-top:17px;display:grid;grid-template-columns:115px 1fr;gap:22px;align-items:start}
+  .position-label{font-size:12px;font-weight:800;color:var(--orange);padding-top:5px;letter-spacing:.5px}
+  .position-text{font-size:18px;line-height:1.55;font-weight:680;color:#e8eef9}.position-text strong{color:var(--cyan)}
+  .takeaway{margin-top:auto;padding-top:20px;border-top:1px solid var(--stroke);display:flex;align-items:flex-end;justify-content:space-between;gap:22px}
+  .takeaway-main{font-size:23px;font-weight:800}.takeaway-main strong{color:var(--orange)}
+  .takeaway-note{text-align:right;font-size:12.5px;line-height:1.45;color:var(--sub)}
+  @media(max-width:900px){.slide{grid-template-columns:1fr}.vera-hero{display:none}.content{padding:34px}.relation{grid-template-columns:1fr}.arrow{transform:rotate(90deg);text-align:center}}
 </style>
 </head>
 <body>
 <main class="slide">
-  <div class="eyebrow">VERA V4 · MARKET POSITIONING</div>
-  <h1>金融工作中，三种工具各司其职</h1>
-  <div class="sub">不是谁替代谁，而是谁擅长什么</div>
-
-  <section class="roles">
-    <article class="role"><div class="tool">Wind 万得</div><div class="analogy">食材供应商</div><div class="job">提供专业数据</div><div class="detail">股价 · 财报 · 新闻<br>专业数据库与信息来源</div></article>
-    <article class="role"><div class="tool">豆包</div><div class="analogy">聊天助手 / 全科医生</div><div class="job">回答通用问题</div><div class="detail">能对话 · 信息检索<br>面向通用场景</div></article>
-    <article class="role"><div class="tool">Vera Agent</div><div class="analogy">专业厨师 / 专科医生</div><div class="job">完成投研工作</div><div class="detail">验证数据来源 · 多维分析<br>生成可追溯研报</div></article>
+  <section class="vera-hero" aria-label="Vera 侧视图">
+    <img src="assets/vera-portrait-side-view.png" alt="Vera 专注研究的侧视形象">
+    <div class="hero-copy">
+      <div class="hero-kicker">THE PROTAGONIST · 主角</div>
+      <div class="hero-name">Vera <span>Agent</span></div>
+      <div class="hero-role">专业研究员 / 专科医生</div>
+      <div class="hero-proof">选择 Skill、验证数据、完成分析，交付有来源、有逻辑、可追溯的研究成果。</div>
+    </div>
   </section>
 
-  <section class="flow" aria-label="Wind 与 Vera 的合作关系">
-    <div><b>Wind 提供数据</b><span>食材供应商</span></div><div class="arrow">→</div>
-    <div><b>Vera 处理流程</b><span>专业厨师</span></div><div class="arrow">→</div>
-    <div><b>研究报告</b><span>有来源 · 有逻辑 · 可追溯</span></div>
-  </section>
+  <section class="content">
+    <div class="eyebrow">VERA V4 · MARKET POSITIONING</div>
+    <h1>工具提供能力，<span>Vera 完成工作</span></h1>
+    <div class="sub">万得、豆包与 Vera 各司其职；Vera 是研究任务的执行主体。</div>
 
-  <div class="takeaway"><div>豆包能回答你问题，<strong>Vera 能替你干活</strong></div><div class="proof">Vera 不替代 Wind<br>而是让数据变成可用的研报</div></div>
+    <div class="supporting">
+      <article class="tool" style="--tool:var(--blue)">
+        <div class="tool-head"><div class="tool-name">万得</div><div class="analogy">食材供应商</div></div>
+        <div class="job">提供专业数据</div><div class="detail">股价 · 财报 · 新闻<br>专业数据库与信息来源</div>
+      </article>
+      <article class="tool" style="--tool:#63d49a">
+        <div class="tool-head"><div class="tool-name">豆包</div><div class="analogy">聊天助手 / 全科医生</div></div>
+        <div class="job">回答通用问题</div><div class="detail">对话 · 信息检索<br>面向通用场景</div>
+      </article>
+    </div>
+
+    <section class="relation" aria-label="万得、Vera 与研究报告的合作关系">
+      <div><b>万得提供数据</b><span>专业信源</span></div><div class="arrow">→</div>
+      <div><b>Vera 执行研究</b><span>验证 · 分析 · 组装</span></div><div class="arrow">→</div>
+      <div><b>研究成果</b><span>有来源 · 可追溯</span></div>
+    </section>
+
+    <div class="position">
+      <div class="position-label">市场定位</div>
+      <div class="position-text">Vera 不替代数据工具，也不是另一个聊天机器人；<strong>Vera 把数据、模型和 Skills 组织成可交付的研究工作。</strong></div>
+    </div>
+
+    <div class="takeaway">
+      <div class="takeaway-main">豆包能回答问题，<strong>Vera 能替你干活</strong></div>
+      <div class="takeaway-note">Vera 不替代万得<br>而是让数据变成可用的研报</div>
+    </div>
+  </section>
 </main>
 </body>
 </html>

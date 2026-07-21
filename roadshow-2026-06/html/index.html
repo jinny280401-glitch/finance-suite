@@ -56,15 +56,18 @@
 
 <script>
   const slides = [
-    {src:"fig0-multichannel-touch.html",        name:"多端触达"},
-    {src:"fig-cover-vera-portraits.html",       name:"Vera 三视图"},
-    {src:"fig1-cover.html",                     name:"封面 天玑"},
+    {src:"fig-cover-vera-portraits.html",       name:"天玑·金融数据全景分析引擎"},
     {src:"fig-era-opportunity.html",            name:"时代机会"},
     {src:"fig-pain-triangle.html",              name:"行业痛点"},
+    {src:"fig1-cover.html",                     name:"Vera 定位简介"},
+    {src:"fig-vera-three-views.html",            name:"Vera Core Skills"},
+    {src:"fig-speed-benchmark.html",             name:"Vera vs 通用Bot"},
     {src:"fig2-vera-overall-architecture.html", name:"图1 整体架构"},
     {src:"fig3-trust-gate-flow.html",           name:"图2 Trust Gate"},
     {src:"fig4-research-runtime.html",          name:"图3 Research Runtime"},
+    {src:"fig-daily-research-loop.html",        name:"全天研究闭环"},
     {src:"fig-vera-production-arch.html",       name:"生产部署架构"},
+    {src:"fig-tongzhou-platform.html",           name:"同舟 投研平台"},
     {src:"fig-hero-homepage.html",              name:"产品首页"},
     {src:"fig-workbench.html",                  name:"投研工作台"},
     {src:"fig-company-panorama.html",           name:"公司拜访速查卡"},
@@ -78,13 +81,14 @@
   const dots = document.getElementById('dots');
   const frame = document.getElementById('frame');
 
-  /* PNG 预加载 — 防止 iframe 切换时空白 */
+  /* HTTP(S) 下预加载页面资源；file:// 下 fetch 不受浏览器支持，直接交给 iframe。 */
   const imgPreload = [];
-  slides.forEach(s=>{
-    /* 通过 fetch 触发 SVG/CSS 缓存 (PNG 已 inline 预加载) */
-    const p = fetch(s.src, {credentials:'same-origin'}).then(r=>r.text()).catch(()=>null);
-    imgPreload.push(p);
-  });
+  if (location.protocol !== 'file:') {
+    slides.forEach(s=>{
+      const p = fetch(s.src, {credentials:'same-origin'}).then(r=>r.text()).catch(()=>null);
+      imgPreload.push(p);
+    });
+  }
 
   slides.forEach((s,idx)=>{
     const d = document.createElement('div');

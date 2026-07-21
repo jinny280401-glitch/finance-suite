@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>D13 Morning Brief — 2026-07-17</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  /* ===== Token system ===== */
+  :root {
+    --ink:       #0F1419;
+    --surface:   #1A1F2E;
+    --surface-2: #232938;
+    --rule:      #2D3447;
+    --text:      #E8E4D9;
+    --text-soft: #B8B4AB;
+    --muted:     #8B8680;
+    --amber:     #D4A574;
+    --amber-dim: #8C6E4E;
+    --caution:   #C97A6B;
+    --caution-dim: #7E4A40;
+    --positive:  #7FA968;
+    --positive-dim: #4A6A3C;
+    --serif:   'Fraunces', 'Songti SC', serif;
+    --sans:    'IBM Plex Sans', 'PingFang SC', sans-serif;
+    --mono:    'JetBrains Mono', 'SF Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #05070A;
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "tnum" 1, "ss01" 1;
+    line-height: 1.55;
+  }
+
+  .stage {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 24px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 880px;
+    background: var(--ink);
+    border: 1px solid var(--rule);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 30px 80px -20px rgba(0,0,0,0.6),
+      0 10px 30px -10px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Top status bar */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 28px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .topbar .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+    margin-right: 8px;
+    vertical-align: middle;
+    box-shadow: 0 0 8px var(--amber);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .topbar-right { color: var(--text-soft); }
+  .topbar-right span + span::before { content: "·"; padding: 0 8px; color: var(--rule); }
+
+  /* Header */
+  .header {
+    padding: 36px 40px 28px;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  .header-eyebrow {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .header-eyebrow .brief-id {
+    color: var(--amber);
+    font-weight: 700;
+  }
+  .header h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 44px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    font-variation-settings: "opsz" 96;
+  }
+  .header h1 em {
+    font-style: italic;
+    color: var(--amber);
+    font-weight: 400;
+  }
+  .header-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 14px;
+    letter-spacing: 0.06em;
+  }
+  .signal-tags {
+    display: flex;
+    gap: 16px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+  }
+  .signal-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+    padding: 5px 10px;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  .signal-tag strong { color: var(--amber); font-weight: 500; }
+  .signal-tag .cross { color: var(--caution); margin-right: 6px; font-weight: 700; }
+
+  /* Verdict / Hero */
+  .verdict {
+    padding: 36px 40px 32px;
+    border-bottom: 1px solid var(--rule);
+    background: linear-gradient(180deg, rgba(212,165,116,0.04) 0%, transparent 100%);
+  }
+  .verdict-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .verdict-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  .verdict-text {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 28px;
+    line-height: 1.4;
+    color: var(--text);
+    letter-spacing: -0.005em;
+    font-variation-settings: "opsz" 60;
+  }
+  .verdict-text .accent { color: var(--amber); font-style: italic; }
+  .verdict-text .muted { color: var(--text-soft); }
+
+  /* Drivers data strip */
+  .drivers {
+    padding: 28px 40px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  .drivers-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .drivers-label strong { color: var(--text-soft); font-weight: 500; }
+  .drivers-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border: 1px solid var(--rule);
+  }
+  .driver {
+    padding: 20px 18px;
+    border-right: 1px solid var(--rule);
+    position: relative;
+  }
+  .driver:last-child { border-right: 0; }
+  .driver-key {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .driver-val {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 36px;
+    line-height: 1;
+    color: var(--text);
+    font-variation-settings: "opsz" 60;
+    letter-spacing: -0.01em;
+  }
+  .driver-val .unit {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-soft);
+    font-weight: 400;
+    margin-left: 4px;
+    letter-spacing: 0.04em;
+  }
+  .driver-val .delta {
+    font-family: var(--mono);
+    font-size: 12px;
+    margin-left: 8px;
+    font-weight: 500;
+    vertical-align: 2px;
+  }
+  .delta.up    { color: var(--positive); }
+  .delta.flat  { color: var(--amber); }
+  .delta.down  { color: var(--caution); }
+  .driver-desc {
+    font-size: 12px;
+    color: var(--text-soft);
+    margin-top: 10px;
+    line-height: 1.45;
+  }
+
+  /* Two-column sections: Impact / Opportunity / Risk */
+  .body-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .body-section {
+    padding: 32px 40px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .section-head .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .section-head .title {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: -0.005em;
+  }
+  .section-head .bar {
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  /* Impact */
+  .impact-list { display: flex; flex-direction: column; gap: 14px; }
+  .impact-row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 20px;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .impact-row:last-child { border-bottom: 0; }
+  .impact-target {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--amber);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .impact-body {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .impact-body strong { color: var(--text-soft); font-weight: 500; }
+
+  /* Opportunity */
+  .opp-list { display: flex; flex-direction: column; gap: 18px; }
+  .opp {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .opp:last-child { border-bottom: 0; }
+  .opp-num {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 28px;
+    color: var(--amber);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .opp-title {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 17px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .opp-driver {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--amber);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .opp-driver span { color: var(--muted); }
+  .opp-observe {
+    font-size: 13px;
+    color: var(--text-soft);
+    line-height: 1.55;
+  }
+  .opp-observe em {
+    color: var(--text);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  /* Risk */
+  .risk {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .risk:last-child { border-bottom: 0; }
+  .risk-glyph {
+    font-family: var(--mono);
+    font-size: 22px;
+    color: var(--caution);
+    line-height: 1;
+    font-weight: 700;
+  }
+  .risk-title {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 17px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .risk-body {
+    font-size: 13px;
+    color: var(--text-soft);
+    line-height: 1.6;
+  }
+  .risk-body .if { color: var(--caution); font-weight: 500; }
+
+  /* Today's observation — watchlist */
+  .watchlist {
+    padding: 32px 40px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  .watch-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 6px;
+  }
+  .watch-head .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+  .watch-head .title {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 22px;
+    color: var(--text);
+  }
+  .watch-head .bar { flex: 1; height: 1px; background: var(--rule); }
+  .watch-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 22px;
+    letter-spacing: 0.04em;
+  }
+  .watch-list { display: flex; flex-direction: column; gap: 0; }
+  .watch {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 0;
+    border-top: 1px solid var(--rule);
+  }
+  .watch:last-child { border-bottom: 1px solid var(--rule); }
+  .watch .ind {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 1px solid var(--amber);
+    background: transparent;
+    margin: 0 auto;
+    box-shadow: 0 0 0 3px rgba(212,165,116,0.12);
+  }
+  .watch-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .watch-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Ticker tape (signature) */
+  .ticker-wrap {
+    background: var(--ink);
+    border-top: 1px solid var(--rule);
+    overflow: hidden;
+    position: relative;
+  }
+  .ticker-wrap::before, .ticker-wrap::after {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 60px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .ticker-wrap::before { left: 0;  background: linear-gradient(90deg, var(--ink), transparent); }
+  .ticker-wrap::after  { right: 0; background: linear-gradient(270deg, var(--ink), transparent); }
+  .ticker {
+    display: flex;
+    gap: 48px;
+    padding: 14px 0;
+    white-space: nowrap;
+    animation: scroll 40s linear infinite;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+  }
+  .ticker .tk {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ticker .tk strong { color: var(--amber); font-weight: 500; }
+  .ticker .tk .arrow { font-size: 9px; }
+  @keyframes scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* Footer */
+  .footer {
+    padding: 18px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .footer .left { color: var(--text-soft); }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    .stage { padding: 0; }
+    .card { border: 0; }
+    .header { padding: 28px 22px; }
+    .header h1 { font-size: 32px; }
+    .verdict { padding: 24px 22px; }
+    .verdict-text { font-size: 21px; }
+    .drivers { padding: 22px; }
+    .drivers-grid { grid-template-columns: repeat(2, 1fr); }
+    .driver:nth-child(2) { border-right: 0; }
+    .driver:nth-child(1), .driver:nth-child(2) { border-bottom: 1px solid var(--rule); }
+    .driver-val { font-size: 30px; }
+    .body-section, .watchlist { padding: 24px 22px; }
+    .impact-row { grid-template-columns: 1fr; gap: 4px; }
+    .footer { padding: 14px 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ticker { animation: none; }
+    .topbar .dot { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <article class="card" role="article">
+
+    <!-- Top status bar -->
+    <div class="topbar">
+      <div><span class="dot"></span>LIVE · A-SHARE DESK</div>
+      <div class="topbar-right">
+        <span>SESSION A · ASIA</span>
+        <span>16:00 · 自动化</span>
+        <span>2026-07-17</span>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-eyebrow">
+        <span class="brief-id">D13</span>
+        <span>MORNING BRIEF</span>
+        <span>· 收盘验证</span>
+      </div>
+      <h1>防御 <em>验证中</em><br/></h1>
+      <div class="header-sub">QC: success · 置信度: MEDIUM</div>
+      <div class="signal-tags">
+        <span class="signal-tag"><strong>Data</strong>&nbsp;&nbsp;MEDIUM</span>
+        <span class="signal-tag"><strong>Use</strong>&nbsp;&nbsp;数据源: 东财</span>
+        <span class="signal-tag"><span class="cross">×</span><strong>NOT</strong>&nbsp;&nbsp;交易建议</span>
+      </div>
+    </header>
+
+    <!-- Verdict -->
+    <section class="verdict">
+      <div class="verdict-label">Verdict · 一句话判断</div>
+      <p class="verdict-text">防御</p>
+    </section>
+
+    <!-- Drivers: data is the hero -->
+    <section class="drivers">
+      <div class="drivers-label">DRIVER <strong>· close snapshot · 15:00</strong></div>
+      <div class="drivers-grid">
+        <div class="driver">
+          <div class="driver-key">上证</div>
+          <div class="driver-val">3870<span class="delta down">-0.3%</span></div>
+          <div class="driver-desc">预期: 3882 (flat), 来源: 东财</div>
+        </div>
+        <div class="driver">
+          <div class="driver-key"></div>
+          <div class="driver-val"></div>
+          <div class="driver-desc"></div>
+        </div>
+        <div class="driver">
+          <div class="driver-key"></div>
+          <div class="driver-val"></div>
+          <div class="driver-desc"></div>
+        </div>
+        <div class="driver">
+          <div class="driver-key"></div>
+          <div class="driver-val"></div>
+          <div class="driver-desc"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Impact -->
+    <section class="body-section">
+      <div class="section-head">
+        <span class="label">Impact</span>
+        <span class="title">三个锚 · 当日分层</span>
+        <span class="bar"></span>
+      </div>
+      <div class="impact-list">
+        <div class="impact-row">
+          <div class="impact-target">✓ 上证 — CONFIRMED</div>
+          <div class="impact-body">企稳</div>
+        </div>
+        <div class="impact-row">
+          <div class="impact-target"></div>
+          <div class="impact-body"></div>
+        </div>
+        <div class="impact-row">
+          <div class="impact-target"></div>
+          <div class="impact-body"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Opportunity -->
+    <section class="body-section">
+      <div class="section-head">
+        <span class="label">Opportunity</span>
+        <span class="title">可观察的三条线</span>
+        <span class="bar"></span>
+      </div>
+      <div class="opp-list">
+        <div class="opp">
+          <div class="opp-num">01</div>
+          <div>
+            <div class="opp-title">防御</div>
+            <div class="opp-driver">Driver <span>·</span> 防御</div>
+            <div class="opp-observe">全天验证确认</div>
+          </div>
+        </div>
+        <div class="opp">
+          <div class="opp-num">02</div>
+          <div>
+            <div class="opp-title"></div>
+            <div class="opp-driver">Driver <span>·</span> </div>
+            <div class="opp-observe"></div>
+          </div>
+        </div>
+        <div class="opp">
+          <div class="opp-num">03</div>
+          <div>
+            <div class="opp-title"></div>
+            <div class="opp-driver">Driver <span>·</span> </div>
+            <div class="opp-observe"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Risk -->
+    <section class="body-section">
+      <div class="section-head">
+        <span class="label">Risk</span>
+        <span class="title">三类风险</span>
+        <span class="bar"></span>
+      </div>
+      <div class="opp-list">
+        <div class="risk">
+          <div class="risk-glyph">!</div>
+          <div>
+            <div class="risk-title"></div>
+            <div class="risk-body"></div>
+          </div>
+        </div>
+        <div class="risk">
+          <div class="risk-glyph">!</div>
+          <div>
+            <div class="risk-title"></div>
+            <div class="risk-body"></div>
+          </div>
+        </div>
+        <div class="risk">
+          <div class="risk-glyph">!</div>
+          <div>
+            <div class="risk-title"></div>
+            <div class="risk-body"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Today's observation: watchlist -->
+    <section class="watchlist">
+      <div class="watch-head">
+        <span class="label">TODAY · WATCHLIST</span>
+        <span class="title">今天重点看三件事</span>
+        <span class="bar"></span>
+      </div>
+      <div class="watch-sub">— 日度宏观观察，信号优先，不作交易指令 —</div>
+      <div class="watch-list">
+        <div class="watch">
+          <div class="ind"></div>
+          <div class="watch-text">关注隔夜NASDAQ</div>
+          <div class="watch-tag">CLS-01</div>
+        </div>
+        <div class="watch">
+          <div class="ind"></div>
+          <div class="watch-text">关注科技反弹</div>
+          <div class="watch-tag">CLS-02</div>
+        </div>
+        <div class="watch">
+          <div class="ind"></div>
+          <div class="watch-text">关注北向回流</div>
+          <div class="watch-tag">CLS-03</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ticker tape signature -->
+    <div class="ticker-wrap" aria-hidden="true">
+      <div class="ticker">
+        <!-- TICKER-COPY-1 · paste <span class="tk">上证 3870</span> here -->
+        <span class="tk">上证 3870</span>
+        <!-- duplicate for seamless loop -->
+        <!-- TICKER-COPY-2 · paste the SAME <span class="tk">上证 3870</span> again here -->
+        <span class="tk">上证 3870</span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span class="left">DATA CONFIDENCE · MEDIUM</span>
+      <span>Allowed use · test · <span style="color:var(--caution);">不作交易建议</span></span>
+    </footer>
+
+  </article>
+</div>
+</body>
+</html>

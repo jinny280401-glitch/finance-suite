@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Vera 三视图 · 你的智能伙伴</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  * { box-sizing: border-box; }
+  body { padding: 0; }
+  .stage{
+    position:relative; width:100%; min-height:100vh; overflow:hidden;
+    background: radial-gradient(ellipse 80% 70% at 50% 50%, #1a1a2e 0%, #0a0a14 60%, #050510 100%);
+    display:flex; flex-direction:column; align-items:center;
+    padding: 28px 40px 28px;
+    gap: 18px;
+  }
+  .stage::before{
+    content:""; position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 15% 30%, rgba(78,168,255,.12) 0%, transparent 35%),
+      radial-gradient(circle at 85% 30%, rgba(255,107,193,.10) 0%, transparent 35%),
+      radial-gradient(circle at 50% 90%, rgba(155,107,255,.08) 0%, transparent 50%);
+    pointer-events:none;
+  }
+
+  /* 顶部标题区 */
+  .title-bar{
+    position:relative; z-index:5; text-align:center;
+  }
+  .title-bar .eyebrow{
+    font-size:12px; color: var(--cyan);
+    font-weight:700; letter-spacing:6px; margin-bottom:8px;
+  }
+  .title-bar h1{
+    font-size:36px; font-weight:800; color: var(--ink);
+    margin:0; letter-spacing:2px;
+  }
+  .title-bar h1 .accent{
+    background: linear-gradient(135deg, #4ea8ff 0%, #9b6bff 60%, #ff6bc1 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .title-bar .sub{
+    font-size:13px; color: var(--sub);
+    letter-spacing: 3px; margin-top:6px;
+  }
+  .title-bar .seal{
+    margin-top: 12px; display:inline-block;
+    padding: 6px 18px; border-radius: 999px;
+    background: rgba(78,168,255,.10);
+    border: 1px solid rgba(78,168,255,.30);
+    font-size: 12px; color: var(--cyan);
+    letter-spacing: 1px;
+  }
+
+  /* 整张三视图图 */
+  .three-views{
+    position:relative; z-index:5;
+    width: min(1100px, 88vw);
+    height: 42vh;            /* 显式高度,不让 PNG 顶满 */
+    max-height: 540px;
+    min-height: 240px;
+    border-radius: 18px;
+    overflow:hidden;
+    background: linear-gradient(160deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.01) 100%);
+    border:1px solid var(--stroke);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.04) inset,
+      0 20px 50px rgba(0,0,0,.5);
+  }
+  .three-views img{
+    display:block; width:100%; height:100%; object-fit:cover; object-position: center 18%;
+  }
+
+  /* 角色档案胶囊 */
+  .profile{
+    position:relative; z-index:5;
+    display:flex; flex-wrap:wrap; justify-content:center; gap:14px;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  .profile .item{
+    padding: 8px 16px;
+    background: rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius: 999px;
+    color: var(--ink);
+    letter-spacing:.5px;
+  }
+  .profile .item .k{ color: var(--sub); margin-right:6px; }
+  .profile .item .v{
+    background: linear-gradient(90deg, #4ea8ff, #9b6bff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+  }
+  .profile .item .v-pink{
+    background: linear-gradient(90deg, #ff6bc1, #ffb056);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+  }
+
+  /* 底部 tagline */
+  .footer-tag{
+    position:relative; z-index:5;
+    margin-top: 6px;
+    text-align:center;
+  }
+  .footer-tag .pill{
+    display:inline-block; padding: 8px 22px;
+    background: linear-gradient(135deg, rgba(78,168,255,.15), rgba(155,107,255,.15));
+    border:1px solid rgba(255,255,255,.18);
+    border-radius: 999px;
+    font-size:13px; color: var(--ink);
+    backdrop-filter: blur(10px);
+  }
+  .footer-tag .pill .accent{ color: #ffb056; font-weight:600; }
+
+  /* 底座关系:天玑 (底) → Vera (数字员工, 顶) */
+  .relation{
+    position:relative; z-index:5;
+    margin-top: 4px;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    padding:12px 36px;
+    background:linear-gradient(135deg, rgba(155,107,255,.10), rgba(78,168,255,.08));
+    border:1px solid rgba(155,107,255,.32);
+    border-radius:18px;
+  }
+  .relation .rel-base, .relation .rel-top{
+    display:flex; align-items:baseline; gap:10px; padding:4px 14px;
+    border-radius:12px;
+  }
+  .relation .rel-base{
+    background:rgba(255,255,255,.04); color: var(--ink);
+  }
+  .relation .rel-top{
+    background:linear-gradient(120deg, rgba(78,168,255,.18), rgba(155,107,255,.18));
+    border:1px solid rgba(140,170,255,.45);
+  }
+  .relation .b{ font-size:11px; color: var(--sub); letter-spacing:4px; }
+  .relation .b-name{ font-size:18px; font-weight:900; letter-spacing:5px;
+    background:linear-gradient(90deg,#ffb056,#ff6bc1);
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .relation .b-desc{ font-size:12.5px; color: var(--sub); }
+  .relation .rel-arrow{
+    color: var(--cyan); font-size:18px; font-weight:700; text-shadow:0 0 12px var(--cyan); line-height:1;
+  }
+  .relation .t{ font-size:22px; font-weight:900; letter-spacing:6px; color:#fff; }
+  .relation .t-role{ font-size:14px; font-weight:700; letter-spacing:3px;
+    background:linear-gradient(90deg,var(--cyan),var(--blue));
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+
+  @media (max-width:860px){
+    .title-bar h1{ font-size:24px; }
+    .three-views{ aspect-ratio: 16/9; }
+    .profile{ font-size:11px; gap:8px; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="title-bar">
+    <div class="eyebrow">VERA · YOUR INTELLIGENT PARTNER</div>
+    <h1>三视图 · <span class="accent">Vera 你的智能伙伴</span></h1>
+    <div class="sub">天玑·金融数据全景分析引擎  ·  Vera Agent v2.0</div>
+    <div class="seal">"足够多的真相，方可触达天机"</div>
+  </div>
+
+  <div class="three-views">
+    <img src="assets/vera-portrait-tri-view.png" alt="Vera 三视图：正视图 / 侧视图 / 后视图" />
+  </div>
+
+  <div class="profile">
+    <div class="item"><span class="k">姓名</span><span class="v">Vera</span></div>
+    <div class="item"><span class="k">年龄</span><span class="v">27岁</span></div>
+    <div class="item"><span class="k">职位</span><span class="v">金融投研数字员工</span></div>
+    <div class="item"><span class="k">性格</span><span class="v">专业 · 智慧 · 亲和</span></div>
+    <div class="item"><span class="k">核心能力</span><span class="v-pink">数据洞察 · 研究分析 · 报告生成 · 趋势追踪</span></div>
+  </div>
+
+  <!-- 底座关系:天玑 = 底座, Vera = 数字员工 -->
+  <div class="relation">
+    <div class="rel-base"><span class="b">底座</span><span class="b-name">天玑</span><span class="b-desc">金融数据全景分析引擎</span></div>
+    <div class="rel-arrow">▲</div>
+    <div class="rel-top"><span class="t">Vera</span><span class="t-role">金融投研数字员工</span></div>
+  </div>
+
+  <div class="footer-tag">
+    <span class="pill">最强的模型 · 最全的信源 · 一分钟给你一份<span class="accent">可信</span>的研报</span>
+  </div>
+
+</div>
+</body>
+</html>

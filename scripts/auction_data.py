@@ -7,12 +7,14 @@
 """
 
 import asyncio
+import os
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 import akshare as ak
 
 _executor = ThreadPoolExecutor(max_workers=4)
+_TOP_GAINERS_TIMEOUT_SECONDS = float(os.getenv("MARKET_CONTEXT_TOP_GAINERS_TIMEOUT", "3"))
 
 
 def _fetch_zt_pool(date: str = None) -> list[dict] | None:
@@ -112,7 +114,7 @@ def _fetch_spot_sorted() -> list[dict] | None:
     return None
 
 
-async def get_auction_data() -> dict:
+async def get_auction_data(include_top_gainers: bool = True) -> dict:
     """并发获取集合竞价相关全部数据"""
     loop = asyncio.get_event_loop()
 
@@ -132,8 +134,25 @@ async def get_auction_data() -> dict:
         except Exception:
             results[key] = None
 
-    # 获取涨幅排行（独立获取，不再依赖stock_data缓存）
-    results["top_gainers"] = _fetch_spot_sorted()
+    if not include_top_gainers:
+        results["top_gainers"] = None
+        results["top_gainers_error"] = "skipped_optional"
+        return results
+
+    # 获取涨幅排行（独立获取，不再依赖 stock_data 缓存）。该 AkShare 全市场接口
+    # 耗时波动很大，不能拖死调用链；超时后保留其他快项并标记缺失。
+    try:
+        top_gainers_task = loop.run_in_executor(_executor, _fetch_spot_sorted)
+        results["top_gainers"] = await asyncio.wait_for(
+            top_gainers_task,
+            timeout=_TOP_GAINERS_TIMEOUT_SECONDS,
+        )
+    except asyncio.TimeoutError:
+        results["top_gainers"] = None
+        results["top_gainers_error"] = f"timeout_{_TOP_GAINERS_TIMEOUT_SECONDS:g}s"
+    except Exception as e:
+        results["top_gainers"] = None
+        results["top_gainers_error"] = f"{type(e).__name__}: {e}"
 
     return results
 

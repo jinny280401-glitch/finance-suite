@@ -3,51 +3,173 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vera V4 · 商业模式与证券机构落地路径</title>
+<title>商业模式与机构落地路径</title>
 <link rel="stylesheet" href="deck.css">
 <style>
+  :root{
+    --bg0:#070b16;--ink:#f4f7ff;--sub:#9fb0d0;
+    --cyan:#37e6d8;--blue:#4ea8ff;--violet:#9b6bff;
+    --orange:#ffb056;--stroke:rgba(255,255,255,.12);
+  }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:#070b16;color:#f5f7ff;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
-  .slide{width:100vw;height:100vh;min-height:650px;padding:5.5vh 6vw;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(circle at 50% 0,rgba(55,111,154,.2),transparent 43%),#070b16}
-  .eyebrow{font-size:14px;color:#55d9ff;font-weight:700;margin-bottom:11px}h1{font-size:clamp(34px,4vw,60px);line-height:1.16}.sub{font-size:18px;color:#9fb0ca;margin-top:9px}
-  .columns{display:grid;grid-template-columns:1fr 1fr;gap:24px;flex:1;margin-top:5vh}
-  .column{background:rgba(255,255,255,.055);border-top:4px solid #ff718b;padding:28px}.column.future{border-color:#b795ff}
-  .phase{font-size:13px;color:#8ea6c9;margin-bottom:12px}.title{font-size:28px;font-weight:780;margin-bottom:23px}.items{display:grid;gap:18px}.item{padding-bottom:17px;border-bottom:1px solid rgba(255,255,255,.1)}.item:last-child{border-bottom:0}.item b{display:block;font-size:19px;margin-bottom:6px}.item span{color:#b7c4d8;line-height:1.5;font-size:15px}
-  .note{margin-top:24px;padding:15px 18px;background:rgba(183,149,255,.11);border-left:3px solid #b795ff;color:#d8d0ee;font-size:15px}
-  .foot{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-top:25px;padding-top:22px;border-top:1px solid rgba(255,255,255,.14);font-size:clamp(19px,2.1vw,29px);font-weight:750}.foot span{color:#ffbd59}.foot small{font-size:14px;color:#94a6c0;font-weight:500}
-  @media(max-width:900px){.columns{grid-template-columns:1fr}.slide{min-height:1000px}.foot{align-items:flex-start;flex-direction:column}}
+  body{background:var(--bg0);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+
+  .slide{
+    width:100vw;height:100vh;min-height:620px;padding:6vh 6vw 5vh;
+    display:flex;flex-direction:column;overflow:hidden;
+    background:
+      radial-gradient(860px 480px at 18% 8%,rgba(78,168,255,.14),transparent 55%),
+      radial-gradient(720px 420px at 88% 12%,rgba(155,107,255,.12),transparent 52%),
+      var(--bg0);
+  }
+
+  .header{margin-bottom:5vh}
+  .eyebrow{font-size:13px;color:var(--cyan);font-weight:700;letter-spacing:5px;margin-bottom:10px}
+  h1{font-size:clamp(32px,3.6vw,52px);font-weight:800;line-height:1.18;letter-spacing:1px}
+  h1 .hl{background:linear-gradient(100deg,var(--cyan),var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{font-size:17px;color:var(--sub);margin-top:8px;letter-spacing:.5px}
+
+  /* 双栏 */
+  .columns{display:grid;grid-template-columns:1fr 1fr;gap:26px;flex:1}
+
+  .col{
+    border-radius:16px;padding:32px 30px 28px;
+    display:flex;flex-direction:column;gap:20px;
+    position:relative;overflow:hidden;
+  }
+  .col::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:4px;
+    border-radius:4px 4px 0 0;
+  }
+  .col.phase1{
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--stroke);
+  }
+  .col.phase1::before{background:linear-gradient(90deg,var(--orange),#ff718b)}
+  .col.phase2{
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--stroke);
+  }
+  .col.phase2::before{background:linear-gradient(90deg,var(--violet),var(--blue))}
+
+  .col .phase-label{
+    font-size:12px;font-weight:700;letter-spacing:3px;
+  }
+  .col.phase1 .phase-label{color:var(--orange)}
+  .col.phase2 .phase-label{color:var(--violet)}
+
+  .col .col-title{
+    font-size:26px;font-weight:800;line-height:1.2;
+  }
+  .col.phase1 .col-title{color:var(--ink)}
+  .col.phase2 .col-title{color:var(--ink)}
+
+  .col .points{display:flex;flex-direction:column;gap:14px}
+  .col .point{display:flex;align-items:flex-start;gap:10px}
+  .col .point .marker{
+    flex:0 0 6px;width:6px;height:6px;border-radius:50%;margin-top:8px;
+  }
+  .col.phase1 .point .marker{background:var(--orange)}
+  .col.phase2 .point .marker{background:var(--violet)}
+  .col .point .text{font-size:16px;line-height:1.5;color:var(--ink)}
+  .col .point .text strong{font-weight:700}
+  .col .point .text .note{color:var(--sub);font-size:14px;display:block}
+
+  .col .highlight-box{
+    padding:12px 16px;border-radius:10px;font-size:14px;line-height:1.5;
+    margin-top:auto;
+  }
+  .col.phase1 .highlight-box{
+    background:rgba(255,176,86,.08);border-left:3px solid var(--orange);color:#e8c98e;
+  }
+  .col.phase2 .highlight-box{
+    background:rgba(155,107,255,.08);border-left:3px solid var(--violet);color:#c8b8ee;
+  }
+
+  .foot{
+    display:flex;justify-content:space-between;align-items:center;gap:20px;
+    margin-top:20px;padding-top:18px;border-top:1px solid var(--stroke);
+    font-size:clamp(17px,2vw,24px);font-weight:700;
+  }
+  .foot .accent{color:var(--orange)}
+  .foot small{font-size:13px;color:var(--sub);font-weight:500}
+
+  @media(max-width:860px){
+    .columns{grid-template-columns:1fr}
+    .slide{min-height:900px}
+    .col{padding:22px 20px}
+    .col-title{font-size:22px}
+  }
 </style>
 </head>
 <body>
 <main class="slide">
-  <div class="eyebrow">VERA V4 · 商业模式与机构落地路径</div>
-  <h1>商业模式与证券机构落地路径</h1>
-  <div class="sub">从投研场景切入，逐步构建证券行业可信 AI 基础设施</div>
+
+  <div class="header">
+    <div class="eyebrow">BUSINESS MODEL</div>
+    <h1>从机构场景落地，<span class="hl">构建可信研究基础设施</span></h1>
+    <div class="sub">以机构投研场景为切入点，逐步构建证券行业可信 AI 基础设施</div>
+  </div>
 
   <section class="columns">
-    <article class="column">
-      <div class="phase">首批落地 · 证券机构投研场景</div>
-      <div class="title">同舟平台 / 投研平台嫁接</div>
-      <div class="items">
-        <div class="item"><b>研究员智能助手</b><span>公司拜访准备卡 · 行业研究辅助 · 投研知识沉淀，覆盖分析师核心工作流。</span></div>
-        <div class="item"><b>商业模式</b><span>机构授权 SaaS ＋ 项目合作 ＋ 场景定制，以机构投研场景为起点验证价值。</span></div>
-        <div class="item"><b>当前阶段</b><span>围绕证券机构核心场景进行产品验证与合作探索，不将规划表述为已实现收入。</span></div>
-      </div>
-    </article>
 
-    <article class="column future">
-      <div class="phase">长期生态 · 可信金融 AI 平台</div>
-      <div class="title">从机构场景走向行业基础设施</div>
-      <div class="items">
-        <div class="item"><b>平台授权模式</b><span>向证券机构开放可信 AI 研究能力，形成行业级基础设施。</span></div>
-        <div class="item"><b>Agent / Skill 生态</b><span>支持第三方业务能力扩展，机构可接入自有数据源与研究流程。</span></div>
-        <div class="item"><b>可信 AI 输出规范</b><span>推动金融 Agent 应用标准形成，让可信研究成为行业默认范式。</span></div>
+    <!-- 阶段一 -->
+    <div class="col phase1">
+      <div class="phase-label">Today</div>
+      <div class="col-title">机构场景验证</div>
+
+      <div class="points">
+        <div class="point">
+          <div class="marker"></div>
+          <div class="text"><strong>同舟平台嫁接</strong><span class="note">投研平台集成 Vera 引擎，作为 AI 能力层嵌入</span></div>
+        </div>
+        <div class="point">
+          <div class="marker"></div>
+          <div class="text"><strong>研究员智能助手</strong><span class="note">公司拜访 · 行业研究 · 知识沉淀，覆盖分析师核心工作流</span></div>
+        </div>
+        <div class="point">
+          <div class="marker"></div>
+          <div class="text"><strong>商业验证</strong><span class="note">机构授权 SaaS + 项目合作 + 场景定制</span></div>
+        </div>
       </div>
-      <div class="note">长期生态随机构场景验证逐步展开，当前聚焦首批落地场景</div>
-    </article>
+
+      <div class="highlight-box">验证价值 · 形成案例 · 完成 PMF</div>
+    </div>
+
+    <!-- 阶段二 -->
+    <div class="col phase2">
+      <div class="phase-label">Next</div>
+      <div class="col-title">行业基础设施构建</div>
+
+      <div class="points">
+        <div class="point">
+          <div class="marker"></div>
+          <div class="text"><strong>平台授权</strong><span class="note">向证券机构开放可信 AI 研究能力，形成行业级基础设施</span></div>
+        </div>
+        <div class="point">
+          <div class="marker"></div>
+          <div class="text"><strong>Agent / Skill 生态</strong><span class="note">第三方业务能力扩展，机构接入自有数据源与研究流程</span></div>
+        </div>
+        <div class="point">
+          <div class="marker"></div>
+          <div class="text"><strong>Trust Gate 标准</strong><span class="note">推动金融 Agent 应用规范，让可信研究成为行业默认范式</span></div>
+        </div>
+        <div class="point">
+          <div class="marker"></div>
+          <div class="text"><strong>行业能力开放</strong><span class="note">规模复制，构建证券行业可信 AI 基础设施</span></div>
+        </div>
+      </div>
+
+      <div class="highlight-box">平台授权 · Agent 生态 · 能力开放 · 规模复制</div>
+    </div>
+
   </section>
 
-  <div class="foot"><div><span>以证券机构投研场景为起点</span>，逐步构建可信金融 AI 生态</div><small>不展示未经验证的商业事实或收入数字</small></div>
+  <div class="foot">
+    <div>从机构应用，<span class="accent">走向行业基础设施</span></div>
+    <small>不展示未经验证的商业事实或收入数字</small>
+  </div>
+
 </main>
 </body>
 </html>

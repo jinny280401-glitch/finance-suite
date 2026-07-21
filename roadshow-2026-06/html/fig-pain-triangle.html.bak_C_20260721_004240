@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vera V4 · 行业痛点</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#070b16;color:#f5f7ff;font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+  .slide{width:100vw;height:100vh;min-height:650px;padding:5.5vh 6vw;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(circle at 50% 45%,rgba(150,56,93,.18),transparent 38%),#070b16}
+  .eyebrow{font-size:14px;color:#ff8aa3;font-weight:700;margin-bottom:12px}h1{font-size:clamp(34px,4vw,60px);line-height:1.16}.en{color:#8ea6c9;font-size:17px;margin-top:9px}
+  .triangle{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-items:end;flex:1;margin-top:5vh;position:relative}
+  .triangle:before{content:"";position:absolute;left:16%;right:16%;top:48%;height:2px;background:linear-gradient(90deg,#34c7f3,#ffbd59,#ff718b);opacity:.55}
+  .pain{position:relative;z-index:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);padding:26px 24px;min-height:270px}
+  .pain:nth-child(2){align-self:start;border-top:4px solid #ffbd59}.pain:first-child{border-top:4px solid #34c7f3}.pain:last-child{border-top:4px solid #ff718b}
+  .label{font-size:25px;font-weight:750;margin-bottom:20px}.label small{display:block;font-size:13px;color:#8ea6c9;margin-top:6px;font-weight:500}
+  ul{list-style:none;display:grid;gap:13px;color:#dbe4f4;font-size:17px;line-height:1.45}li:before{content:"•";color:#55d9ff;margin-right:9px}.pain:nth-child(2) li:before{color:#ffbd59}.pain:last-child li:before{color:#ff718b}
+  .takeaway{text-align:center;border-top:1px solid rgba(255,255,255,.14);padding-top:24px;margin-top:28px;font-size:clamp(22px,2.4vw,34px);font-weight:750}.takeaway span{color:#ff718b}
+  @media(max-width:900px){.triangle{grid-template-columns:1fr;overflow:auto}.triangle:before{display:none}.pain,.pain:nth-child(2){align-self:auto;min-height:0}.slide{min-height:980px}}
+</style>
+</head>
+<body>
+<main class="slide">
+  <div class="eyebrow">VERA V4 · THREE CHALLENGES IN FINANCIAL AI</div>
+  <h1>证券行业 AI 应用的三重困境</h1>
+  <div class="en">信息爆炸 / AI 难证明 / 决策须追责</div>
+
+  <section class="triangle">
+    <article class="pain"><div class="label">信息爆炸<small>TIME</small></div><ul><li>海量研报、公告、新闻与数据源</li><li>市场机会转瞬即逝</li><li>人力无法规模化</li></ul></article>
+    <article class="pain"><div class="label">AI 难证明<small>RISK</small></div><ul><li>虚假数据导致决策失误</li><li>数据来源无法追溯</li><li>缺少审计证据链</li></ul></article>
+    <article class="pain"><div class="label">决策须追责<small>COST</small></div><ul><li>专业数据采购成本高</li><li>人工尽调周期长</li><li>同样问题反复查</li></ul></article>
+  </section>
+
+  <div class="takeaway">需要 AI 效率，<span>但不敢用 AI 决策</span></div>
+</main>
+</body>
+</html>

@@ -61,11 +61,21 @@ def _build_context(session: ResearchSession, gate_result: TrustGateResult) -> di
     return {
         "symbol": session.symbol,
         "provider": session.provider,
+        "trust_gate": _trust_gate_summary(gate_result),
         "allowed_evidence_count": len(gate_result.allowed_bundles),
         "blocked_evidence_count": len(gate_result.blocked_items),
         "passthrough_count": len(gate_result.passthrough_items),
         "research_question": "Build a traceable research navigation context without recommendations.",
         "llm_enabled": False,
+    }
+
+
+def _trust_gate_summary(gate_result: TrustGateResult) -> dict[str, Any]:
+    return {
+        "allowed_count": len(gate_result.allowed_bundles),
+        "blocked_count": len(gate_result.blocked_items),
+        "passthrough_count": len(gate_result.passthrough_items),
+        "has_any_allowed": gate_result.has_any_allowed,
     }
 
 
@@ -141,6 +151,11 @@ def run_research_workflow(symbol: str = "300750.SZ", mode: str = "local") -> Res
 
         if not gate_result.has_any_allowed and any(item.get("kind", "").startswith("gateway_") for item in raw_evidence):
             session.set_state("NO_EVIDENCE", "All gateway evidence blocked by Trust Gate")
+            session.context = {
+                "symbol": session.symbol,
+                "provider": session.provider,
+                "trust_gate": _trust_gate_summary(gate_result),
+            }
             session.qc = {"passed": False, "status": "no_evidence", "reason": "trust_gate_blocked_all"}
             _write_artifacts(session)
             return session

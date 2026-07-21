@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>同舟 · 投研平台 × Vera 引擎</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:#000}
+
+  .stage{
+    position:relative; width:100%; min-height:100vh; overflow:hidden;
+    background: radial-gradient(ellipse 80% 70% at 50% 40%, #14142a 0%, #090914 55%, #040410 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 40px 44px 36px;
+  }
+  .stage::before{
+    content:""; position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 20% 25%, rgba(78,168,255,.10) 0%, transparent 30%),
+      radial-gradient(circle at 80% 70%, rgba(155,107,255,.08) 0%, transparent 30%);
+    pointer-events:none;
+  }
+
+  .header{
+    position:relative; z-index:3; text-align:center; margin-bottom:20px;
+  }
+  .header .eyebrow{
+    font-size:11pt; font-weight:700; color: var(--cyan); letter-spacing:5px; margin-bottom:6px;
+  }
+  .header h2{
+    font-size:clamp(26pt,2.8vw,38pt); font-weight:800; color: var(--ink); letter-spacing:2px; margin:0;
+  }
+  .header h2 .accent{
+    background: linear-gradient(135deg, #4ea8ff 0%, #9b6bff 50%, #ff6bc1 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header .sub{
+    margin-top:6px; font-size:13pt; color: var(--sub); letter-spacing:1px;
+  }
+
+  /* 嫁接架构图 */
+  .bridge{
+    position:relative; z-index:3;
+    width: min(1060px, 94vw);
+    display:flex; flex-direction:column; gap:12px;
+  }
+
+  /* 同舟 → Vera → 输出 三段 */
+  .row-block{
+    display:flex; gap:14px; align-items:stretch;
+  }
+  .box{
+    flex:1; border-radius:12px; padding:14px 16px 12px;
+    border:1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.04);
+  }
+  .box .label{
+    font-size:11pt; font-weight:700; letter-spacing:1px; margin-bottom:6px;
+  }
+  .box .items{
+    font-size:10.5pt; color: var(--sub); line-height:1.55;
+  }
+  .box.tongzhou{border-color:rgba(78,168,255,.25); background:rgba(78,168,255,.06)}
+  .box.tongzhou .label{color: var(--cyan)}
+  .box.vera{border-color:rgba(155,107,255,.25); background:rgba(155,107,255,.06)}
+  .box.vera .label{color:#ff6bc1}
+  .box.output{border-color:rgba(55,230,216,.20); background:rgba(55,230,216,.05)}
+  .box.output .label{color:#37e6d8}
+
+  /* 连接箭头 */
+  .connector{
+    display:flex; align-items:center; justify-content:center; gap:12px;
+  }
+  .pipe{
+    flex:1; height:2px; background:rgba(255,255,255,.12);
+    position:relative;
+  }
+  .pipe::after{
+    content:""; position:absolute; right:-6px; top:-5px;
+    width:0;height:0;
+    border-left:12px solid rgba(255,255,255,.25);
+    border-top:6px solid transparent;
+    border-bottom:6px solid transparent;
+  }
+  .pipe-label{
+    font-size:9pt; color: var(--sub); letter-spacing:1px; white-space:nowrap;
+  }
+
+  /* 双通道标注 */
+  .channels{
+    display:flex; gap:14px;
+  }
+  .channel{
+    flex:1; border-radius:10px; padding:10px 14px;
+    border:1px dashed rgba(255,255,255,.10);
+  }
+  .channel .ch-label{
+    font-size:11pt; font-weight:700; margin-bottom:3px;
+  }
+  .channel.mcp{border-color:rgba(255,107,193,.25); background:rgba(255,107,193,.04)}
+  .channel.mcp .ch-label{color:#ff6bc1}
+  .channel.rest{border-color:rgba(78,168,255,.25); background:rgba(78,168,255,.04)}
+  .channel.rest .ch-label{color:#4ea8ff}
+  .channel .ch-desc{font-size:10pt; color: var(--sub); line-height:1.45}
+
+  /* 底部原则 */
+  .principles{
+    position:relative; z-index:3;
+    margin-top:16px;
+    display:flex; gap:16px;
+    width: min(1060px, 94vw);
+  }
+  .principle{
+    flex:1; text-align:center;
+    font-size:10.5pt; color: var(--sub); line-height:1.5;
+  }
+  .principle .p-num{
+    font-size:18pt; font-weight:800; color: var(--cyan); margin-bottom:2px;
+  }
+  .principle b{color: var(--ink);}
+
+  @media(max-width:780px){
+    .stage{padding:24px 18px}
+    .row-block{flex-direction:column}
+    .channels{flex-direction:column}
+    .principles{flex-direction:column; gap:10px}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="header">
+    <div class="eyebrow">PLATFORM · 嫁接方案</div>
+    <h2><span class="accent">同舟</span> 投研平台 × Vera 引擎</h2>
+    <div class="sub">MCP + REST 双通道，引擎能力植入平台前端</div>
+  </div>
+
+  <div class="bridge">
+    <!-- 同舟 → 箭头 → Vera -->
+    <div class="row-block">
+      <div class="box tongzhou">
+        <div class="label">同舟 前端</div>
+        <div class="items">投研工作台 · 公司速查 · 研报中心 · 数据看板</div>
+      </div>
+      <div class="connector" style="flex:0 0 60px;flex-direction:column;gap:4px">
+        <span style="font-size:18pt;color:rgba(255,255,255,.3)">→</span>
+      </div>
+      <div class="box vera">
+        <div class="label">Vera 引擎</div>
+        <div class="items">Agent Router · Skills · Research Runtime · Trust Gate · Evidence Layer</div>
+      </div>
+      <div class="connector" style="flex:0 0 60px;flex-direction:column;gap:4px">
+        <span style="font-size:18pt;color:rgba(255,255,255,.3)">→</span>
+      </div>
+      <div class="box output">
+        <div class="label">可信输出</div>
+        <div class="items">结构化结果 · 来源追溯 · 风险声明 · QC 标记</div>
+      </div>
+    </div>
+
+    <!-- 双通道 -->
+    <div class="channels">
+      <div class="channel mcp">
+        <div class="ch-label">MCP 通道 · AI 驱动任务</div>
+        <div class="ch-desc">Company Panorama · Deep Research · Due Diligence · Meeting · Writing — 同舟前端通过 MCP Client 调用 Vera Tool，返回结构化结果</div>
+      </div>
+      <div class="channel rest">
+        <div class="ch-label">REST 通道 · 高频数据查询</div>
+        <div class="ch-desc">行情快照 · 盘面 Pulse · 估值历史 · Golden Pit 信号 — 直连 Provider 层，毫秒响应，不经过 MCP 协议</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 关键原则 -->
+  <div class="principles">
+    <div class="principle"><div class="p-num">01</div><b>MCP 优先</b>　AI Skill 走 MCP 标准协议，同舟直接消费结构化 tool result</div>
+    <div class="principle"><div class="p-num">02</div><b>高频直连</b>　行情 / 盘面数据走 REST，避免协议开销</div>
+    <div class="principle"><div class="p-num">03</div><b>Trust Gate 贯穿</b>　双通道输出均经过来源标记 + QC + 边界声明</div>
+    <div class="principle"><div class="p-num">04</div><b>同舟不改 Vera</b>　引擎独立部署，平台作为新前端渠道接入</div>
+  </div>
+
+</div>
+</body>
+</html>

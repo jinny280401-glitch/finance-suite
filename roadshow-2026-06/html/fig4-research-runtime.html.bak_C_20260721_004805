@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>图3 · Research Runtime Workflow</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  .body3{flex:1; display:grid; grid-template-columns:1fr .32fr; gap:18px; margin-top:16px; z-index:2}
+  .states{display:flex; flex-direction:column; gap:9px}
+  .st{display:flex; align-items:center; gap:14px}
+  .st .cap{flex:1; display:flex; align-items:center; gap:14px; padding:10px 16px}
+  .st .step{font-size:14px; font-weight:800; color:var(--cyan); width:118px; flex:none; letter-spacing:.5px}
+  .st .micro{margin-top:0}
+  .st.qc .cap{box-shadow:0 0 0 1px rgba(55,230,216,.3),0 14px 36px rgba(55,230,216,.25),inset 0 1px 0 rgba(255,255,255,.18); border-color:rgba(55,230,216,.5)}
+  .arrowv{color:rgba(255,255,255,.28); font-size:11px; align-self:flex-start; margin-left:55px; line-height:.4}
+  .side{display:flex; flex-direction:column; gap:14px}
+  .side .cap{flex:1}
+  .side .name{font-size:15px}
+  .audit{line-height:2.0; font-size:13px; color:var(--ink); margin-top:6px}
+  .audit code{background:rgba(255,255,255,.08); padding:2px 8px; border-radius:6px; font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="head">
+    <div class="h-title">为什么 Vera <span style="background:linear-gradient(110deg, var(--cyan), var(--blue), var(--violet)); -webkit-background-clip:text; background-clip:text; color:transparent">可以一分钟</span>完成分析？</div>
+    <div class="h-sub">Runtime 是原因。Vera = <span style="color:var(--orange); font-weight:700">研究员</span> · 8 步状态机驱动,每步可解释、可中断、可证伪</div>
+  </div>
+
+  <div class="body3">
+    <div class="states">
+      <div class="st"><div class="cap"><span class="step">PLAN</span><div class="micro">列提纲 / 拆问题</div></div></div>
+      <div class="arrowv">▼</div>
+      <div class="st"><div class="cap"><span class="step">RETRIEVE</span><div class="micro">四层降级：Wind → Tushare → JQ → 东财</div></div></div>
+      <div class="arrowv">▼</div>
+      <div class="st"><div class="cap"><span class="step">BUILD_CTX</span><div class="micro">证据包组装 + 阻断字段剥离</div></div></div>
+      <div class="arrowv">▼</div>
+      <div class="st"><div class="cap"><span class="step">ANALYZE</span><div class="micro">财务对比 + 估值计算</div></div></div>
+      <div class="arrowv">▼</div>
+      <div class="st qc"><div class="cap"><span class="step">QC</span><div class="micro">completeness 评分 + 异常检测</div></div></div>
+      <div class="arrowv">▼</div>
+      <div class="st"><div class="cap"><span class="step">SYNTHESIZE</span><div class="micro">11 章节结构化报告</div></div></div>
+      <div class="arrowv">▼</div>
+      <div class="st"><div class="cap glow"><span class="step">DONE</span><div class="micro">每条结论挂 evidence_id</div></div></div>
+    </div>
+
+    <div class="side">
+      <div class="cap">
+        <div class="name">可审计约束</div>
+        <div class="audit">
+          <code>evidence_id</code><br>
+          <code>source</code><br>
+          <code>timestamp</code><br>
+          <code>allowed_use</code>
+        </div>
+      </div>
+      <div class="warn" style="display:block; line-height:1.6">
+        <b>Blocked fields</b><br>
+        <span style="font-weight:500; color:var(--ink)"><code style="background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px">_qc / raw / payload</code> 永不进入最终 LLM 上下文</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="slogan">数据 → 分析 → 验证 → 报告 → <span class="accent">一分钟</span>　·　<span class="accent">估值先行,理由跟上,跨源验证</span></div>
+    <div class="brand">Vera Agent v3<br>面向证券行业的金融投研数字员工</div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>诚实 vs 编造</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:#000}
+
+  .stage{
+    position:relative; width:100%; min-height:100vh; overflow:hidden;
+    background: radial-gradient(ellipse 80% 70% at 50% 50%, #1a1a2e 0%, #0a0a14 60%, #050510 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 40px 48px 36px;
+  }
+
+  .header{
+    position:relative; z-index:3; text-align:center; margin-bottom:24px;
+  }
+  .header .eyebrow{
+    font-size:11pt; font-weight:700; color: var(--cyan); letter-spacing:5px; margin-bottom:6px;
+  }
+  .header h2{
+    font-size:clamp(24pt,2.6vw,32pt); font-weight:800; color: var(--ink); letter-spacing:2px; margin:0;
+  }
+  .header h2 .hl{
+    background: linear-gradient(135deg, #4ea8ff 0%, #9b6bff 50%, #ff6bc1 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header .sub{
+    margin-top:8px; font-size:13pt; color: var(--sub); letter-spacing:1px;
+  }
+
+  /* 左右对比 */
+  .compare{
+    position:relative; z-index:3;
+    display:flex; gap:24px;
+    width: min(1000px, 94vw);
+  }
+  .card{
+    flex:1; border-radius:16px; padding:28px 24px 24px;
+    display:flex; flex-direction:column; gap:16px; align-items:center; text-align:center;
+  }
+  .card.bad{
+    background:rgba(255,107,107,.06);
+    border:1px solid rgba(255,107,107,.20);
+  }
+  .card.good{
+    background:rgba(55,230,216,.06);
+    border:1px solid rgba(55,230,216,.20);
+  }
+
+  .card .icon{
+    font-size:40pt; line-height:1;
+  }
+  .card .card-title{
+    font-size:20pt; font-weight:800; letter-spacing:1px;
+  }
+  .card.bad .card-title{color:#ff6b6b}
+  .card.good .card-title{color:var(--cyan)}
+
+  .card .scenario{
+    font-size:13pt; color: var(--ink); line-height:1.5; font-weight:600;
+  }
+  .card .outcome{
+    font-size:11pt; color: var(--sub); line-height:1.5;
+    padding:10px 14px; border-radius:10px;
+  }
+  .card.bad .outcome{
+    background:rgba(255,107,107,.08);
+  }
+  .card.good .outcome{
+    background:rgba(55,230,216,.06);
+  }
+
+  .arrow-down{
+    font-size:18pt; color:rgba(255,255,255,.3); line-height:1;
+  }
+
+  .conclusion{
+    position:relative; z-index:3; margin-top:20px; text-align:center;
+  }
+  .conclusion .main{
+    font-size:16pt; font-weight:700; color: var(--ink); letter-spacing:1px;
+  }
+  .conclusion .main .hl{
+    background: linear-gradient(135deg, #4ea8ff, #9b6bff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight:800;
+  }
+
+  @media(max-width:720px){
+    .compare{flex-direction:column}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="header">
+    <div class="eyebrow">THE DIFFERENCE</div>
+    <h2>我们不消除幻觉，<span class="hl">我们管理幻觉</span></h2>
+    <div class="sub">同一问题，两种回答方式</div>
+  </div>
+
+  <div class="compare">
+    <!-- 左边：通用 AI -->
+    <div class="card bad">
+      <div class="icon">&#9888;&#65039;</div>
+      <div class="card-title">通用 AI</div>
+      <div class="scenario">"宁德时代 Q2 毛利率是多少？"</div>
+      <div class="arrow-down">&#8595;</div>
+      <div class="outcome"><b>编造一个数字</b><br>看起来合理，但是假的。<br>没有来源，没有验证，没有边界。</div>
+    </div>
+    <!-- 右边：Vera -->
+    <div class="card good">
+      <div class="icon">&#10003;</div>
+      <div class="card-title">Vera</div>
+      <div class="scenario">"宁德时代 Q2 毛利率是多少？"</div>
+      <div class="arrow-down">&#8595;</div>
+      <div class="outcome"><b>诚实地说不知道</b><br>数据未披露，无法回答。<br>或：要求人工确认后再给出答案。</div>
+    </div>
+  </div>
+
+  <div class="conclusion">
+    <div class="main">让 AI <span class="hl">在不知道的时候，诚实地说不知道</span></div>
+  </div>
+
+</div>
+</body>
+</html>

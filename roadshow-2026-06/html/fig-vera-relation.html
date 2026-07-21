@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Vera + 天玑 · 底座关系</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:#000}
+
+  .stage{
+    position:relative; width:100%; min-height:100vh; overflow:hidden;
+    background: radial-gradient(ellipse 80% 70% at 50% 50%, #1a1a2e 0%, #0a0a14 60%, #050510 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 60px 80px;
+    gap: 30px;
+  }
+  .stage::before{
+    content:""; position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(155,107,255,.12) 0%, transparent 40%),
+      radial-gradient(circle at 70% 70%, rgba(78,168,255,.12) 0%, transparent 40%);
+    pointer-events:none;
+  }
+
+  /* 顶部标题 */
+  .title-bar{
+    position:relative; z-index:5; text-align:center;
+  }
+  .title-bar .eyebrow{
+    font-size:13px; color: var(--cyan);
+    font-weight:700; letter-spacing:6px; margin-bottom:10px;
+  }
+  .title-bar h1{
+    font-size:42px; font-weight:800; color: var(--ink);
+    margin:0; letter-spacing:2px;
+  }
+  .title-bar h1 .accent{
+    background: linear-gradient(135deg, #ffb056 0%, #ff6bc1 50%, #9b6bff 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .title-bar .sub{
+    font-size:14px; color: var(--sub);
+    letter-spacing: 3px; margin-top:8px;
+  }
+
+  /* 关系可视化:上下两层 */
+  .relation{
+    position:relative; z-index:5;
+    display:flex; flex-direction:column; align-items:center; gap: 16px;
+  }
+  /* 上层:Vera(数字员工) */
+  .layer-top{
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    padding: 28px 80px;
+    background: linear-gradient(135deg, rgba(78,168,255,.22) 0%, rgba(155,107,255,.22) 100%);
+    border: 2px solid rgba(140,170,255,.5);
+    border-radius: 20px;
+    box-shadow: 0 12px 40px rgba(78,168,255,.35);
+  }
+  .layer-top .top-name{
+    font-size:56px; font-weight:900; letter-spacing:8px; color: #fff;
+  }
+  .layer-top .top-role{
+    font-size:18px; font-weight:700; letter-spacing:3px;
+    background: linear-gradient(90deg, var(--cyan), var(--blue));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .layer-top .top-tag{
+    font-size:13px; color: var(--sub); margin-top: 4px;
+  }
+
+  /* 中间箭头 */
+  .arrow{
+    color: var(--cyan); font-size:32px; font-weight:700;
+    text-shadow: 0 0 20px var(--cyan);
+    line-height: 1;
+  }
+  .arrow-sub{
+    font-size:12px; color: var(--sub);
+    letter-spacing: 4px;
+  }
+
+  /* 下层:天玑(底座) */
+  .layer-bottom{
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    padding: 24px 80px;
+    background: linear-gradient(135deg, rgba(255,176,86,.10) 0%, rgba(255,107,193,.10) 100%);
+    border: 1.5px solid rgba(255,176,86,.4);
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(255,176,86,.2);
+  }
+  .layer-bottom .b-label{
+    font-size:14px; color: rgba(255,210,150,.85); letter-spacing:6px; font-weight:700;
+  }
+  .layer-bottom .b-name{
+    font-size:42px; font-weight:900; letter-spacing:10px;
+    background: linear-gradient(90deg, #ffb056, #ff6bc1);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .layer-bottom .b-desc{
+    font-size:16px; color: var(--sub);
+    letter-spacing: 1.5px;
+    margin-top: 2px;
+  }
+
+  /* 底部:核心金句 */
+  .bottom-line{
+    position:relative; z-index:5; text-align:center; margin-top: 14px;
+    font-size:14px; color: var(--sub); letter-spacing: 3px;
+  }
+  .bottom-line b{
+    background: linear-gradient(90deg, var(--cyan), var(--violet));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+
+  @media (max-width:860px){
+    .title-bar h1{ font-size:26px; }
+    .layer-top, .layer-bottom{ padding: 18px 30px; }
+    .layer-top .top-name{ font-size:36px; }
+    .layer-bottom .b-name{ font-size:28px; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="title-bar">
+    <div class="eyebrow">RELATIONSHIP</div>
+    <h1>天玑 是底座 · <span class="accent">Vera 是数字员工</span></h1>
+    <div class="sub">"Vera" = 真相 · "天玑" = 天机 · 足够多的真相,方可触达天机</div>
+  </div>
+
+  <div class="relation">
+    <!-- 上层:Vera -->
+    <div class="layer-top">
+      <div class="top-name">Vera</div>
+      <div class="top-role">金融投研数字员工</div>
+      <div class="top-tag">7×24 在线 · 你提问它调度</div>
+    </div>
+
+    <!-- 中间:运行关系 -->
+    <div class="arrow">▲</div>
+    <div class="arrow-sub">运行在 · POWERED BY</div>
+
+    <!-- 下层:天玑底座 -->
+    <div class="layer-bottom">
+      <div class="b-label">底座 · FOUNDATION</div>
+      <div class="b-name">天 玑</div>
+      <div class="b-desc">金融数据全景分析引擎 · 12 大信源 · Claude Opus 4.8</div>
+    </div>
+  </div>
+
+  <div class="bottom-line">
+    <b>可信,来自可验证的数据与流程</b>
+  </div>
+
+</div>
+</body>
+</html>

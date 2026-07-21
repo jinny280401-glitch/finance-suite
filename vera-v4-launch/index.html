@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, height=1080" />
+  <title>Vera V4 · Product Launch</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    @font-face{font-family:'PingFang SC';src:local('PingFang SC')}
+    @font-face{font-family:'Microsoft YaHei';src:local('Microsoft YaHei')}
+    @font-face{font-family:system-ui;src:local('system-ui')}
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#0a0e1a}
+    body{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:#fff}
+    #root{position:relative;width:1920px;height:1080px;overflow:hidden}
+    .clip{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .clip img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.5) 100%);z-index:1;pointer-events:none}
+    .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;padding:60px 120px;text-align:center}
+    .overlay h2{font-size:64px;font-weight:800;margin:0 0 16px;letter-spacing:2px;text-shadow:0 2px 24px rgba(0,0,0,.7)}
+    .overlay p{font-size:28px;font-weight:500;color:rgba(255,255,255,.82);margin:0;max-width:1200px;line-height:1.5;text-shadow:0 1px 12px rgba(0,0,0,.6)}
+    .g-cyan{background:linear-gradient(110deg,#37e6d8,#4ea8ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .g-full{background:linear-gradient(110deg,#37e6d8,#4ea8ff,#9b6bff);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .g-warm{background:linear-gradient(110deg,#ffb056,#ff6bc1);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .tag{position:absolute;top:40px;left:60px;z-index:3;font-size:14px;font-weight:700;letter-spacing:2px;color:#37e6d8;padding:6px 14px;border:1px solid rgba(55,230,216,.3);border-radius:999px;background:rgba(55,230,216,.08)}
+    .loop-title{text-align:center;z-index:3;padding-top:30px}
+    .loop-title h2{font-size:72px;font-weight:800;margin:0;letter-spacing:1px;text-shadow:0 2px 20px rgba(0,0,0,.5)}
+    .loop-title .g-warm{background:linear-gradient(110deg,#ffb056,#ff6bc1);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .timeline{display:flex;align-items:stretch;justify-content:center;gap:8px;z-index:3;flex:1;padding:20px 40px 30px}
+    .tl-col{flex:1;max-width:420px;display:flex;flex-direction:column;align-items:center;text-align:center;border-radius:18px;padding:24px 18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10)}
+    .tl-col .tl-time{font-size:16px;color:rgba(255,255,255,.5);font-weight:700;letter-spacing:3px;margin-bottom:4px}
+    .tl-col .tl-icon{font-size:40px;margin-bottom:6px}
+    .tl-col .tl-name{font-size:28px;font-weight:800;color:#fff;margin-bottom:14px}
+    .tl-col .tl-items{display:flex;flex-direction:column;gap:8px}
+    .tl-col .tl-item{font-size:19px;color:rgba(255,255,255,.75);padding:4px 0}
+    .tl-col.morning{border-top:4px solid #ffb056}.tl-col.morning .tl-name{color:#ffb056}
+    .tl-col.midday{border-top:4px solid #4ea8ff}.tl-col.midday .tl-name{color:#4ea8ff}
+    .tl-col.close{border-top:4px solid #9b6bff}.tl-col.close .tl-name{color:#9b6bff}
+    .tl-arrow{display:flex;align-items:center;color:rgba(255,255,255,.25);font-size:36px;flex-shrink:0;padding:0 4px}
+    .loop-foot{text-align:center;z-index:3;padding-bottom:20px;font-size:22px;font-weight:700;color:rgba(255,255,255,.7)}
+  </style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="71">
+
+  <!-- S1: Cover 0-6s — clean dark background -->
+  <section id="s1" class="clip" data-start="0" data-duration="6" data-track-index="1" style="background:radial-gradient(ellipse at 50% 30%,rgba(78,168,255,.12),transparent 60%),linear-gradient(170deg,#070b16,#0a1020,#070b16)">
+    <div class="overlay">
+      <h2 id="s1t" style="font-size:72px"><span class="g-cyan">Vera</span> · 证券行业可信研究智能体</h2>
+      <p id="s1s">面向证券行业的新一代 AI 研究伙伴</p>
+    </div>
+    <div class="tag" id="s1b">VERA AGENT</div>
+  </section>
+
+  <!-- S2: Era 6-12s -->
+  <section id="s2" class="clip" data-start="6" data-duration="6" data-track-index="1" style="background:radial-gradient(ellipse at 50% 30%,rgba(255,176,86,.10),transparent 60%),linear-gradient(170deg,#070b16,#0a1020,#070b16)">
+    <div class="vignette"></div>
+    <div class="overlay">
+      <h2 id="s2t">2026，金融 AI 从<span class="g-full">生成内容</span>进入<span class="g-full">可信决策</span>时代</h2>
+      <p id="s2s">生成答案 ≠ 可信决策</p>
+    </div>
+    <div class="tag" id="s2b">WHY NOW</div>
+  </section>
+
+  <!-- S3: Trust Gate 12-20s -->
+  <section id="s3" class="clip" data-start="12" data-duration="8" data-track-index="1" style="background:radial-gradient(ellipse at 50% 30%,rgba(55,230,216,.10),transparent 60%),linear-gradient(170deg,#070b16,#0a1020,#070b16)">
+    <div class="vignette"></div>
+    <div class="overlay">
+      <h2 id="s3t"><span class="g-cyan">Trust Gate</span> · 可信校验前置</h2>
+      <p id="s3s">可信，不来自模型，而来自可验证的数据与流程</p>
+    </div>
+    <div class="tag" id="s3b">WHY TRUST</div>
+  </section>
+
+  <!-- S4: Daily Research Loop 20-34s (14s) -->
+  <section id="s4" class="clip" data-start="20" data-duration="14" data-track-index="1" style="background:radial-gradient(ellipse at 50% 20%,rgba(78,168,255,.10),transparent 55%),linear-gradient(170deg,#070b16,#0a1020,#070b16)">
+    <div class="vignette"></div>
+    <div class="loop-title">
+      <h2 id="s4t">Vera <span class="g-warm">Daily Research Loop</span> · 全天研究闭环</h2>
+    </div>
+    <div class="timeline">
+      <div class="tl-col morning" id="s4c1">
+        <div class="tl-time">09:15</div>
+        <div class="tl-icon">&#x1F305;</div>
+        <div class="tl-name">Morning Brief</div>
+        <div class="tl-items">
+          <div class="tl-item">集合竞价异动</div>
+          <div class="tl-item">盘前量化扫描</div>
+          <div class="tl-item">高开低开预警</div>
+          <div class="tl-item">今日机会清单</div>
+        </div>
+      </div>
+      <div class="tl-arrow" id="s4a1">→</div>
+      <div class="tl-col midday" id="s4c2">
+        <div class="tl-time">11:30</div>
+        <div class="tl-icon">&#x2600;</div>
+        <div class="tl-name">Midday Pulse</div>
+        <div class="tl-items">
+          <div class="tl-item">上午行情总结</div>
+          <div class="tl-item">市场情绪指标</div>
+          <div class="tl-item">热点轮动切换</div>
+          <div class="tl-item">下午关注清单</div>
+        </div>
+      </div>
+      <div class="tl-arrow" id="s4a2">→</div>
+      <div class="tl-col close" id="s4c3">
+        <div class="tl-time">15:00</div>
+        <div class="tl-icon">&#x1F307;</div>
+        <div class="tl-name">Close Brief</div>
+        <div class="tl-items">
+          <div class="tl-item">收盘市场画像</div>
+          <div class="tl-item">板块热力图</div>
+          <div class="tl-item">资金流向复盘</div>
+          <div class="tl-item">明日观察清单</div>
+        </div>
+      </div>
+    </div>
+    <div class="loop-foot" id="s4f">让研究员始终站在市场节奏之前</div>
+    <div class="tag" id="s4b">RESEARCH LOOP</div>
+  </section>
+
+  <!-- S5: Company Panorama 34-42s -->
+  <section id="s5" class="clip" data-start="34" data-duration="8" data-track-index="1" style="background:radial-gradient(ellipse at 50% 30%,rgba(255,107,193,.08),transparent 60%),linear-gradient(170deg,#070b16,#0a1020,#070b16)">
+    <div class="vignette"></div>
+    <div class="overlay">
+      <h2 id="s5t"><span class="g-warm">3分钟</span>生成客户拜访准备卡</h2>
+      <p id="s5s">企业摘要 · 风险雷达 · 证据等级 · 结论边界 · 人工核查清单</p>
+    </div>
+    <div class="tag" id="s5b">PROOF</div>
+  </section>
+
+  <!-- S6: Business Model 42-52s -->
+  <section id="s6" class="clip" data-start="42" data-duration="10" data-track-index="1" style="background:radial-gradient(ellipse at 50% 30%,rgba(78,168,255,.12),transparent 60%),linear-gradient(170deg,#070b16,#0a1020,#070b16)">
+    <div class="vignette"></div>
+    <div class="overlay">
+      <h2 id="s6t">从<span class="g-cyan">证券机构投研场景</span>切入</h2>
+      <p id="s6s">同舟平台 / 投研平台嫁接 · 机构授权 SaaS · 逐步构建行业基础设施</p>
+    </div>
+    <div class="tag" id="s6b">GO-TO-MARKET</div>
+  </section>
+
+  <!-- S7: Ecosystem 52-58s -->
+  <section id="s7" class="clip" data-start="52" data-duration="6" data-track-index="1" style="background:radial-gradient(ellipse at 50% 30%,rgba(155,107,255,.10),transparent 60%),linear-gradient(170deg,#070b16,#0a1020,#070b16)">
+    <div class="vignette"></div>
+    <div class="overlay">
+      <h2 id="s7t">为什么 Vera 会<span class="g-full">越来越懂证券</span>？</h2>
+      <p id="s7s">Skill 生态 · 4 类成长能力 · 越用越懂你</p>
+    </div>
+    <div class="tag" id="s7b">ECOSYSTEM</div>
+  </section>
+
+  <!-- S8: Vera Chat 58-64s -->
+  <section id="s8" class="clip" data-start="58" data-duration="6" data-track-index="1" style="background:#070b16">
+    <div style="position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;gap:40px;padding:60px 100px">
+      <div id="s8img" style="max-height:80vh;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+        <img src=".media/vera-reply.png" alt="Vera 好的我这就去做" style="max-height:80vh;display:block" />
+      </div>
+      <div style="text-align:left">
+        <p id="s8t" style="font-size:36px;font-weight:700;color:#fff;margin:0 0 12px">你告诉 Vera 干活</p>
+        <p id="s8s" style="font-size:48px;font-weight:800;margin:0"><span class="g-cyan">好的，我这就去做</span></p>
+        <p style="font-size:18px;color:rgba(255,255,255,.5);margin-top:16px">7×24，从不偷懒</p>
+      </div>
+    </div>
+    <div class="tag" id="s8b">CHAT</div>
+  </section>
+
+  <!-- S9: Closing 64-71s -->
+  <section id="s9" class="clip" data-start="64" data-duration="7" data-track-index="1" style="background:radial-gradient(ellipse at 50% 40%,rgba(78,168,255,.10),transparent 60%),linear-gradient(170deg,#070b16,#0a1020,#070b16)">
+    <div class="vignette"></div>
+    <div class="overlay">
+      <h2 id="s9t"><span class="g-cyan">Vera</span>，把时间还给思考，把判断留给人</h2>
+      <p id="s9s">可信金融 AI 研究伙伴 · touziagent.com</p>
+    </div>
+    <div class="tag" id="s9b">VERA V4</div>
+  </section>
+
+</div>
+<script>
+window.__timelines = window.__timelines || {};
+var tl = gsap.timeline({ paused: true });
+
+// S1: Cover — clean dark bg, gentle fade in
+tl.from("#s1t", { y:60, opacity:0, duration:1.0, ease:"power4.out" }, 0.3);
+tl.from("#s1s", { y:30, opacity:0, duration:0.7, ease:"power4.out" }, 0.9);
+tl.from("#s1b", { x:-20, opacity:0, duration:0.5, ease:"power3.out" }, 0.2);
+
+// S2: Era
+tl.from("#s2t", { x:80, opacity:0, duration:0.7, ease:"power3.out" }, 6.3);
+tl.from("#s2s", { x:60, opacity:0, duration:0.5, ease:"power3.out" }, 6.8);
+tl.from("#s2b", { opacity:0, duration:0.4 }, 6.1);
+// S2: Era
+tl.from("#s2t", { y:50, opacity:0, duration:0.8, ease:"power4.out" }, 6.5);
+tl.from("#s2s", { y:30, opacity:0, duration:0.6, ease:"power4.out" }, 7.0);
+tl.from("#s2b", { opacity:0, duration:0.4 }, 6.2);
+
+// S3: Trust
+tl.from("#s3t", { scale:0.9, opacity:0, duration:0.8, ease:"power3.out" }, 12.2);
+tl.from("#s3s", { opacity:0, duration:0.7, ease:"power3.out" }, 12.8);
+tl.from("#s3b", { opacity:0, duration:0.4 }, 12.1);
+
+// S4: Daily Research Loop — three columns stagger
+tl.from("#s4t",  { y:30, opacity:0, duration:0.8, ease:"power4.out" }, 20.3);
+tl.from("#s4c1", { x:-30, opacity:0, duration:0.6, ease:"power3.out" }, 21.0);
+tl.from("#s4a1", { opacity:0, duration:0.4 }, 21.5);
+tl.from("#s4c2", { y:20, opacity:0, duration:0.6, ease:"power3.out" }, 21.8);
+tl.from("#s4a2", { opacity:0, duration:0.4 }, 22.3);
+tl.from("#s4c3", { x:30, opacity:0, duration:0.6, ease:"power3.out" }, 22.6);
+tl.from("#s4f",  { y:20, opacity:0, duration:0.6, ease:"power3.out" }, 23.3);
+tl.from("#s4b",  { opacity:0, duration:0.4 }, 20.1);
+
+// S5: Panorama
+tl.from("#s5t", { y:-40, opacity:0, duration:0.7, ease:"back.out(1.4)" }, 34.3);
+tl.from("#s5s", { opacity:0, duration:0.6, ease:"power3.out" }, 34.8);
+tl.from("#s5b", { opacity:0, duration:0.4 }, 34.1);
+
+// S6: Business
+tl.from("#s6t", { y:50, opacity:0, duration:0.9, ease:"power3.out" }, 42.4);
+tl.from("#s6s", { y:30, opacity:0, duration:0.7, ease:"power3.out" }, 43.0);
+tl.from("#s6b", { opacity:0, duration:0.4 }, 42.1);
+
+// S7: Eco (52-58)
+tl.from("#s7t", { scale:0.92, opacity:0, duration:0.7, ease:"back.out(1.3)" }, 52.3);
+tl.from("#s7s", { opacity:0, duration:0.5, ease:"power3.out" }, 52.8);
+tl.from("#s7b", { opacity:0, duration:0.4 }, 52.1);
+
+// S8: Vera Chat (58-64)
+tl.from("#s8img", { x:-40, opacity:0, duration:0.7, ease:"power3.out" }, 58.3);
+tl.from("#s8t",   { y:20, opacity:0, duration:0.5, ease:"power3.out" }, 58.6);
+tl.from("#s8s",   { scale:0.9, opacity:0, duration:0.6, ease:"back.out(1.3)" }, 59.0);
+tl.from("#s8b",   { opacity:0, duration:0.4 }, 58.1);
+
+// S9: Closing (64-71)
+tl.from("#s9t", { y:30, opacity:0, duration:1.0, ease:"power4.out" }, 64.5);
+tl.from("#s9s", { y:20, opacity:0, duration:0.8, ease:"power4.out" }, 65.2);
+tl.from("#s9b", { opacity:0, duration:0.5 }, 64.2);
+
+window.__timelines["main"] = tl;
+</script>
+</body>
+</html>

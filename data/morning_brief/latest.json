@@ -1,0 +1,18 @@
+{
+  "verdict": "防御",
+  "generated_at": "2026-07-17T11:39:47+08:00",
+  "drivers": [
+    {
+      "key": "driver",
+      "label": "上证",
+      "value": "3870",
+      "tone": "caution"
+    }
+  ],
+  "brief_md_path": null,
+  "brief_html_path": "/Users/Zhuanz/finance-suite/data/morning_brief/latest.html",
+  "status": "stale",
+  "fetched_at": "2026-07-21T09:30:10+08:00",
+  "source_mtime": "2026-07-17T11:39:47+08:00",
+  "age_hours": 93.8
+}

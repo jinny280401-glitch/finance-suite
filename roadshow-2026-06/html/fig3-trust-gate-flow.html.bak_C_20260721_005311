@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>fig3 · 为什么我愿意相信 Vera</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  /* 整页叙事优先:大标题 → 一句记忆点 → 证据 → 金句 */
+  .hero-title{
+    text-align:center; margin-top:18px; z-index:3; position:relative;
+  }
+  .hero-title .eyebrow{
+    font-size:12px; color:var(--cyan); font-weight:700; letter-spacing:6px; margin-bottom:10px;
+  }
+  .hero-title h1{
+    font-size:38px; font-weight:800; color:var(--ink);
+    margin:0; letter-spacing:2px; line-height:1.25;
+  }
+  .hero-title h1 .accent{
+    background:linear-gradient(110deg, var(--cyan) 0%, var(--blue) 50%, var(--violet) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero-title .sub{
+    margin-top:14px; font-size:15px; color:var(--sub); letter-spacing:1px;
+  }
+
+  /* 整页论证 3 块 */
+  .proof{
+    display:grid; grid-template-columns: 1fr 1.2fr; gap:18px; flex:1; margin-top:18px; z-index:2;
+  }
+  .card{
+    background:var(--glass); border:1px solid var(--stroke); border-radius:14px; padding:16px 18px;
+  }
+  .card .ct{font-size:14px; font-weight:800; color:var(--cyan); margin-bottom:10px; letter-spacing:1px}
+  .card .cb{font-size:13.5px; color:var(--ink); line-height:1.85}
+  .card .cb b{color:var(--orange); font-weight:700}
+
+  /* 流程图(从用户提问 → BLOCKED / ALLOWED,叙事) */
+  .flow{
+    display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:center;
+    margin-top:8px;
+  }
+  .flow .chip{
+    padding:8px 12px; border-radius:10px; font-size:12.5px;
+    background:rgba(255,255,255,.05); border:1px solid var(--stroke); color:var(--ink);
+  }
+  .flow .chip.glow{background:linear-gradient(90deg, rgba(78,168,255,.22), rgba(155,107,255,.22)); border-color:rgba(140,170,255,.55); font-weight:700}
+  .flow .chip.danger{background:rgba(255,107,107,.20); border-color:rgba(255,107,107,.55); color:#ffd2d2; font-weight:700}
+  .flow .arr{color:rgba(255,255,255,.3); font-size:14px}
+
+  /* 契约表(数据可信度 → 能力) */
+  table.gtable{
+    width:100%; border-collapse:collapse; font-size:12.5px;
+  }
+  table.gtable th{
+    text-align:left; color:var(--sub); font-weight:600; padding:6px 8px;
+    border-bottom:1px solid var(--stroke); font-size:12px;
+  }
+  table.gtable td{
+    padding:8px 8px; color:var(--ink);
+    border-bottom:1px solid rgba(255,255,255,.05);
+  }
+  table.gtable td.ok{color:var(--cyan); font-weight:700}
+  table.gtable td.hl{color:var(--orange); font-weight:700}
+
+  /* 整页金句底 */
+  .takeaway{
+    text-align:center; margin-top:14px; z-index:3; position:relative;
+    padding:12px 20px;
+  }
+  .takeaway .pill{
+    display:inline-block; padding:9px 22px; border-radius:999px;
+    background:linear-gradient(135deg, rgba(78,168,255,.18), rgba(155,107,255,.18));
+    border:1px solid rgba(255,255,255,.20);
+    font-size:14px; color:var(--ink); letter-spacing:.5px;
+  }
+  .takeaway .pill b{
+    background:linear-gradient(90deg, var(--cyan), var(--violet));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    font-weight:800;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <!-- 整页顶部:价值标题 -->
+  <div class="hero-title">
+    <div class="eyebrow">FIG.03 / VERA · WHY TRUST</div>
+    <h1>为什么我愿意 <span class="accent">相信 Vera</span>？</h1>
+    <div class="sub">不是更聪明的 AI，是 <b style="color:var(--orange)">更诚实的 AI</b> · 越界请求直接拒答，不靠 LLM 自律</div>
+  </div>
+
+  <!-- 主体两列:左边流程+拒答实例,右边三档契约 -->
+  <div class="proof">
+    <!-- 左:Trust Gate 流程 + 拒答实例 -->
+    <div class="card">
+      <div class="ct">① Trust Gate 流程 · 用户提问到回答,每一步都有规则</div>
+      <div class="cb">
+        <div class="flow">
+          <span class="chip">用户提问</span>
+          <span class="arr">→</span>
+          <span class="chip">意图识别</span>
+          <span class="arr">→</span>
+          <span class="chip">越界检测</span>
+          <span class="arr">→</span>
+          <span class="chip glow">Trust Gate</span>
+          <span class="arr">→</span>
+          <span class="chip">允许回答</span>
+        </div>
+        <div style="margin-top:12px; font-size:12.5px; color:var(--sub)">
+          越界命中 ⟶ <span class="chip danger" style="display:inline-block; padding:4px 10px; font-size:12px">已阻断</span>
+          <span style="color:var(--sub); margin-left:6px">短线 / 仓位 / 交易建议 / 资金流推断</span>
+        </div>
+        <div style="margin-top:10px; padding:8px 10px; background:rgba(255,107,107,.08); border-left:3px solid #ff6b6b; border-radius:6px; font-size:12.5px; color:var(--ink)">
+          示例:问"派能储能现在能买吗?给个仓位"<br>
+          → <b style="color:#ff6b6b">Vera:</b> <span style="color:var(--orange)">已阻断</span> · 自动 fallback 到基本面速览
+        </div>
+      </div>
+    </div>
+
+    <!-- 右:三档契约 -->
+    <div class="card">
+      <div class="ct">② 三档可信契约 · 数据档位决定能说什么话</div>
+      <div class="cb">
+        <table class="gtable">
+          <thead><tr><th>数据档位</th><th>可信度</th><th>允许能力</th><th>来源</th></tr></thead>
+          <tbody>
+            <tr><td>测试数据</td><td class="ok">通过</td><td>仅冒烟测试</td><td>测试环境</td></tr>
+            <tr><td>降级命中</td><td class="ok">通过</td><td>仅速览</td><td>聚宽、东方财富</td></tr>
+            <tr><td class="hl">真实生产</td><td class="ok">通过</td><td class="hl">速览 + 深度分析 + 生产级研究</td><td>Wind、Tushare</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:12px; font-size:12.5px; color:var(--ink); line-height:1.85">
+          <b style="color:var(--orange)">禁止回答:</b>
+          短线建议 · 仓位建议 · 交易建议 · 资金流推断<br>
+          <b style="color:var(--cyan)">可答:</b>
+          客观估值定位 · 行业分析 · 年报字段验证 · 跨源对比
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 整页金句底 -->
+  <div class="takeaway">
+    <span class="pill">可信,<b>不来自模型</b>,而来自<b>可验证的数据与流程</b>。</span>
+  </div>
+
+</div>
+</body>
+</html>

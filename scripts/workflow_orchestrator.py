@@ -60,15 +60,25 @@ def workflow_morning_brief() -> Dict[str, Any]:
     }
 
     # Step 1: 获取市场脉搏（涨停池、强势股、异动）
+    # P0 Timeout Isolation Fix: 包 asyncio.wait_for(30s), 超时降级返空骨架,
+    # 不抛外层, 继续执行 Step 2 / 3 / 4.
     print("📊 [1/3] 获取市场脉搏...")
+    market_pulse = {}  # 预初始化, 让 Step 2 即使走 except 也能引用, 不触发 NameError
+    async def _step1_auction_with_timeout():
+        return await asyncio.wait_for(get_auction_data(), timeout=30)
     try:
-        market_pulse = asyncio.run(get_auction_data())
+        market_pulse = asyncio.run(_step1_auction_with_timeout())
         result["market_pulse"] = market_pulse
         print(f"  ✓ 涨停池: {len(market_pulse.get('涨停池', []))} 只")
         print(f"  ✓ 强势股: {len(market_pulse.get('强势股池', []))} 只")
+    except asyncio.TimeoutError:
+        print("  ⏱ [WARN] Step 1 auction 30s timeout, 降级返空骨架")
+        market_pulse = {"error": "timeout_30s", "涨停池": [], "强势股池": []}
+        result["market_pulse"] = market_pulse
     except Exception as e:
         print(f"  ✗ 市场脉搏获取失败: {e}")
-        result["market_pulse"] = {"error": str(e)}
+        market_pulse = {"error": str(e), "涨停池": [], "强势股池": []}
+        result["market_pulse"] = market_pulse
 
     # Step 2: 自选股交叉比对
     print("🎯 [2/3] 自选股交叉比对...")
@@ -109,9 +119,13 @@ def workflow_morning_brief() -> Dict[str, Any]:
     result["watchlist_hits"] = watchlist_hits
 
     # Step 3: 宏观快讯
+    # P0 Timeout Isolation Fix: 包 asyncio.wait_for(30s), 超时降级返空骨架.
     print("🌐 [3/3] 获取宏观快讯...")
+    macro_snapshot = {}  # 预初始化, 同 Step 1, 防 except 路径 unbound
+    async def _step3_macro_with_timeout():
+        return await asyncio.wait_for(get_macro_data(), timeout=30)
     try:
-        macro_snapshot = asyncio.run(get_macro_data())
+        macro_snapshot = asyncio.run(_step3_macro_with_timeout())
         result["macro_snapshot"] = macro_snapshot
 
         # macro_snapshot 结构: {"gdp": [...], "cpi": [...], ...}
@@ -129,9 +143,14 @@ def workflow_morning_brief() -> Dict[str, Any]:
 
         print(f"  ✓ GDP: {_v(gdp_latest.get('国内生产总值-同比增长'))}%")
         print(f"  ✓ CPI: {_v(cpi_latest.get('今值'))}%")
+    except asyncio.TimeoutError:
+        print("  ⏱ [WARN] Step 3 macro 30s timeout, 降级返空骨架")
+        macro_snapshot = {"error": "timeout_30s", "gdp": [], "cpi": [], "pmi": []}
+        result["macro_snapshot"] = macro_snapshot
     except Exception as e:
         print(f"  ✗ 宏观数据获取失败: {e}")
-        result["macro_snapshot"] = {"error": str(e)}
+        macro_snapshot = {"error": str(e), "gdp": [], "cpi": [], "pmi": []}
+        result["macro_snapshot"] = macro_snapshot
 
     # Step 4: 生成 Markdown 简报
     print("📝 生成简报...")

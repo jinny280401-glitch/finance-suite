@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vera Agent · 天玑 · 封面</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  /* 单页覆写父级样式,只居中 */
+  .slide{justify-content:center; align-items:center; text-align:center; padding:0}
+
+  /* 极光流动背景 */
+  .aurora{position:absolute; inset:-20%; z-index:0; filter:blur(60px); opacity:.85}
+  .aurora span{position:absolute; border-radius:50%; mix-blend-mode:screen; animation:drift 14s ease-in-out infinite}
+  .a1{width:520px;height:520px;left:6%;top:8%;background:radial-gradient(circle,var(--blue),transparent 65%);animation-delay:0s}
+  .a2{width:480px;height:480px;right:4%;top:0;background:radial-gradient(circle,var(--violet),transparent 65%);animation-delay:-4s}
+  .a3{width:560px;height:560px;left:32%;bottom:-12%;background:radial-gradient(circle,var(--magenta),transparent 65%);animation-delay:-8s}
+  .a4{width:420px;height:420px;right:24%;bottom:-6%;background:radial-gradient(circle,var(--cyan),transparent 65%);animation-delay:-11s}
+  @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-30px) scale(1.1)}66%{transform:translate(-30px,25px) scale(.95)}}
+
+  .hero{position:relative; z-index:3; display:flex; flex-direction:column; align-items:center; gap:16px; padding:36px}
+
+  /* Vera 特写头像 */
+  .logo{
+    width:160px; height:160px; border-radius:50%; overflow:hidden;
+    border:2px solid rgba(150,190,255,.6);
+    box-shadow:0 22px 64px rgba(80,120,255,.5),
+               0 0 0 6px rgba(255,255,255,.04),
+               0 0 0 14px rgba(78,168,255,.08);
+    backdrop-filter:blur(8px);
+  }
+  .logo img{width:100%; height:100%; object-fit:cover; display:block}
+
+  /* 副定位: Vera Agent ｜ 金融投研数字员工 */
+  .identity{
+    text-align:center; line-height:1.15;
+    display:flex; align-items:baseline; justify-content:center; gap:14px; flex-wrap:wrap;
+  }
+  .identity .a{font-size:32px; font-weight:900; letter-spacing:6px; color:#fff}
+  .identity .b{font-size:18px; font-weight:700; letter-spacing:4px;
+    background:linear-gradient(90deg,#ffb056,#ff6bc1,#9b6bff);
+    -webkit-background-clip:text; background-clip:text; color:transparent;}
+
+  .divider{display:flex; align-items:center; gap:16px; color:rgba(255,255,255,.35)}
+  .divider .line{width:54px; height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.5))}
+  .divider .line.r{background:linear-gradient(90deg,rgba(255,255,255,.5),transparent)}
+  .divider .gem{font-size:14px; letter-spacing:2px}
+
+  .title-cn{
+    font-size:96px; font-weight:900; letter-spacing:14px; line-height:1.05;
+    background:linear-gradient(110deg,#cfe4ff 5%,var(--cyan) 30%,var(--blue) 50%,var(--violet) 72%,var(--magenta) 95%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 10px 60px rgba(120,160,255,.40); filter:drop-shadow(0 4px 28px rgba(120,120,255,.45));
+  }
+  .subtitle{font-size:30px; font-weight:700; color:var(--ink); letter-spacing:5px}
+  .subtitle .accent{
+    background:linear-gradient(90deg,var(--cyan),var(--blue),var(--violet));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+
+  /* 印章:右上角 */
+  .seal{
+    position:absolute; top:32px; right:38px; z-index:6;
+    width:168px; height:168px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    border-radius:50%; padding:8px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), rgba(0,0,0,0) 55%),
+      conic-gradient(from 0deg, rgba(255,176,86,.22), rgba(255,107,193,.22), rgba(155,107,255,.22), rgba(78,168,255,.22), rgba(255,176,86,.22));
+    border: 1.5px solid rgba(255,210,150,.45);
+    box-shadow:
+      0 0 0 4px rgba(255,255,255,.05),
+      0 16px 40px rgba(255,176,86,.30),
+      inset 0 0 30px rgba(255,255,255,.06);
+    transform: rotate(-8deg);
+    animation: stampPulse 6s ease-in-out infinite;
+  }
+  .seal::before{content:""; position:absolute; inset:6px; border-radius:50%; border:1px dashed rgba(255,210,150,.40)}
+  @keyframes stampPulse{0%,100%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(-8deg) scale(1.05)}}
+  .seal .top{font-size:10.5px; letter-spacing:4px; color:rgba(255,230,180,.85); font-weight:700}
+  .seal .mid{font-size:20px; font-weight:900; letter-spacing:5px; line-height:1.2; margin:5px 0;
+    text-shadow:0 2px 8px rgba(255,176,86,.45)}
+  .seal .bot{font-size:10px; letter-spacing:3px; color:rgba(255,210,150,.7); margin-top:3px}
+  @media (max-width:860px){.seal{display:none} .identity .a{font-size:24px}}
+
+  /* 底部 tagline:豆包 vs Vera */
+  .tagline{
+    margin-top:6px; font-size:15px; color:var(--sub); padding:9px 24px; border-radius:999px;
+    background:rgba(255,255,255,.05); border:1px solid var(--stroke); backdrop-filter:blur(6px);
+  }
+  .tagline .accent{color:var(--orange); font-weight:700}
+
+  /* 底部品牌行 (关系表达放在此页副信息里,主体关系在第 2 页详细展示) */
+  .ver{position:absolute; bottom:30px; left:0; right:0; z-index:3; text-align:center; font-size:12.5px; color:var(--sub); letter-spacing:2px}
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span><span class="a4"></span></div>
+
+  <!-- 右上角印章 -->
+  <div class="seal">
+    <div class="top">VERA · 2026</div>
+    <div class="mid">足够多的真相<br/>方可触达天机</div>
+    <div class="bot">SEAL · 天玑</div>
+  </div>
+
+  <div class="hero">
+
+    <!-- Vera 特写头像 -->
+    <div class="logo"><img src="assets/vera-portrait-closeup.png" alt="Vera" /></div>
+
+    <!-- 主副定位 -->
+    <div class="identity">
+      <span class="a">Vera Agent</span>
+      <span class="b">金融投研数字员工</span>
+    </div>
+
+    <div class="divider"><span class="line"></span><span class="gem">◆</span><span class="line r"></span></div>
+
+    <!-- 大字: 天玑 -->
+    <div class="title-cn">天 玑</div>
+    <div class="subtitle"><span class="accent">金融数据全景分析引擎</span></div>
+
+    <div class="tagline">豆包能回答你问题，<span class="accent">Vera 能替你干活</span></div>
+  </div>
+
+  <div class="ver">Vera Agent v2.0 · 面向证券行业的 Agent 员工平台</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>为什么金融行业还不敢相信 AI？</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:#000}
+
+  .stage{
+    position:relative; width:100%; min-height:100vh; overflow:hidden;
+    background: radial-gradient(ellipse 70% 60% at 50% 45%, #14142a 0%, #080814 50%, #030310 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 56px 48px;
+    gap: 36px;
+  }
+
+  .big-question{
+    position:relative; z-index:3; text-align:center; max-width: 800px;
+  }
+  .big-question .line1{
+    font-size:clamp(22pt,2.4vw,30pt); color: var(--sub); font-weight:500;
+    letter-spacing:1px; margin-bottom:12px;
+  }
+  .big-question .line2{
+    font-size:clamp(36pt,4.2vw,56pt); font-weight:850; color: var(--ink);
+    letter-spacing:2px; line-height:1.2;
+  }
+  .big-question .line2 .hl{
+    background: linear-gradient(135deg, #ff6bc1 0%, #ffb056 50%, #FFD166 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stats{
+    position:relative; z-index:3; display:flex; gap:32px;
+  }
+  .stat{
+    text-align:center;
+  }
+  .stat .num{
+    font-size:clamp(28pt,3vw,40pt); font-weight:800; color: var(--cyan);
+  }
+  .stat .label{
+    font-size:12pt; color: var(--sub); margin-top:4px; letter-spacing:.5px;
+  }
+
+  .bottom-line{
+    position:relative; z-index:3;
+    font-size:15pt; color: var(--sub); letter-spacing:1.5px;
+    text-align:center;
+  }
+
+  @media(max-width:720px){
+    .stats{flex-direction:column; gap:16px}
+    .stage{padding:32px 24px}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="big-question">
+    <div class="line1">AI 已经能回答大多数问题</div>
+    <div class="line2">为什么金融行业<br>还<span class="hl">不敢相信</span>？</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="num">78%</div><div class="label">金融从业者不信任 AI 输出</div></div>
+    <div class="stat"><div class="num">1 次</div><div class="label">错误行情 = 客户信任归零</div></div>
+    <div class="stat"><div class="num">∞</div><div class="label">幻觉是信任的无底洞</div></div>
+  </div>
+
+  <div class="bottom-line">幻觉不是准确率问题，而是信任成本问题</div>
+
+</div>
+</body>
+</html>

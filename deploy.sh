@@ -30,8 +30,8 @@ done
 
 # 拉取首页
 curl -sL "https://raw.githubusercontent.com/jinny280401-glitch/finance-suite/main/index.html" \
-  -o /home/ubuntu/finance-suite-web/static/index.html
-echo "  ✓ index.html (首页)"
+  -o /home/ubuntu/finance-suite-web/templates/index.html
+echo "  ✓ index.html (首页模板)"
 
 echo ""
 echo "===== 2. 验证文件 ====="
@@ -120,6 +120,14 @@ echo "  ✓ nginx 已重载"
 
 echo ""
 echo "===== 部署完成！ ====="
+echo ""
+echo "===== 验证首页部署 ====="
+echo "检查首页内容（前20行）："
+curl -s https://touziagent.com/ | head -20
+echo ""
+echo "如果看到最新修改内容，说明部署成功 ↑"
+echo ""
+echo "访问地址："
 echo "首页：   https://touziagent.com/"
 echo "工作台： https://touziagent.com/app/"
 echo "看票：   https://touziagent.com/app/stock.html"

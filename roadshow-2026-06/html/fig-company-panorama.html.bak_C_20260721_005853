@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Vera · 公司拜访速查卡 · 客户拜访准备卡</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  .hero-title{ margin-top:0; z-index:3; position:relative; }
+  .hero-title .eyebrow{
+    font-size:11px; color:var(--cyan); font-weight:700; letter-spacing:4px; margin-bottom:6px;
+  }
+  .hero-title h1{
+    font-size:30px; font-weight:800; color:var(--ink); margin:0; letter-spacing:1px; line-height:1.15;
+  }
+  .hero-title .sub{ margin-top:6px; font-size:14px; color:var(--sub); letter-spacing:.5px; }
+
+  .main{ display:grid; grid-template-columns: 1fr 0.92fr; gap:18px; flex:1; margin-top:10px; z-index:2; min-height:0; }
+
+  .steps{ display:flex; flex-direction:column; gap:8px; }
+  .step{
+    background:var(--glass); border:1px solid var(--stroke); border-radius:14px; padding:11px 15px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .step.glow{
+    background:linear-gradient(180deg,rgba(78,168,255,.16),rgba(155,107,255,.08));
+    border:1.5px solid rgba(120,180,255,.5);
+  }
+  .step .tag{
+    display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:1px;
+    padding:2px 8px; border-radius:999px; margin-bottom:5px;
+  }
+  .step.s1 .tag{ background:rgba(255,176,86,.16); color:var(--orange); border:1px solid rgba(255,176,86,.4); }
+  .step.s2 .tag{ background:rgba(55,230,216,.14); color:var(--cyan); border:1px solid rgba(55,230,216,.4); }
+  .step.s3 .tag{ background:rgba(78,168,255,.16); color:var(--blue); border:1px solid rgba(120,180,255,.45); }
+  .step .st{ font-size:15px; font-weight:700; color:var(--ink); margin-bottom:3px; }
+  .step .sb{ font-size:12.5px; color:var(--sub); line-height:1.5; }
+  .step .sb b{ color:var(--ink); font-weight:600; }
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; margin-top:7px; }
+  .chip{
+    font-size:11px; padding:3px 8px; border-radius:7px; color:var(--ink);
+    background:rgba(255,255,255,.06); border:1px solid var(--stroke);
+  }
+  .chip.on{ background:linear-gradient(90deg,rgba(78,168,255,.22),rgba(155,107,255,.22)); border-color:rgba(140,170,255,.55); font-weight:700; }
+
+  /* 右:跑通样例卡 */
+  .proofcard{
+    display:flex; flex-direction:column; min-height:0;
+    background:var(--glass); border:1px solid var(--stroke); border-radius:16px; padding:12px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .proofcard .plabel{
+    font-size:12px; color:var(--sub); font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:8px;
+  }
+  .proofcard .plabel .live{
+    font-size:10.5px; font-weight:800; letter-spacing:.5px; padding:2px 8px; border-radius:999px;
+    background:rgba(55,230,216,.14); color:var(--cyan); border:1px solid rgba(55,230,216,.4);
+  }
+  .proofcard .imgwrap{
+    flex:1; min-height:0; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.1);
+    display:flex; align-items:center; justify-content:center; background:#0a0e1a;
+  }
+  .proofcard img{ max-width:100%; max-height:100%; object-fit:contain; display:block; }
+
+  .foot{ margin-top:14px; }
+  .slogan{ font-size:15px; font-weight:700; }
+</style>
+</head>
+<body>
+<div class="slide">
+
+  <div class="hero-title">
+    <div class="eyebrow">VERA · 公司拜访速查卡 · 可信研究技能</div>
+    <h1>3 分钟生成 <span class="accent">客户拜访准备卡</span></h1>
+    <div class="sub">Vera 如何将<b>可信 AI 能力</b>转化为可复用的金融业务能力</div>
+  </div>
+
+  <div class="main">
+    <!-- 左:三段 -->
+    <div class="steps">
+      <div class="step s1">
+        <span class="tag">① 痛点</span>
+        <div class="st">拜访前查背景,又慢又不可信</div>
+        <div class="sb">销售 / 投研 / 风控拜访前查公司背景<b>耗时</b>,更危险的是<b>容易把媒体估算当成事实</b>写进材料。</div>
+      </div>
+      <div class="step s2">
+        <span class="tag">② 能力</span>
+        <div class="st">公司拜访速查卡 · 一页拜访准备卡</div>
+        <div class="sb">输入公司名，一页输出企业摘要、风险雷达、证据等级、结论边界与人工核查清单。</div>
+      </div>
+      <div class="step s3 glow">
+        <span class="tag">③ 可信</span>
+        <div class="st">可信校验前置，不依赖模型自律</div>
+        <div class="sb">证据进入模型<b>前</b>先分级、定用途；生成后再次检查风险边界。</div>
+        <div class="chips">
+          <span class="chip on">可信校验前置</span>
+          <span class="chip">证据分级 High / Medium / Low</span>
+          <span class="chip">风险边界检查</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右:跑通样例 -->
+    <div class="proofcard">
+      <div class="plabel"><span class="live">已跑通</span> 样例输出 · 宁德时代 · 原始证据 3 → 可信校验 → 模型采用 2 / 拦下 1</div>
+      <div class="imgwrap"><img src="company-panorama-card.png" alt="公司拜访速查卡拜访准备卡"></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="slogan">发现痛点 → 沉淀为<span class="accent">业务能力</span> → 让同事早点下班</div>
+    <div class="brand">公司拜访速查卡 v0<br>Vera 可信研究案例</div>
+  </div>
+
+</div>
+</body>
+</html>

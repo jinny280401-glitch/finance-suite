@@ -3,73 +3,97 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vera Agent · 天玑 · 封面</title>
-<link rel="stylesheet" href="deck.css">
+<title>Vera 定位简介 · 可信金融研究智能体</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:#eef2f6;color:#0a467d;font-family:"PingFang SC","Microsoft YaHei",Arial,sans-serif}
-  .slide{position:relative;width:100vw;height:100vh;min-height:620px;overflow:hidden;background:#f7f9fb}
-
-  .top-rule{position:absolute;left:5.4vw;right:5.4vw;top:5.8vh;height:3px;background:#1b8bc5;z-index:5}
-  .top-rule:after{content:"";position:absolute;right:0;top:0;width:8.5vw;height:3px;background:#ef6c32}
-  .brand{position:absolute;right:5.4vw;top:8.1vh;z-index:5;text-align:right;color:#0b518a;font-size:13px;font-weight:700;letter-spacing:0}
-  .brand span{color:#ef6c32;margin-left:8px}
-
-  .portrait-panel{position:absolute;left:0;top:0;width:47vw;height:100vh;overflow:hidden;clip-path:polygon(0 0,72% 0,100% 100%,0 100%);background:#0b4a7f}
-  .portrait-panel img{width:100%;height:100%;display:block;object-fit:cover;object-position:56% 29%}
-  .portrait-panel:after{content:"";position:absolute;inset:0;background:rgba(5,64,112,.16)}
-  .blue-plane{position:absolute;left:0;bottom:0;width:32vw;height:48vh;background:rgba(5,71,124,.88);clip-path:polygon(0 18%,67% 0,100% 100%,0 100%);z-index:2}
-  .blue-plane:after{content:"VERA";position:absolute;left:5.5vw;bottom:7vh;color:rgba(255,255,255,.2);font-size:70px;font-weight:800;letter-spacing:10px}
-
-  .accent-corner{position:absolute;right:5.4vw;top:13vh;width:0;height:0;border-top:46px solid #ef6c32;border-left:46px solid transparent}
-  .mini-mark{position:absolute;left:5.4vw;top:8vh;z-index:6;width:35px;height:28px}
-  .mini-mark:before,.mini-mark:after{content:"";position:absolute;left:0;width:0;height:0}
-  .mini-mark:before{top:0;border-top:18px solid #0b518a;border-right:24px solid transparent}
-  .mini-mark:after{bottom:0;border-bottom:12px solid #ef6c32;border-left:16px solid transparent}
-
-  .content{position:absolute;left:49vw;right:8vw;top:24vh;z-index:4}
-  .eyebrow{font-size:16px;font-weight:750;color:#ef6c32;margin-bottom:18px}
-  h1{font-size:clamp(70px,8.2vw,126px);line-height:.92;color:#0a467d;font-weight:850;letter-spacing:0}
-  .subtitle{margin-top:28px;font-size:clamp(25px,3vw,43px);line-height:1.25;color:#153f63;font-weight:700}
-  .identity{margin-top:18px;font-size:20px;color:#56809f;font-weight:600}
-  .divider{width:112px;height:5px;background:#ef6c32;margin:34px 0 28px}
-  .tagline{font-size:clamp(20px,2.2vw,32px);line-height:1.45;color:#304e67;font-weight:600;max-width:680px}
-  .tagline strong{color:#0b70ae}
-
-  .footer{position:absolute;left:49vw;right:5.4vw;bottom:7vh;z-index:4;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #b8c7d3;padding-top:16px;color:#6b8193;font-size:13px}
-  .footer b{color:#0a467d}
-
-  @media(max-width:900px){
-    .portrait-panel{width:42vw}.blue-plane{width:36vw}.content,.footer{left:43vw}.content{right:5vw;top:21vh}.brand{display:none}
-    h1{font-size:70px}.subtitle{font-size:27px}.tagline{font-size:21px}.blue-plane:after{font-size:44px;left:4vw}
+  :root{
+    --bg0:#070b16;--bg1:#111827;--ink:#f4f7ff;--sub:#9fb0d0;
+    --blue:#4ea8ff;--cyan:#37e6d8;--violet:#9b6bff;--orange:#ffb056;
+    --stroke:rgba(255,255,255,.14);
   }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden}
+  body{font-family:"PingFang SC","Microsoft YaHei",-apple-system,system-ui,sans-serif;background:#070b16;color:var(--ink)}
+  .slide{
+    width:100vw;height:100vh;position:relative;overflow:hidden;display:grid;grid-template-columns:43% 57%;
+    background:
+      radial-gradient(800px 520px at 94% 18%,rgba(155,107,255,.16),transparent 62%),
+      radial-gradient(680px 420px at 45% 106%,rgba(55,230,216,.10),transparent 65%),
+      linear-gradient(145deg,var(--bg0),var(--bg1));
+  }
+  .slide::after{content:"";position:absolute;inset:18px;border:1px solid var(--stroke);border-radius:26px;pointer-events:none;z-index:10}
+
+  .portrait{position:relative;min-width:0;overflow:hidden;background:#0b1c31}
+  .portrait img{width:100%;height:100%;display:block;object-fit:cover;object-position:55% 28%;filter:saturate(.88) contrast(1.03) brightness(.82)}
+  .portrait::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,10,22,.06) 42%,rgba(7,11,22,.90) 100%),linear-gradient(0deg,rgba(7,11,22,.78),transparent 46%);z-index:1}
+  .portrait::after{content:"";position:absolute;right:-1px;top:0;bottom:0;width:3px;background:linear-gradient(180deg,transparent,var(--cyan) 22%,var(--blue) 55%,var(--violet) 82%,transparent);box-shadow:0 0 30px rgba(78,168,255,.55);z-index:2}
+  .portrait-label{position:absolute;left:54px;bottom:46px;z-index:3}
+  .portrait-label .name{font-size:64px;font-weight:850;line-height:.9;letter-spacing:0;color:#fff}
+  .portrait-label .role{font-size:14px;font-weight:700;color:#c9d8ef;margin-top:15px;letter-spacing:.3px}
+  .portrait-label .role span{color:var(--cyan)}
+
+  .content{position:relative;z-index:2;padding:54px 70px 42px 64px;display:flex;flex-direction:column;min-width:0}
+  .topline{display:flex;align-items:center;justify-content:space-between;margin-bottom:34px}
+  .eyebrow{font-size:14px;font-weight:800;color:var(--orange);letter-spacing:.7px}
+  .version{font-size:12px;color:var(--sub);font-weight:650}
+  h1{font-size:50px;line-height:1.18;font-weight:850;letter-spacing:0;max-width:690px}
+  h1 .accent{background:linear-gradient(95deg,var(--cyan),var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{font-size:20px;line-height:1.58;color:#c6d2e7;margin-top:18px;max-width:690px;font-weight:560}
+  .lead strong{color:#fff}
+
+  .positioning{display:grid;gap:0;margin-top:34px;border-top:1px solid var(--stroke);border-bottom:1px solid var(--stroke)}
+  .row{position:relative;display:grid;grid-template-columns:112px 170px 1fr;align-items:center;gap:18px;min-height:74px;border-bottom:1px solid rgba(255,255,255,.09)}
+  .row:last-child{border-bottom:0}
+  .row::before{content:"";position:absolute;left:0;top:22px;bottom:22px;width:4px;border-radius:3px;background:var(--row);box-shadow:0 0 14px var(--row)}
+  .num{padding-left:22px;font-size:12px;font-weight:800;color:var(--row)}
+  .promise{font-size:20px;font-weight:760;color:#fff}
+  .proof{font-size:14px;color:var(--sub);line-height:1.45;font-weight:520}
+
+  .statement{margin-top:auto;padding-top:28px;display:flex;align-items:flex-end;justify-content:space-between;gap:28px}
+  .statement-main{font-size:23px;line-height:1.42;font-weight:760;max-width:610px}
+  .statement-main span{color:var(--cyan)}
+  .mark{flex:none;width:52px;height:52px;position:relative}
+  .mark::before{content:"";position:absolute;left:0;top:0;border-top:28px solid var(--blue);border-right:38px solid transparent}
+  .mark::after{content:"";position:absolute;left:0;bottom:0;border-bottom:20px solid var(--orange);border-left:27px solid transparent}
+
+  @media(max-width:900px){.slide{grid-template-columns:1fr}.portrait{display:none}.content{padding:40px}.row{grid-template-columns:70px 150px 1fr}h1{font-size:42px}}
 </style>
 </head>
 <body>
 <main class="slide">
-  <div class="top-rule"></div>
-  <div class="mini-mark" aria-hidden="true"></div>
-  <div class="brand">VERA AGENT <span>2026</span></div>
-  <div class="accent-corner" aria-hidden="true"></div>
-
-  <div class="portrait-panel">
+  <section class="portrait" aria-label="Vera 智能研究伙伴形象">
     <img src="assets/vera-portrait-closeup.png" alt="Vera 可信金融研究智能体">
-  </div>
-  <div class="blue-plane" aria-hidden="true"></div>
-
-  <section class="content">
-    <div class="eyebrow">VERA AGENT · 证券行业可信研究智能体</div>
-    <h1>天玑</h1>
-    <div class="subtitle">可信金融研究智能体</div>
-    <div class="identity">面向证券行业的新一代 AI 研究伙伴</div>
-    <div class="divider"></div>
-    <div class="tagline">AI 能生成答案，<strong>Vera 让金融研究可信落地</strong></div>
+    <div class="portrait-label">
+      <div class="name">VERA</div>
+      <div class="role">证券行业的 <span>AI 研究伙伴</span></div>
+    </div>
   </section>
 
-  <footer class="footer">
-    <span><b>Vera Agent v3</b></span>
-    <span>足够多的真相，方可触达天机</span>
-  </footer>
+  <section class="content">
+    <div class="topline">
+      <div class="eyebrow">VERA POSITIONING · 定位简介</div>
+      <div class="version">VERA AGENT · 2026</div>
+    </div>
+
+    <h1>Vera：让金融研究<br><span class="accent">可信落地</span></h1>
+    <div class="lead">面向证券行业的可信金融研究智能体。<strong>不是回答问题的通用 Bot，而是能完成研究任务的数字员工。</strong></div>
+
+    <div class="positioning">
+      <div class="row" style="--row:var(--cyan)">
+        <div class="num">01 · KNOW</div><div class="promise">懂金融业务</div><div class="proof">理解研究目标、行业语境与交付标准</div>
+      </div>
+      <div class="row" style="--row:var(--orange)">
+        <div class="num">02 · DO</div><div class="promise">会完成研究</div><div class="proof">选择 Skill，调度数据、模型与工作流</div>
+      </div>
+      <div class="row" style="--row:var(--violet)">
+        <div class="num">03 · TRUST</div><div class="promise">结果可验证</div><div class="proof">证据可追溯、过程可审计、边界可声明</div>
+      </div>
+    </div>
+
+    <div class="statement">
+      <div class="statement-main">AI 能生成答案，<span>Vera 交付可核验的研究成果。</span></div>
+      <div class="mark" aria-hidden="true"></div>
+    </div>
+  </section>
 </main>
 </body>
 </html>

@@ -37,6 +37,15 @@
       template: 'skill_link',
       skill: 'video',
       icon: 'video'
+    },
+    morning_brief: {
+      key: 'morning_brief',
+      title: '今日简报',
+      description: 'D13 Morning Brief · 09:25 自动产出',
+      enabled: true,
+      order: 40,
+      renderable: true,
+      template: 'morning_brief'
     }
   };
 

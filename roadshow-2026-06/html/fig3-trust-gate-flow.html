@@ -5,164 +5,127 @@
 <title>fig3 · 为什么我愿意相信 Vera</title>
 <link rel="stylesheet" href="deck.css">
 <style>
-  /* 整页叙事优先:大标题 → 一句记忆点 → 证据 → 金句 */
-  .hero-title{
-    text-align:center; margin-top:18px; z-index:3; position:relative;
-  }
-  .hero-title .eyebrow{
-    font-size:12px; color:var(--cyan); font-weight:700; letter-spacing:2px; margin-bottom:10px;
-  }
-  .hero-title h1{
-    font-size:38px; font-weight:800; color:var(--ink);
-    margin:0; letter-spacing:2px; line-height:1.25;
-  }
-  .hero-title h1 .accent{
-    background:linear-gradient(110deg, var(--cyan) 0%, var(--blue) 50%, var(--violet) 100%);
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-  }
-  .hero-title .sub{
-    margin-top:12px; font-size:17px; color:var(--sub); letter-spacing:0;
-  }
+  .hero-title{text-align:center; margin-top:10px; z-index:3; position:relative}
+  .hero-title .eyebrow{font-size:12px; color:var(--cyan); font-weight:700; letter-spacing:2px; margin-bottom:6px}
+  .hero-title h1{font-size:36px; font-weight:800; color:var(--ink); letter-spacing:1px}
+  .hero-title h1 .accent{background:linear-gradient(110deg,var(--cyan),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero-title .sub{margin-top:8px; font-size:16px; color:var(--sub)}
 
-  /* 整页论证 3 块 */
-  .proof{
-    display:grid; grid-template-columns:1fr 1.12fr; gap:18px; flex:1; min-height:0; margin-top:18px; z-index:2;
-  }
-  .card{
-    display:flex; flex-direction:column; min-height:0;
-    background:var(--glass); border:1px solid var(--stroke); border-radius:14px; padding:22px 24px;
-  }
-  .card .ct{font-size:18px; font-weight:800; color:var(--cyan); margin-bottom:14px; letter-spacing:0}
-  .card .cb{flex:1; display:flex; flex-direction:column; justify-content:space-between; font-size:16px; color:var(--ink); line-height:1.72}
-  .card .cb b{color:var(--orange); font-weight:700}
+  /* 主体:左流程 + 右证据卡片 */
+  .main{display:grid; grid-template-columns:1.1fr 0.9fr; gap:16px; flex:1; min-height:0; margin-top:12px; z-index:2}
+  .card{display:flex; flex-direction:column; background:var(--glass); border:1px solid var(--stroke); border-radius:14px; padding:18px 22px}
+  .card .ct{font-size:16px; font-weight:800; color:var(--cyan); margin-bottom:10px}
 
-  /* 流程图(从用户提问 → BLOCKED / ALLOWED,叙事) */
-  .flow{
-    display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;
-    margin-top:14px;
-  }
-  .flow .chip{
-    padding:13px 16px; border-radius:10px; font-size:15px;
-    background:rgba(255,255,255,.05); border:1px solid var(--stroke); color:var(--ink);
-  }
-  .flow .chip.glow{background:linear-gradient(90deg, rgba(78,168,255,.22), rgba(155,107,255,.22)); border-color:rgba(140,170,255,.55); font-weight:700}
-  .flow .chip.danger{background:rgba(255,107,107,.20); border-color:rgba(255,107,107,.55); color:#ffd2d2; font-weight:700}
-  .flow .arr{color:rgba(255,255,255,.3); font-size:14px}
+  /* 左侧流程 */
+  .flow-steps{display:flex; flex-direction:column; gap:0}
+  .step{display:flex; align-items:center; gap:10px; padding:10px 0}
+  .step .dot{width:10px; height:10px; border-radius:50%; flex-shrink:0; background:var(--cyan); box-shadow:0 0 8px var(--cyan)}
+  .step .sl{font-size:16px; font-weight:700; color:var(--ink); width:90px; flex-shrink:0}
+  .step .sr{font-size:14px; color:var(--sub)}
+  .step .chip{display:inline-block; padding:4px 10px; border-radius:6px; font-size:13px; font-weight:700}
+  .chip.ok{background:rgba(55,230,216,.14); color:var(--cyan); border:1px solid rgba(55,230,216,.35)}
+  .chip.warn{background:rgba(255,176,86,.14); color:var(--orange); border:1px solid rgba(255,176,86,.35)}
+  .chip.no{background:rgba(255,107,107,.14); color:#ffb0b0; border:1px solid rgba(255,107,107,.35)}
 
-  /* 契约表(数据可信度 → 能力) */
-  table.gtable{
-    width:100%; border-collapse:collapse; font-size:15.5px;
-  }
-  table.gtable th{
-    text-align:left; color:var(--sub); font-weight:600; padding:8px 10px;
-    border-bottom:1px solid var(--stroke); font-size:14px;
-  }
-  table.gtable td{
-    padding:18px 10px; color:var(--ink);
-    border-bottom:1px solid rgba(255,255,255,.05);
-  }
-  table.gtable td.ok{color:var(--cyan); font-weight:700}
-  table.gtable td.hl{color:var(--orange); font-weight:700}
+  /* 右侧证据卡片 */
+  .evidence-stack{display:flex; flex-direction:column; gap:8px; flex:1}
+  .ev-card{padding:11px 14px; border-radius:10px; border:1px solid var(--stroke); background:rgba(255,255,255,.04); display:flex; align-items:center; gap:10px}
+  .ev-card .ev-icon{font-size:15px; width:28px; text-align:center; flex-shrink:0}
+  .ev-card .ev-title{font-size:15px; font-weight:700; color:var(--ink); flex-shrink:0; width:80px}
+  .ev-card .ev-desc{font-size:13px; color:var(--sub); flex:1}
+  .ev-card.real{border-color:rgba(55,230,216,.4); background:rgba(55,230,216,.08)}
+  .ev-card.real .ev-title{color:var(--cyan)}
+  .ev-card.fallback{border-color:rgba(78,168,255,.35); background:rgba(78,168,255,.06)}
+  .ev-card.fallback .ev-title{color:var(--blue)}
 
-  .concept-loop{
-    display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:center;
-    gap:16px; margin:14px auto 0; width:min(760px,84%); z-index:3;
-  }
-  .concept{text-align:center; padding:11px 14px; border-top:3px solid var(--cyan); color:var(--ink); font-size:16px; font-weight:800}
-  .concept:nth-of-type(2){border-color:var(--blue)}.concept:nth-of-type(3){border-color:var(--violet)}
-  .concept small{display:block; color:var(--sub); font-size:11px; font-weight:600; margin-top:3px}
-  .concept-arr{color:rgba(255,255,255,.38); font-size:20px}
+  /* 底部:案例 + 能力边界 */
+  .bottom{display:flex; gap:14px; margin-top:10px; z-index:2; min-height:0}
+  .example{width:26%; flex-shrink:0; background:rgba(255,107,107,.06); border:1px solid rgba(255,107,107,.3); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; justify-content:center}
+  .example .ex-label{font-size:11px; color:#ffb0b0; font-weight:700; letter-spacing:1px; margin-bottom:4px}
+  .example .ex-q{font-size:14px; color:var(--ink); font-weight:600; margin-bottom:4px}
+  .example .ex-a{font-size:13px; color:#ffb0b0; font-weight:700}
+  .example .ex-r{font-size:11px; color:var(--sub); margin-top:2px}
 
-  /* 整页金句底 */
-  .takeaway{
-    text-align:center; margin-top:10px; z-index:3; position:relative;
-    padding:8px 20px 4px;
-  }
-  .takeaway .pill{
-    display:inline-block; padding:9px 22px; border-radius:999px;
-    background:linear-gradient(135deg, rgba(78,168,255,.18), rgba(155,107,255,.18));
-    border:1px solid rgba(255,255,255,.20);
-    font-size:15px; color:var(--ink); letter-spacing:0;
-  }
-  .takeaway .pill b{
-    background:linear-gradient(90deg, var(--cyan), var(--violet));
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-    font-weight:800;
-  }
+  .boundary{flex:1; display:flex; gap:14px}
+  .b-col{flex:1; border-radius:12px; padding:14px 16px}
+  .b-col.no{background:rgba(255,107,107,.06); border:1px solid rgba(255,107,107,.25)}
+  .b-col.ok{background:rgba(55,230,216,.06); border:1px solid rgba(55,230,216,.3)}
+  .b-col .b-h{font-size:15px; font-weight:800; margin-bottom:8px}
+  .b-col.no .b-h{color:#ffb0b0}
+  .b-col.ok .b-h{color:var(--cyan)}
+  .b-col .b-item{font-size:14px; color:var(--ink); padding:3px 0}
+
+  /* 底部金句发光条 */
+  .takeaway-bar{text-align:center; margin-top:8px; z-index:3; padding:10px 0 0}
+  .takeaway-bar span{display:inline-block; padding:10px 28px; font-size:17px; font-weight:700; color:var(--ink); letter-spacing:1px; border-radius:999px; background:linear-gradient(90deg,rgba(55,230,216,.14),rgba(78,168,255,.10)); border:1px solid rgba(55,230,216,.35); box-shadow:0 0 24px rgba(55,230,216,.12)}
 </style>
 </head>
 <body>
 <div class="slide">
 
-  <!-- 整页顶部:价值标题 -->
   <div class="hero-title">
     <div class="eyebrow">VERA · 为什么可信（WHY TRUST）</div>
     <h1>为什么我愿意 <span class="accent">相信 Vera</span>？</h1>
-    <div class="sub">金融 AI 的核心不是生成更多答案，而是保证每个答案都有边界。</div>
+    <div class="sub">可信，不来自模型，而来自可验证的数据与流程。</div>
   </div>
 
-  <!-- 主体两列:左边流程+拒答实例,右边三档契约 -->
-  <div class="proof">
-    <!-- 左:Trust Gate 流程 + 拒答实例 -->
+  <!-- 主体:左流程 + 右证据等级 -->
+  <div class="main">
+    <!-- 左: Trust Gate 流程 -->
     <div class="card">
-      <div class="ct">① 回答之前，先验证可信边界</div>
-      <div class="cb">
-        <div class="flow">
-          <span class="chip">用户需求</span>
-          <span class="arr">→</span>
-          <span class="chip">证据检查</span>
-          <span class="arr">→</span>
-          <span class="chip glow">可信校验（Trust Gate）</span>
-          <span class="arr">→</span>
-          <span class="chip">能力边界判断</span>
-          <span class="arr">→</span>
-          <span class="chip">可信回答</span>
-        </div>
-        <div style="margin-top:15px; font-size:15px; color:var(--sub)">
-          谨从合规要求 ⟶ <span class="chip danger" style="display:inline-block; padding:5px 11px; font-size:14px">自动拦截</span>
-        </div>
-        <div style="margin-top:12px; padding:14px 15px; background:rgba(255,107,107,.08); border-left:3px solid #ff6b6b; border-radius:6px; font-size:15px; color:var(--ink); line-height:1.68">
-          <b style="color:#ffb0b0">谨从合规要求</b><br>
-          用户：“现在能买吗？给仓位建议。”<br>
-          <b style="color:#ff6b6b">Vera：</b>拒绝生成交易建议<br>
-          原因：当前证据不足，不支持投资决策。
-        </div>
+      <div class="ct">① 回答之前，先经过 Trust Gate</div>
+      <div class="flow-steps">
+        <div class="step"><span class="dot"></span><span class="sl">用户提问</span><span class="sr">研究员提出问题或需求</span></div>
+        <div class="step"><span class="dot" style="background:var(--blue);box-shadow:0 0 8px var(--blue)"></span><span class="sl">证据检查</span><span class="sr">验证数据来源与可信等级</span></div>
+        <div class="step"><span class="dot" style="background:var(--orange);box-shadow:0 0 8px var(--orange)"></span><span class="sl">能力边界</span><span class="sr">判断是否在 Vera 能力范围内</span></div>
+        <div class="step"><span class="dot" style="background:var(--cyan);box-shadow:0 0 8px var(--cyan)"></span><span class="sl">可信回答</span><span class="sr">仅输出有证据支撑的结论</span></div>
       </div>
     </div>
 
-    <!-- 右:三档契约 -->
+    <!-- 右: 证据等级卡片 -->
     <div class="card">
       <div class="ct">② 数据可信等级，决定 AI 的表达边界</div>
-      <div class="cb">
-        <table class="gtable">
-          <thead><tr><th>数据等级</th><th>AI 行为</th></tr></thead>
-          <tbody>
-            <tr><td>测试数据</td><td>仅功能验证</td></tr>
-            <tr><td>降级命中</td><td>仅基础信息</td></tr>
-            <tr><td class="hl">真实生产</td><td class="hl">深度分析与生产级研究</td></tr>
-          </tbody>
-        </table>
-        <div style="margin-top:15px; font-size:15px; color:var(--ink); line-height:1.9">
-          <b style="color:var(--orange)">禁止回答:</b>
-          短线建议 · 仓位建议 · 交易建议 · 资金流推断<br>
-          <b style="color:var(--cyan)">可答:</b>
-          客观估值定位 · 行业分析 · 年报字段验证 · 跨源对比
-        </div>
+      <div class="evidence-stack">
+        <div class="ev-card real"><span class="ev-icon">✓</span><span class="ev-title">Real Evidence</span><span class="ev-desc">生产级真实数据，可深度分析</span></div>
+        <div class="ev-card fallback"><span class="ev-icon">◐</span><span class="ev-title">Fallback</span><span class="ev-desc">降级数据源，仅提供基础信息</span></div>
+        <div class="ev-card"><span class="ev-icon">○</span><span class="ev-title">Mock</span><span class="ev-desc">测试数据，仅用于功能验证</span></div>
+        <div class="ev-card" style="border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.04)"><span class="ev-icon" style="color:#ff6b6b">✕</span><span class="ev-title" style="color:#ffb0b0">Blocked</span><span class="ev-desc">超出能力边界，拒绝进入推理链</span></div>
       </div>
     </div>
   </div>
 
-  <div class="concept-loop" aria-label="可信决策闭环">
-    <div class="concept">证据<small>Evidence</small></div>
-    <div class="concept-arr">→</div>
-    <div class="concept">边界<small>Boundary</small></div>
-    <div class="concept-arr">→</div>
-    <div class="concept">决策<small>Decision</small></div>
+  <!-- 底部:案例 + 能力边界 -->
+  <div class="bottom">
+    <!-- 左: 案例 -->
+    <div class="example">
+      <div class="ex-label">EXAMPLE · 越界拦截</div>
+      <div class="ex-q">"现在可以买吗？给仓位建议。"</div>
+      <div class="ex-a">→ 拒绝回答</div>
+      <div class="ex-r">原因：超出能力与合规边界；即使证据充分，交易及仓位建议也不自动放行</div>
+    </div>
+
+    <!-- 右: 能力边界 -->
+    <div class="boundary">
+      <div class="b-col no">
+        <div class="b-h">❌ 不回答</div>
+        <div class="b-item">交易建议</div>
+        <div class="b-item">仓位建议</div>
+        <div class="b-item">资金流推断</div>
+        <div class="b-item">短线预测</div>
+      </div>
+      <div class="b-col ok">
+        <div class="b-h">✓ 可以回答</div>
+        <div class="b-item">估值分析</div>
+        <div class="b-item">行业分析</div>
+        <div class="b-item">年报验证</div>
+        <div class="b-item">跨源对比</div>
+      </div>
+    </div>
   </div>
 
-  <!-- 整页金句底 -->
-  <div class="takeaway">
-    <span class="pill">可信，<b>不来自模型</b>，而来自<b>可验证的数据与流程</b>。</span>
+  <!-- 底部金句发光条 -->
+  <div class="takeaway-bar">
+    <span>可信，不来自模型，而来自可验证的数据与流程。</span>
   </div>
 
 </div>

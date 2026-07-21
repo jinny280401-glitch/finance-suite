@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今日市场情绪画像 · 2026-07-21</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC",sans-serif; background:#101318; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+  .card { background:white; border-radius:16px; padding:24px; max-width:400px; width:100%; margin:20px; box-shadow:0 12px 48px rgba(0,0,0,0.3); }
+  .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+  .kicker { font-size:10px; color:#69717d; text-transform:uppercase; letter-spacing:0.06em; }
+  .title { font-size:18px; font-weight:700; color:#101318; margin-top:2px; }
+  .badge { font-size:12px; padding:4px 12px; border-radius:12px; font-weight:600; white-space:nowrap; }
+  .badge--active { background:#e9f8f0; color:#0aa66a; }
+  .badge--warm { background:#fff3e0; color:#ef8a25; }
+  .badge--hot { background:#fde8e8; color:#db3b31; }
+  .metrics { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:16px; }
+  .metric { padding:10px 12px; border-radius:10px; background:#f8f9fa; }
+  .metric-label { font-size:10px; color:#69717d; display:block; margin-bottom:3px; }
+  .metric-value { font-size:16px; font-weight:700; }
+  .metric-value--hot { color:#db3b31; }
+  .metric-value--cool { color:#2563eb; }
+  .metric-value--positive { color:#0aa66a; }
+  .section-title { font-size:11px; color:#69717d; margin-bottom:8px; font-weight:600; letter-spacing:0.04em; }
+  .theme { display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:12px; border-bottom:1px solid #f0f0f0; }
+  .theme:last-child { border-bottom:none; }
+  .theme-name { color:#596271; font-weight:500; }
+  .theme-stocks { font-size:10px; color:#a0a7b0; }
+  .theme-tag { font-size:11px; font-weight:700; color:#101318; }
+  .signal-row { display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+  .signal { font-size:11px; padding:2px 8px; border-radius:6px; font-weight:500; }
+  .signal--risk { background:#fff3e0; color:#ef8a25; }
+  .signal--info { background:#edf3ff; color:#2563eb; }
+  .signal--positive { background:#e9f8f0; color:#0aa66a; }
+  .footer { display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:14px; border-top:1px solid #eee; }
+  .risk { font-size:11px; color:#ef8a25; }
+  .sources { font-size:10px; color:#a0a7b0; margin-top:6px; }
+  .missing { background:#fff9e6; border:1px dashed #ef8a25; border-radius:8px; padding:8px 12px; margin-top:12px; font-size:11px; color:#b06d10; }
+  .螺丝钉 { margin-top:12px; }
+  .螺丝钉-label { font-size:10px; color:#69717d; margin-bottom:2px; }
+  .螺丝钉-row { display:flex; gap:8px; }
+  .螺丝钉-item { flex:1; padding:8px 10px; border-radius:8px; background:#f0f4ff; text-align:center; }
+  .螺丝钉-item--empty { background:#fafafa; border:1px dashed #ddd; color:#ccc; }
+  .螺丝钉-val { font-size:15px; font-weight:700; color:#101318; }
+  .螺丝钉-sub { font-size:10px; color:#69717d; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <div>
+      <p class="kicker">Tianji Market Snapshot</p>
+      <h2 class="title">今日市场情绪画像</h2>
+    </div>
+    <span class="badge badge--active">活跃分化</span>
+  </div>
+
+  <!-- ===== 盘面脉冲 ===== -->
+  <div class="metrics">
+    <div class="metric">
+      <span class="metric-label">涨停</span>
+      <strong class="metric-value">46只</strong>
+    </div>
+    <div class="metric">
+      <span class="metric-label">最高连板</span>
+      <strong class="metric-value">4板</strong>
+    </div>
+    <div class="metric">
+      <span class="metric-label">昨日溢价</span>
+      <strong class="metric-value metric-value--cool">-3.6%</strong>
+    </div>
+  </div>
+
+  <!-- ===== 螺丝钉估值温度 ⚠️ 待填 ===== -->
+  <div class="螺丝钉">
+    <p class="螺丝钉-label">📐 螺丝钉市场温度（待从图中补充）</p>
+    <div class="螺丝钉-row">
+      <div class="螺丝钉-item 螺丝钉-item--empty">
+        <div class="螺丝钉-val">???</div>
+        <div class="螺丝钉-sub">PE分位</div>
+      </div>
+      <div class="螺丝钉-item 螺丝钉-item--empty">
+        <div class="螺丝钉-val">???</div>
+        <div class="螺丝钉-sub">PB分位</div>
+      </div>
+      <div class="螺丝钉-item 螺丝钉-item--empty">
+        <div class="螺丝钉-val">???</div>
+        <div class="螺丝钉-sub">星级/阶段</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 信号标签 ===== -->
+  <div class="signal-row" style="margin-top:14px;">
+    <span class="signal signal--risk">⚠ 昨日涨停溢价转负 · 接力亏钱</span>
+    <span class="signal signal--info">大票活跃 · 紫光155亿成交</span>
+    <span class="signal signal--positive">半导体/AI算力主线清晰</span>
+  </div>
+
+  <!-- ===== 主线 ===== -->
+  <p class="section-title" style="margin-top:14px;">🔥 主线热度</p>
+  <div class="theme">
+    <span class="theme-name">半导体 / AI算力</span>
+    <span class="theme-stocks">紫光股份·长电科技·兆易创新·中际旭创</span>
+    <span class="theme-tag">≥8只涨停</span>
+  </div>
+  <div class="theme">
+    <span class="theme-name">电力</span>
+    <span class="theme-stocks">立新能源4板·华银电力·大唐发电</span>
+    <span class="theme-tag">标杆4板</span>
+  </div>
+  <div class="theme">
+    <span class="theme-name">医疗器械</span>
+    <span class="theme-stocks">九安医疗·采纳股份</span>
+    <span class="theme-tag">九安6天4板</span>
+  </div>
+  <div class="theme">
+    <span class="theme-name">光学光电 / IT服务</span>
+    <span class="theme-stocks">联创电子·美利云·京北方·证通电子</span>
+    <span class="theme-tag">批量首板</span>
+  </div>
+
+  <!-- ===== 人气 ===== -->
+  <p class="section-title" style="margin-top:12px;">📊 人气排行Top5</p>
+  <div class="theme"><span class="theme-name">1. 德明利</span><span class="theme-stocks">存储芯片</span><span class="theme-tag">488元</span></div>
+  <div class="theme"><span class="theme-name">2. 大唐发电</span><span class="theme-stocks">电力</span><span class="theme-tag">-0.78%</span></div>
+  <div class="theme"><span class="theme-name">3. 华银电力</span><span class="theme-stocks">电力</span><span class="theme-tag">+5.34%</span></div>
+  <div class="theme"><span class="theme-name">4. 长电科技</span><span class="theme-stocks">封测龙头</span><span class="theme-tag">+6.51%</span></div>
+  <div class="theme"><span class="theme-name">5. 立新能源</span><span class="theme-stocks">4连板</span><span class="theme-tag">涨停</span></div>
+
+  <div class="footer">
+    <span class="risk">仅市场结构描述 · 不含操作建议</span>
+  </div>
+  <div class="sources">Source: AkShare/东方财富 · 数据时间 2026-07-21 11:35 · _qc: partial(top_gainers缺失)</div>
+</div>
+
+</body>
+</html>

@@ -15,7 +15,7 @@
   .box .bl{font-size:18px; font-weight:750; color:var(--ink)}
   .box .bs{font-size:12px; color:var(--sub); margin-top:3px; line-height:1.4}
   .box.high{background:linear-gradient(180deg,rgba(78,168,255,.18),rgba(155,107,255,.08)); border-color:rgba(120,180,255,.5)}
-  .box.core{background:linear-gradient(180deg,rgba(55,230,216,.18),rgba(78,168,255,.10)); border-color:rgba(55,230,216,.5); min-height:90px}
+  .box.core{background:linear-gradient(180deg,rgba(55,230,216,.18),rgba(78,168,255,.10)); border-color:rgba(55,230,216,.5); min-height:110px}
   .box.source{background:linear-gradient(180deg,rgba(255,176,86,.12),rgba(255,107,107,.05)); border-color:rgba(255,176,86,.4)}
   .arrow-down{display:flex; justify-content:center; padding:2px 0}
   .arrow-down span{color:rgba(255,255,255,.3); font-size:18px}
@@ -29,8 +29,8 @@
 <div class="slide">
 
   <div class="head">
-    <div class="h-title">Vera × <span style="background:linear-gradient(110deg, var(--cyan), var(--blue)); -webkit-background-clip:text; background-clip:text; color:transparent">touziagent.com</span> · 生产部署架构</div>
-    <div class="h-sub">Vera 是<span style="color:var(--cyan);font-weight:700">可信研究智能引擎</span>，touziagent.com 是<span style="color:var(--blue);font-weight:700">生产交付与体验载体</span></div>
+    <div class="h-title">Production Architecture · <span style="background:linear-gradient(110deg, var(--cyan), var(--blue)); -webkit-background-clip:text; background-clip:text; color:transparent">Vera Research Engine</span> + touziagent.com</div>
+    <div class="h-sub">可信研究引擎 × 生产交付载体 · 从用户触点到数据源的全链路</div>
   </div>
 
   <div class="arch">
@@ -52,11 +52,11 @@
 
     <div class="arrow-down"><span>▼</span></div>
 
-    <!-- OpenClaw 网关 -->
+    <!-- Claw 网关 -->
     <div class="row">
       <div class="box" style="flex:1; max-width:100%">
-        <div class="bl">🔀 OpenClaw 多渠道路由网关</div>
-        <div class="bs">统一接入 · 客户记忆隔离 · 消息路由 · 会话管理</div>
+        <div class="bl">🔀 Claw Gateway</div>
+        <div class="bs">多渠道路由 · 微信 · 飞书 · API · MCP · 统一接入</div>
       </div>
     </div>
 
@@ -65,14 +65,8 @@
     <!-- Vera Agent 核心 -->
     <div class="row">
       <div class="box core" style="flex:2">
-        <div class="bl" style="font-size:20px">🧠 Vera Agent · 可信研究智能引擎</div>
-        <div class="bs" style="font-size:13px">Claude AI + Trust Gate + Evidence Chain + Research Runtime</div>
-        <div class="tag-row">
-          <span class="tag on">可信校验</span>
-          <span class="tag on">证据溯源</span>
-          <span class="tag on">研究流程</span>
-          <span class="tag">Skill 调度</span>
-        </div>
+        <div class="bl" style="font-size:22px">🧠 Vera Agent</div>
+        <div class="bs" style="font-size:14px">可信研究智能引擎 · Trust Gate · Research Runtime · Skill Orchestration</div>
       </div>
       <div class="box" style="flex:1">
         <div class="bl">🖥 touziagent.com</div>
@@ -86,11 +80,11 @@
     <div class="row">
       <div class="box" style="flex:1">
         <div class="bl">📊 Finance Suite MCP</div>
-        <div class="bs">12 金融数据工具<br>集合竞价 · 研报 · 估值 · 市场</div>
+        <div class="bs">12 Research Skills</div>
       </div>
       <div class="box" style="flex:1">
         <div class="bl">📈 Trading System MCP</div>
-        <div class="bs">5 量化交易工具<br>因子扫描 · 黄金坑 · K 线</div>
+        <div class="bs">5 Trading Skills</div>
       </div>
     </div>
 
@@ -99,8 +93,8 @@
     <!-- 数据源 -->
     <div class="row">
       <div class="box source" style="flex:1; max-width:100%">
-        <div class="bl" style="font-size:16px">🗄 四级数据源降级引擎</div>
-        <div class="bs" style="font-size:12px">Wind API → Tushare Pro → JoinQuant → AkShare · 自动切换 · &lt;2s 响应</div>
+        <div class="bl" style="font-size:16px">🗄 Data Providers</div>
+        <div class="bs" style="font-size:12px">万得 · 聚宽 · Tushare · AkShare · Auto Fallback</div>
       </div>
     </div>
   </div>

@@ -1,0 +1,93 @@
+/* Vera 路演架构图 · 液态玻璃设计系统 (deck.css)
+   内容 SSOT: ASCII架构图指令-v2.md / Image2液态玻璃架构图指令.md */
+:root{
+  --bg0:#0a0e1a; --bg1:#111827; --ink:#eef2ff; --sub:#9fb0d0;
+  --blue:#4ea8ff; --cyan:#37e6d8; --violet:#9b6bff; --magenta:#ff6bc1; --orange:#ffb056;
+  --red:#ff6b6b;
+  --glass:rgba(255,255,255,.06); --stroke:rgba(255,255,255,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:"PingFang SC","Microsoft YaHei",-apple-system,system-ui,sans-serif;
+  background:
+    radial-gradient(1200px 700px at 18% -10%, rgba(78,168,255,.18), transparent 60%),
+    radial-gradient(1000px 600px at 110% 20%, rgba(155,107,255,.16), transparent 55%),
+    radial-gradient(900px 600px at 50% 120%, rgba(255,107,193,.12), transparent 55%),
+    linear-gradient(160deg,var(--bg0),var(--bg1));
+  color:var(--ink); min-height:100vh; display:flex; justify-content:center;
+  padding:32px 20px;
+}
+.slide{
+  width:min(1280px,100%); aspect-ratio:16/9; position:relative;
+  border-radius:28px; padding:40px 56px;
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+  border:1px solid var(--stroke);
+  box-shadow:0 40px 120px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter:blur(10px); overflow:hidden; display:flex; flex-direction:column;
+}
+.slide::before{
+  content:""; position:absolute; inset:0;
+  background:radial-gradient(700px 200px at 50% -40px, rgba(78,168,255,.25), transparent 70%);
+  pointer-events:none;
+}
+.head{display:flex; align-items:baseline; gap:16px; z-index:2; flex-wrap:wrap}
+.h-title{font-size:30px; font-weight:800; letter-spacing:.5px}
+.h-sub{font-size:15px; color:var(--sub); font-weight:500}
+.star{color:var(--orange); text-shadow:0 0 10px var(--orange)}
+
+/* 通用玻璃胶囊 */
+.cap{
+  position:relative; border-radius:16px; padding:12px 18px;
+  background:linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.03));
+  border:1px solid var(--stroke);
+  box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.14);
+}
+.cap .name{font-size:18px; font-weight:700}
+.cap .micro{font-size:12.5px; color:var(--sub); font-weight:500; margin-top:3px}
+.cap.glow{
+  background:linear-gradient(180deg,rgba(78,168,255,.20),rgba(155,107,255,.12));
+  border:1.5px solid rgba(120,180,255,.55);
+  box-shadow:0 0 0 1px rgba(120,180,255,.25), 0 16px 46px rgba(78,168,255,.40), inset 0 1px 0 rgba(255,255,255,.22);
+}
+.cap.danger{
+  background:linear-gradient(180deg,rgba(255,107,107,.18),rgba(255,107,107,.06));
+  border:1.5px solid rgba(255,120,120,.5);
+  box-shadow:0 12px 34px rgba(255,80,80,.30), inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+/* 流程箭头 */
+.arrow{color:rgba(255,255,255,.34); font-weight:700}
+.moat{
+  font-size:12px; font-weight:700; padding:5px 13px; border-radius:999px; color:#fff;
+  background:linear-gradient(90deg,var(--blue),var(--violet));
+  box-shadow:0 6px 18px rgba(120,120,255,.5); white-space:nowrap;
+}
+
+/* 玻璃表格 */
+.gtable{width:100%; border-collapse:separate; border-spacing:0; z-index:2; font-size:13.5px}
+.gtable th,.gtable td{padding:9px 14px; text-align:left; border-bottom:1px solid rgba(255,255,255,.10)}
+.gtable th{color:var(--sub); font-weight:600; font-size:12.5px; letter-spacing:.3px}
+.gtable tr:last-child td{border-bottom:none}
+.gtable .ok{color:var(--cyan)}
+.gtable .hl{color:var(--blue); font-weight:700}
+
+/* 警告条 */
+.warn{
+  display:flex; align-items:center; gap:10px; padding:10px 16px; border-radius:12px; z-index:2;
+  background:linear-gradient(90deg,rgba(255,107,107,.16),rgba(255,107,107,.05));
+  border:1px solid rgba(255,120,120,.4); font-size:13.5px; font-weight:600;
+}
+.warn b{color:var(--red)}
+
+/* 底部金句 */
+.foot{margin-top:auto; padding-top:16px; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:20px}
+.slogan{font-size:17px; font-weight:700}
+.slogan .accent{background:linear-gradient(90deg,var(--cyan),var(--blue),var(--violet)); -webkit-background-clip:text; background-clip:text; color:transparent}
+.brand{font-size:12px; color:var(--sub); text-align:right; line-height:1.5}
+
+@media (max-width:720px){
+  .slide{aspect-ratio:auto; padding:24px}
+  .h-title{font-size:22px}
+  .foot{flex-direction:column; align-items:flex-start}
+}

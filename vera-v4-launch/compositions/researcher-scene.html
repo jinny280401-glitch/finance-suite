@@ -1,0 +1,34 @@
+<template>
+<div id="researcher" data-composition-id="researcher" data-start="0" data-duration="8" data-width="1920" data-height="1080" style="position:relative;width:1920px;height:1080px;overflow:hidden;background:linear-gradient(160deg,#0a0e1a 0%,#0d1525 30%,#0a1020 60%,#070b16 100%)">
+  <!-- 屏幕反光 -->
+  <div id="glow" style="position:absolute;top:15%;left:30%;width:500px;height:280px;border-radius:16px;background:radial-gradient(ellipse at center,rgba(78,168,255,.08),transparent 70%);box-shadow:0 0 80px rgba(78,168,255,.06),0 0 200px rgba(55,230,216,.04)"></div>
+  <!-- 键盘光 -->
+  <div id="keys" style="position:absolute;bottom:35%;left:25%;width:420px;height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(78,168,255,.15),rgba(155,107,255,.15),rgba(78,168,255,.15))"></div>
+  <!-- 粒子 -->
+  <div id="p1" style="position:absolute;top:20%;left:45%;width:2px;height:2px;border-radius:50%;background:rgba(55,230,216,.6)"></div>
+  <div id="p2" style="position:absolute;top:35%;left:52%;width:1.5px;height:1.5px;border-radius:50%;background:rgba(78,168,255,.5)"></div>
+  <div id="p3" style="position:absolute;top:28%;left:38%;width:1px;height:1px;border-radius:50%;background:rgba(155,107,255,.4)"></div>
+  <!-- 文字 -->
+  <div id="text" style="position:absolute;bottom:22%;left:0;right:0;text-align:center;z-index:3">
+    <p style="font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:32px;font-weight:600;color:rgba(255,255,255,.7);margin:0;letter-spacing:2px">每一个金融决策的背后</p>
+    <p style="font-family:'PingFang SC','Microsoft YaHei',sans-serif;font-size:20px;font-weight:400;color:rgba(255,255,255,.4);margin:12px 0 0;letter-spacing:1px">都需要可信的研究作为支撑</p>
+  </div>
+</div>
+<style>
+  @font-face{font-family:'PingFang SC';src:local('PingFang SC')}
+  @font-face{font-family:'Microsoft YaHei';src:local('Microsoft YaHei')}
+</style>
+<script>
+window.__timelines = window.__timelines || {};
+var tl = gsap.timeline({ paused: true });
+tl.from("#glow", { opacity:0.3, duration:2, ease:"power2.inOut" }, 0);
+tl.from("#keys", { width:0, duration:1.5, ease:"power3.out" }, 0.5);
+tl.from("#text", { y:20, opacity:0, duration:1.2, ease:"power3.out" }, 0.8);
+tl.from("#p1", { opacity:0, duration:0.6 }, 1.5);
+tl.from("#p2", { opacity:0, duration:0.6 }, 2.0);
+tl.from("#p3", { opacity:0, duration:0.6 }, 2.5);
+tl.to("#glow", { opacity:0.5, duration:3, ease:"power2.inOut" }, 3);
+tl.to("#glow", { opacity:0.3, duration:3, ease:"power2.inOut" }, 5);
+window.__timelines["researcher"] = tl;
+</script>
+</template>

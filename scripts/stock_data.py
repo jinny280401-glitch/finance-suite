@@ -60,8 +60,71 @@ def get_active_source() -> str:
 _stock_cache: dict | None = None
 _stock_cache_time: datetime | None = None
 
+# 确定性 identity map。优先于缓存模糊匹配，用来处理自然语言句子
+# 中包含股票名的输入，避免把"招商银行..."、"苏美达..."解析到错误证券。
+QUICK_MAP = {
+    "贵州茅台": ("600519", "贵州茅台"),
+    "茅台": ("600519", "贵州茅台"),
+    "招商银行": ("600036", "招商银行"),
+    "招行": ("600036", "招商银行"),
+    "苏美达": ("600710", "苏美达"),
+    "常林股份": ("600710", "苏美达"),
+    "比亚迪": ("002594", "比亚迪"),
+    "宁德时代": ("300750", "宁德时代"),
+    "中国平安": ("601318", "中国平安"),
+    "腾讯": ("00700", "腾讯"),
+    "阿里巴巴": ("09988", "阿里巴巴"),
+    "工商银行": ("601398", "工商银行"),
+    "建设银行": ("601939", "建设银行"),
+    "中国银行": ("601988", "中国银行"),
+    "农业银行": ("601288", "农业银行"),
+    "中国中免": ("601888", "中国中免"),
+    "美的集团": ("000333", "美的集团"),
+    "格力电器": ("000651", "格力电器"),
+    "海尔智家": ("600690", "海尔智家"),
+    "隆基绿能": ("601012", "隆基绿能"),
+    "恒瑞医药": ("600276", "恒瑞医药"),
+    "药明康德": ("603259", "药明康德"),
+    "迈瑞医疗": ("300760", "迈瑞医疗"),
+    "五粮液": ("000858", "五粮液"),
+    "泸州老窖": ("000568", "泸州老窖"),
+    "长江电力": ("600900", "长江电力"),
+    "中国神华": ("601088", "中国神华"),
+    "紫金矿业": ("601899", "紫金矿业"),
+    "中国石油": ("601857", "中国石油"),
+    "中国移动": ("600941", "中国移动"),
+    "中国电信": ("601728", "中国电信"),
+    "立讯精密": ("002475", "立讯精密"),
+    "歌尔股份": ("002241", "歌尔股份"),
+    "东方财富": ("300059", "东方财富"),
+    "同花顺": ("300033", "同花顺"),
+    "中信证券": ("600030", "中信证券"),
+    "海天味业": ("603288", "海天味业"),
+    "万科": ("000002", "万科"),
+    "保利发展": ("600048", "保利发展"),
+    "三一重工": ("600031", "三一重工"),
+    "中联重科": ("000157", "中联重科"),
+    "科大讯飞": ("002230", "科大讯飞"),
+    "海康威视": ("002415", "海康威视"),
+    "中芯国际": ("688981", "中芯国际"),
+    "韦尔股份": ("603501", "韦尔股份"),
+    "博纳影业": ("001330", "博纳影业"),
+}
+
 # 实时行情缓存保真期（秒）：超过视为 stale
 _CACHE_STALE_SECONDS = 900  # 15分钟
+REALTIME_TRADING_BLOCKED_FIELDS = [
+    "price",
+    "volume",
+    "amount",
+    "current_price_judgment",
+    "intraday_strength",
+    "support_resistance",
+    "short_term_breakout",
+    "position_advice",
+    "short_term_signal",
+    "buy_sell_recommendation",
+]
 
 
 def _is_realtime_stale() -> bool:
@@ -108,64 +171,92 @@ def _load_stock_cache() -> dict:
     return _stock_cache or {}
 
 
-def resolve_stock(query: str) -> tuple[str, str] | None:
+def _strip_exchange_suffix(query: str) -> str:
+    upper = query.strip().upper()
+    for suffix in (".SH", ".SZ", ".BJ", "SH", "SZ", "BJ"):
+        if upper.endswith(suffix) and len(upper) > len(suffix):
+            return upper[: -len(suffix)]
+    return query.strip()
+
+
+def resolve_stock_detail(query: str) -> dict | None:
     """
-    用户输入→(代码, 名称)。
+    用户输入→解析详情。
     核心原则：绝不阻塞。如果缓存没就绪，用快速备用方案。
     """
     query = query.strip()
+    normalized_query = _strip_exchange_suffix(query)
+
+    # 0. 确定性锚点优先。支持自然语言句子包含股票名，
+    # 如"招商银行当前基本面和风险如何？"。
+    if normalized_query.isdigit() and len(normalized_query) == 6:
+        for alias, (code, canonical_name) in QUICK_MAP.items():
+            if normalized_query == code:
+                return {
+                    "code": code,
+                    "name": canonical_name,
+                    "resolver_source": "quick_map_code",
+                    "matched_text": normalized_query,
+                    "input_text": query,
+                }
+        return {
+            "code": normalized_query,
+            "name": normalized_query,
+            "resolver_source": "direct_code",
+            "matched_text": normalized_query,
+            "input_text": query,
+        }
+
+    for alias in sorted(QUICK_MAP, key=len, reverse=True):
+        code, canonical_name = QUICK_MAP[alias]
+        if alias == normalized_query or alias in normalized_query:
+            return {
+                "code": code,
+                "name": canonical_name,
+                "resolver_source": "quick_map_alias",
+                "matched_text": alias,
+                "input_text": query,
+            }
 
     # 1. 优先用缓存（毫秒级）
     if _stock_cache:
         # 精确匹配
-        if query in _stock_cache:
-            info = _stock_cache[query]
+        if normalized_query in _stock_cache:
+            info = _stock_cache[normalized_query]
             code = info["code"]
-            name = query if not query.isdigit() else next(
-                (k for k, v in _stock_cache.items() if isinstance(v, dict) and v.get("code") == code and not k.isdigit()), query
+            name = normalized_query if not normalized_query.isdigit() else next(
+                (k for k, v in _stock_cache.items() if isinstance(v, dict) and v.get("code") == code and not k.isdigit()),
+                normalized_query,
             )
-            return (code, name)
+            return {
+                "code": code,
+                "name": name,
+                "resolver_source": "cache_exact",
+                "matched_text": normalized_query,
+                "input_text": query,
+            }
         # 模糊匹配
-        for key, info in _stock_cache.items():
-            if isinstance(info, dict) and not key.isdigit() and query in key:
-                return (info["code"], key)
+        for key, info in sorted(_stock_cache.items(), key=lambda item: len(str(item[0])), reverse=True):
+            key_text = str(key)
+            if isinstance(info, dict) and not key_text.isdigit() and key_text in normalized_query:
+                return {
+                    "code": info["code"],
+                    "name": key_text,
+                    "resolver_source": "cache_name_contains",
+                    "matched_text": key_text,
+                    "input_text": query,
+                }
 
-    # 2. 缓存没就绪 → 快速备用方案（不等待，不阻塞）
-    # 常见股票硬编码映射（覆盖最热门的50只 + 高频查询的次新股/传媒股）
-    QUICK_MAP = {
-        "贵州茅台": "600519", "茅台": "600519",
-        "比亚迪": "002594", "宁德时代": "300750",
-        "中国平安": "601318", "招商银行": "600036",
-        "腾讯": "00700", "阿里巴巴": "09988",
-        "工商银行": "601398", "建设银行": "601939",
-        "中国银行": "601988", "农业银行": "601288",
-        "中国中免": "601888", "美的集团": "000333",
-        "格力电器": "000651", "海尔智家": "600690",
-        "隆基绿能": "601012", "恒瑞医药": "600276",
-        "药明康德": "603259", "迈瑞医疗": "300760",
-        "五粮液": "000858", "泸州老窖": "000568",
-        "长江电力": "600900", "中国神华": "601088",
-        "紫金矿业": "601899", "中国石油": "601857",
-        "中国移动": "600941", "中国电信": "601728",
-        "立讯精密": "002475", "歌尔股份": "002241",
-        "东方财富": "300059", "同花顺": "300033",
-        "中信证券": "600030", "海天味业": "603288",
-        "万科": "000002", "保利发展": "600048",
-        "三一重工": "600031", "中联重科": "000157",
-        "科大讯飞": "002230", "海康威视": "002415",
-        "中芯国际": "688981", "韦尔股份": "603501",
-        "博纳影业": "001330",  # 2022年8月上市,传媒板块龙头
-    }
-    for name, code in QUICK_MAP.items():
-        if query in name or query == code:
-            return (code, name)
-
-    # 3. 如果输入看起来像股票代码（纯数字6位），直接用
-    if query.isdigit() and len(query) == 6:
-        return (query, query)
-
-    # 4. 都匹配不上，返回None（让后续逻辑用用户原始输入搜索）
+    # 2. 都匹配不上，返回None（让后续逻辑用用户原始输入搜索）
     return None
+
+
+def resolve_stock(query: str) -> tuple[str, str] | None:
+    """用户输入→(代码, 名称)。兼容旧调用方。"""
+    detail = resolve_stock_detail(query)
+    if not detail:
+        return None
+    return (detail["code"], detail["name"])
 
 
 def _get_market(code: str) -> str:
@@ -231,6 +322,122 @@ def _fetch_realtime_from_cache(code: str) -> dict | None:
     if isinstance(info, dict):
         return info
     return None
+
+
+def _fetch_quote_gateway(code: str) -> dict:
+    """Use the unified quote gateway instead of relying on the optional stock cache."""
+    try:
+        import finance_data_gateway
+
+        symbol = code if "." in code else f"{code}.SH" if code.startswith(("6", "9")) else f"{code}.SZ"
+        return finance_data_gateway.get_finance_data("quote", symbol=symbol)
+    except Exception as exc:
+        return {
+            "ok": False,
+            "symbol": code,
+            "data_type": "quote",
+            "provider": None,
+            "freshness": "unavailable",
+            "as_of": None,
+            "data": {},
+            "_qc": {
+                "status": "failure",
+                "reason": "quote_gateway_error",
+                "sources": [],
+                "missing_fields": ["quote"],
+                "missing_dimensions": ["quote"],
+                "blocked_fields": ["all"],
+                "error": str(exc),
+            },
+        }
+
+
+def _quote_realtime_status(quote: dict | None) -> str:
+    qc = (quote or {}).get("_qc") or {}
+    status = str(qc.get("status") or "failure").lower()
+    freshness = str((quote or {}).get("freshness") or qc.get("freshness") or "").lower()
+    if status == "success" and freshness == "realtime":
+        return "available"
+    if status in {"success", "partial"} and freshness in {"daily", "delayed", "cached", "stale"}:
+        return "partial"
+    if status == "partial":
+        return "partial"
+    return "unavailable"
+
+
+def _quote_allowed_use(quote: dict | None) -> list[str]:
+    status = _quote_realtime_status(quote)
+    freshness = str((quote or {}).get("freshness") or ((quote or {}).get("_qc") or {}).get("freshness") or "").lower()
+    if status == "available":
+        return ["realtime_snapshot", "price_reference"]
+    if status == "partial" and freshness in {"daily", "delayed", "cached", "stale"}:
+        return ["daily_reference", "historical_context"]
+    if status == "partial":
+        return ["limited_quote_reference"]
+    return []
+
+
+def _quote_blocked_fields(quote: dict | None) -> list[str]:
+    status = _quote_realtime_status(quote)
+    qc = (quote or {}).get("_qc") or {}
+    blocked = list(qc.get("blocked_fields") or [])
+    for field in qc.get("missing_fields") or qc.get("missing_dimensions") or []:
+        if field not in blocked:
+            blocked.append(str(field))
+    if status != "available":
+        for field in ("price", "volume", "amount"):
+            if field not in blocked:
+                blocked.append(field)
+        for field in REALTIME_TRADING_BLOCKED_FIELDS:
+            if field not in blocked:
+                blocked.append(field)
+    if status == "unavailable" and not blocked:
+        blocked.extend(["all_realtime_fields", *REALTIME_TRADING_BLOCKED_FIELDS])
+    return blocked
+
+
+def _strip_blocked_quote_fields(quote: dict | None) -> dict | None:
+    data = dict((quote or {}).get("data") or {})
+    if not data:
+        return None
+    for field in _quote_blocked_fields(quote):
+        data.pop(field, None)
+    return data or None
+
+
+def build_realtime_availability(quote: dict | None) -> dict:
+    """Build Trust Presentation metadata for single-stock realtime quote data."""
+    qc = (quote or {}).get("_qc") or {}
+    data = (quote or {}).get("data") or {}
+    status = _quote_realtime_status(quote)
+    blocked_fields = _quote_blocked_fields(quote)
+    if status == "available":
+        available = [
+            field
+            for field in ("price", "volume", "amount", "change", "pe", "pb", "mv")
+            if data.get(field) not in (None, "") and field not in blocked_fields
+        ]
+    else:
+        available = [
+            label
+            for field, label in (("close", "daily_close"), ("change", "daily_change"), ("trade_date", "trade_date"), ("pe", "pe"), ("pb", "pb"), ("mv", "mv"))
+            if data.get(field) not in (None, "")
+        ]
+    missing = [str(field) for field in (qc.get("missing_fields") or qc.get("missing_dimensions") or [])]
+    if status == "unavailable" and not missing:
+        missing = ["realtime"]
+    return {
+        "status": status,
+        "source": (quote or {}).get("provider"),
+        "source_type": "real" if (quote or {}).get("provider") else "not_connected",
+        "as_of": (quote or {}).get("as_of"),
+        "freshness": (quote or {}).get("freshness"),
+        "available": available,
+        "missing": missing,
+        "allowed_use": _quote_allowed_use(quote),
+        "blocked_fields": blocked_fields,
+        "reason": qc.get("reason"),
+    }
 
 
 def _fetch_price_history(code: str) -> list[dict] | None:
@@ -330,8 +537,11 @@ async def get_stock_full_data(code: str) -> dict:
         except Exception:
             results[key] = None
 
-    # 实时行情从缓存取（不额外请求）
-    results["realtime"] = _fetch_realtime_from_cache(code)
+    # 实时行情走统一 quote gateway，不再只依赖可为空的内存 cache。
+    quote = _fetch_quote_gateway(code)
+    results["realtime_quote"] = quote
+    results["realtime_availability"] = build_realtime_availability(quote)
+    results["realtime"] = _strip_blocked_quote_fields(quote) if _quote_realtime_status(quote) in {"available", "partial"} else None
 
     return results
 
@@ -344,15 +554,31 @@ def format_stock_data(data: dict, stock_name: str = "", stock_code: str = "") ->
     parts.append(f"=== {stock_name}({stock_code}) 东方财富结构化数据 ===")
     parts.append(f"数据获取时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
 
-    # 实时行情
+    # 实时/行情参考
     rt = data.get("realtime")
     if rt and isinstance(rt, dict):
-        parts.append("【实时行情】")
-        parts.append(f"最新价：{rt.get('price', 'N/A')} 元")
-        parts.append(f"涨跌幅：{rt.get('change', 'N/A')}%")
+        availability = data.get("realtime_availability") or {}
+        freshness = availability.get("freshness")
+        is_realtime_available = availability.get("status") == "available"
+        title = "实时行情" if is_realtime_available else "行情参考（非实时）"
+        parts.append(f"【{title}】")
+        if freshness:
+            parts.append(f"数据新鲜度：{freshness}")
+        if is_realtime_available:
+            parts.append(f"最新价：{rt.get('price', 'N/A')} 元")
+            parts.append(f"涨跌幅：{rt.get('change', 'N/A')}%")
+        else:
+            if rt.get("close") not in (None, ""):
+                parts.append(f"参考收盘价：{rt.get('close')} 元")
+            if rt.get("change") not in (None, ""):
+                parts.append(f"日涨跌幅：{rt.get('change')}%")
+            if rt.get("trade_date"):
+                parts.append(f"交易日：{rt.get('trade_date')}")
         parts.append(f"市盈率(动态)：{rt.get('pe', 'N/A')} 倍")
         parts.append(f"市净率：{rt.get('pb', 'N/A')} 倍")
         parts.append(f"总市值：{rt.get('mv', 'N/A')}")
+        if not is_realtime_available:
+            parts.append("说明：该行情不可用于盘中强弱、支撑压力、短线突破或仓位建议。")
         parts.append("")
 
     # 财报

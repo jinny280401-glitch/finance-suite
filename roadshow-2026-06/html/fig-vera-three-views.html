@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Vera 核心 Skills</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:#000}
+
+  .stage{
+    position:relative; width:100%; min-height:100vh; overflow:hidden;
+    background: radial-gradient(ellipse 80% 70% at 50% 50%, #1a1a2e 0%, #0a0a14 60%, #050510 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 48px 48px 44px;
+  }
+  .stage::before{
+    content:""; position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 15% 30%, rgba(78,168,255,.10) 0%, transparent 35%),
+      radial-gradient(circle at 85% 30%, rgba(155,107,255,.06) 0%, transparent 35%);
+    pointer-events:none;
+  }
+
+  /* 标题区 */
+  .header{
+    position:relative; z-index:3; text-align:center;
+    margin-bottom:28px;
+  }
+  .header .eyebrow{
+    font-size:11pt; font-weight:700; color: var(--cyan);
+    letter-spacing:5px; margin-bottom:6px;
+  }
+  .header h2{
+    font-size:clamp(28pt,3vw,36pt); font-weight:800; color: var(--ink);
+    letter-spacing:2px; margin:0;
+  }
+  .header h2 .hl{
+    background: linear-gradient(135deg, #4ea8ff 0%, #9b6bff 50%, #ff6bc1 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header .sub{
+    margin-top:6px; font-size:14pt; color: var(--sub); letter-spacing:1.5px;
+  }
+
+  /* 三栏 */
+  .cols{
+    position:relative; z-index:3;
+    display:flex; gap:36px;
+    width: min(1060px, 92vw);
+  }
+  .col{flex:1; display:flex; flex-direction:column;}
+
+  .col-index{
+    font-size:11pt; font-weight:700; color: var(--cyan);
+    margin-bottom:2px;
+  }
+  .col-heading{
+    font-size:18pt; font-weight:700; color: var(--ink);
+    margin-bottom:8px;
+  }
+  .col-rule{
+    width:100%; height:1px; background:rgba(255,255,255,.1); margin-bottom:16px;
+  }
+  .col .skill{
+    display:flex; align-items:flex-start; gap:10px; margin-bottom:14px;
+  }
+  .col .marker{
+    flex:0 0 3px; width:3px; height:36px; border-radius:2px; margin-top:2px;
+  }
+  .col .skill-text{display:flex; flex-direction:column;}
+  .col .skill-en{font-size:13.5pt; font-weight:700; color: var(--ink); letter-spacing:.3px;}
+  .col .skill-zh{font-size:11.5pt; color: var(--sub); letter-spacing:.3px;}
+
+  /* 右上角计数 */
+  .count-block{
+    position:absolute; right:7%; top:7%; z-index:4; text-align:center;
+  }
+  .count-num{
+    font-size:30pt; font-weight:800; color: #FFD166; line-height:1;
+  }
+  .count-label{
+    font-size:11pt; color: var(--sub); line-height:1.6;
+  }
+
+  /* 页脚 */
+  .footer{
+    position:relative; z-index:3;
+    margin-top:22px;
+    font-size:9pt; color: var(--sub); letter-spacing:1px;
+    text-align:center;
+  }
+
+  @media(max-width:860px){
+    .cols{flex-direction:column; gap:22px}
+    .stage{padding:32px 24px}
+    .col-heading{font-size:15pt; margin-bottom:4px}
+    .col-rule{margin-bottom:10px}
+    .col .skill{margin-bottom:8px}
+    .count-block{position:relative; right:auto; top:auto; margin-bottom:12px}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="count-block">
+    <div class="count-num">10+</div>
+    <div class="count-label">金融核心能力<br>持续扩展中</div>
+  </div>
+
+  <div class="header">
+    <div class="eyebrow">VERA · FINANCIAL INTELLIGENCE</div>
+    <h2>Vera 核心 <span class="hl">Skills</span></h2>
+    <div class="sub">覆盖盘前、盘中、盘后，从研究决策到内容交付</div>
+  </div>
+
+  <div class="cols">
+    <!-- 01 市场节奏 -->
+    <div class="col">
+      <div class="col-index">01</div>
+      <div class="col-heading">市场节奏</div>
+      <div class="col-rule"></div>
+      <div class="skill"><div class="marker" style="background:#64D5E8"></div><div class="skill-text"><span class="skill-en">Opening Auction Brief</span><span class="skill-zh">集合竞价简报</span></div></div>
+      <div class="skill"><div class="marker" style="background:#64D5E8"></div><div class="skill-text"><span class="skill-en">Midday Pulse</span><span class="skill-zh">午盘快照</span></div></div>
+      <div class="skill"><div class="marker" style="background:#64D5E8"></div><div class="skill-text"><span class="skill-en">Closing Pulse</span><span class="skill-zh">收盘情绪</span></div></div>
+      <div class="skill"><div class="marker" style="background:#64D5E8"></div><div class="skill-text"><span class="skill-en">Golden Pit</span><span class="skill-zh">黄金坑机会识别</span></div></div>
+    </div>
+
+    <!-- 02 研究决策 -->
+    <div class="col">
+      <div class="col-index">02</div>
+      <div class="col-heading">研究决策</div>
+      <div class="col-rule"></div>
+      <div class="skill"><div class="marker" style="background:#FF8A70"></div><div class="skill-text"><span class="skill-en">Company Panorama</span><span class="skill-zh">公司 MINI 尽调</span></div></div>
+      <div class="skill"><div class="marker" style="background:#FF8A70"></div><div class="skill-text"><span class="skill-en">Deep Research</span><span class="skill-zh">深度研究</span></div></div>
+      <div class="skill"><div class="marker" style="background:#FF8A70"></div><div class="skill-text"><span class="skill-en">Due Diligence</span><span class="skill-zh">尽职调查</span></div></div>
+      <div class="skill"><div class="marker" style="background:#FF8A70"></div><div class="skill-text"><span class="skill-en">Visit Prep</span><span class="skill-zh">公司拜访速查卡</span></div></div>
+    </div>
+
+    <!-- 03 内容沉淀 -->
+    <div class="col">
+      <div class="col-index">03</div>
+      <div class="col-heading">内容沉淀</div>
+      <div class="col-rule"></div>
+      <div class="skill"><div class="marker" style="background:#FFD166"></div><div class="skill-text"><span class="skill-en">Meeting Minutes</span><span class="skill-zh">会议纪要</span></div></div>
+      <div class="skill"><div class="marker" style="background:#FFD166"></div><div class="skill-text"><span class="skill-en">Report Writing</span><span class="skill-zh">研报写作</span></div></div>
+    </div>
+  </div>
+
+  <div class="footer">Vera Enterprise · Core Skill Map</div>
+
+</div>
+</body>
+</html>
