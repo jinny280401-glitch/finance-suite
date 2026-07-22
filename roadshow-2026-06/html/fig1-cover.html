@@ -14,7 +14,7 @@
   html,body{width:100%;height:100%;overflow:hidden}
   body{font-family:"PingFang SC","Microsoft YaHei",-apple-system,system-ui,sans-serif;background:#070b16;color:var(--ink)}
   .slide{
-    width:100vw;height:100vh;position:relative;overflow:hidden;display:grid;grid-template-columns:43% 57%;
+    width:100vw;height:100vh;position:relative;overflow:hidden;display:grid;grid-template-columns:34% 66%;
     background:
       radial-gradient(800px 520px at 94% 18%,rgba(155,107,255,.16),transparent 62%),
       radial-gradient(680px 420px at 45% 106%,rgba(55,230,216,.10),transparent 65%),
@@ -26,9 +26,9 @@
   .portrait img{width:100%;height:100%;display:block;object-fit:cover;object-position:55% 28%;filter:saturate(.88) contrast(1.03) brightness(.82)}
   .portrait::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,10,22,.06) 42%,rgba(7,11,22,.90) 100%),linear-gradient(0deg,rgba(7,11,22,.78),transparent 46%);z-index:1}
   .portrait::after{content:"";position:absolute;right:-1px;top:0;bottom:0;width:3px;background:linear-gradient(180deg,transparent,var(--cyan) 22%,var(--blue) 55%,var(--violet) 82%,transparent);box-shadow:0 0 30px rgba(78,168,255,.55);z-index:2}
-  .portrait-label{position:absolute;left:54px;bottom:46px;z-index:3}
-  .portrait-label .name{font-size:64px;font-weight:850;line-height:.9;letter-spacing:0;color:#fff}
-  .portrait-label .role{font-size:14px;font-weight:700;color:#c9d8ef;margin-top:15px;letter-spacing:.3px}
+  .portrait-label{position:absolute;left:40px;bottom:36px;z-index:3}
+  .portrait-label .name{font-size:52px;font-weight:850;line-height:.9;letter-spacing:0;color:#fff}
+  .portrait-label .role{font-size:13px;font-weight:700;color:#c9d8ef;margin-top:12px;letter-spacing:.3px}
   .portrait-label .role span{color:var(--cyan)}
 
   .content{position:relative;z-index:2;padding:54px 70px 42px 64px;display:flex;flex-direction:column;min-width:0}
@@ -48,8 +48,14 @@
   .promise{font-size:20px;font-weight:760;color:#fff}
   .proof{font-size:14px;color:var(--sub);line-height:1.45;font-weight:520}
 
-  .statement{margin-top:auto;padding-top:28px;display:flex;align-items:flex-end;justify-content:space-between;gap:28px}
-  .statement-main{font-size:23px;line-height:1.42;font-weight:760;max-width:610px}
+  .statement{
+    margin-top:32px; padding:22px 36px; border-radius:16px;
+    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 12px 36px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.10);
+    display:flex; align-items:center; justify-content:center; gap:20px;
+  }
+  .statement-main{font-size:26px; line-height:1.42; font-weight:760; text-align:center}
   .statement-main span{color:var(--cyan)}
   .mark{flex:none;width:52px;height:52px;position:relative}
   .mark::before{content:"";position:absolute;left:0;top:0;border-top:28px solid var(--blue);border-right:38px solid transparent}
@@ -75,7 +81,7 @@
     </div>
 
     <h1>Vera：让金融研究<br><span class="accent">可信落地</span></h1>
-    <div class="lead">面向证券行业的可信金融研究智能体。<strong>不是回答问题的通用 Bot，而是能完成研究任务的数字员工。</strong></div>
+    <div class="lead">不消除幻觉，管理幻觉。<strong>在不知道的时候，诚实地说不知道。</strong></div>
 
     <div class="positioning">
       <div class="row" style="--row:var(--cyan)">

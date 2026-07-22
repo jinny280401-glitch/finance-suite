@@ -6,37 +6,97 @@
 <title>Vera 架构图演示套件</title>
 <link rel="stylesheet" href="deck.css">
 <style>
-  body{flex-direction:column; gap:18px; padding:24px 20px}
-  .bar{
-    width:min(1280px,100%); display:flex; align-items:center; gap:14px; z-index:5;
-    color:var(--sub); font-size:14px;
+  body{
+    flex-direction:column; gap:24px; padding:32px 20px;
+    background:
+      radial-gradient(1200px 700px at 18% -10%, rgba(78,168,255,.18), transparent 60%),
+      radial-gradient(1000px 600px at 110% 20%, rgba(155,107,255,.16), transparent 55%),
+      radial-gradient(900px 600px at 50% 120%, rgba(255,107,193,.12), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
   }
-  .bar .title{font-size:18px; font-weight:800; color:var(--ink)}
+  .bar{
+    width:min(1280px,100%); display:flex; align-items:center; gap:16px; z-index:5;
+    padding:18px 28px; border-radius:18px;
+    background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.04));
+    border:1px solid var(--stroke);
+    box-shadow:0 12px 36px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.12);
+    backdrop-filter:blur(14px);
+  }
+  .bar::before{
+    content:""; position:absolute; inset:0; border-radius:18px;
+    background:radial-gradient(400px 100px at 50% 0, rgba(78,168,255,.22), transparent 70%);
+    pointer-events:none; z-index:-1;
+  }
+  .bar .title{
+    font-size:20px; font-weight:800; color:var(--ink); letter-spacing:.5px;
+    background:linear-gradient(90deg,var(--cyan),var(--blue),var(--violet));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
   .bar .spacer{flex:1}
   .btn{
-    padding:8px 16px; border-radius:10px; cursor:pointer; font-size:14px; font-weight:600;
-    background:var(--glass); border:1px solid var(--stroke); color:var(--ink); user-select:none;
+    padding:10px 20px; border-radius:12px; cursor:pointer;
+    font-size:14px; font-weight:650; user-select:none;
+    background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.06));
+    border:1px solid rgba(255,255,255,.20); color:var(--ink);
+    box-shadow:0 6px 18px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.18);
+    transition:all .2s cubic-bezier(.4,0,.2,1);
   }
-  .btn:hover{background:rgba(255,255,255,.12)}
-  .dots{display:flex; gap:8px}
-  .dot{width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,.2); cursor:pointer; transition:.2s}
-  .dot.on{background:linear-gradient(90deg,var(--cyan),var(--violet)); box-shadow:0 0 10px rgba(120,180,255,.7); transform:scale(1.25)}
+  .btn:hover{
+    background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.10));
+    box-shadow:0 8px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.22);
+    transform:translateY(-1px);
+  }
+  .btn:active{transform:translateY(0); box-shadow:0 4px 12px rgba(0,0,0,.30)}
+  .dots{display:flex; gap:10px}
+  .dot{
+    width:10px; height:10px; border-radius:50%; cursor:pointer;
+    background:rgba(255,255,255,.18);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 2px 6px rgba(0,0,0,.25);
+    transition:all .3s cubic-bezier(.4,0,.2,1);
+  }
+  .dot:hover{background:rgba(255,255,255,.28); transform:scale(1.15)}
+  .dot.on{
+    background:linear-gradient(135deg,var(--cyan),var(--blue),var(--violet));
+    border:1.5px solid rgba(120,180,255,.65);
+    box-shadow:0 0 16px rgba(78,168,255,.75), 0 4px 12px rgba(78,168,255,.45);
+    transform:scale(1.3);
+  }
   .frame{
     width:min(1280px,100%); aspect-ratio:16/9; border-radius:28px; overflow:hidden;
-    border:1px solid var(--stroke); box-shadow:0 40px 120px rgba(0,0,0,.55);
-    background:#0a0e1a;
+    border:1px solid var(--stroke);
+    box-shadow:0 40px 120px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+    backdrop-filter:blur(10px); position:relative;
   }
-  .frame iframe{width:100%; height:100%; border:0; display:block}
-  .hint{color:var(--sub); font-size:12.5px}
-  kbd{background:rgba(255,255,255,.1); border:1px solid var(--stroke); border-radius:5px; padding:1px 7px; font-size:12px}
-  @media (max-width:720px){.frame{aspect-ratio:auto; height:60vh}}
+  .frame::before{
+    content:""; position:absolute; inset:0;
+    background:radial-gradient(700px 200px at 50% -40px, rgba(78,168,255,.15), transparent 70%);
+    pointer-events:none; z-index:0;
+  }
+  .frame iframe{width:100%; height:100%; border:0; display:block; position:relative; z-index:1}
+  .hint{
+    color:var(--sub); font-size:13px; font-weight:550;
+    display:flex; align-items:center; gap:8px;
+  }
+  kbd{
+    background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.08));
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:6px; padding:2px 8px; font-size:12px; font-weight:600;
+    box-shadow:0 2px 6px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  @media (max-width:720px){
+    .frame{aspect-ratio:auto; height:60vh}
+    .bar{flex-wrap:wrap; gap:12px; padding:16px 20px}
+    .hint{display:none}
+  }
 </style>
 </head>
 <body>
   <div class="bar">
     <div class="title">Vera 架构图演示套件</div>
     <div class="spacer"></div>
-    <span class="hint"><kbd>←</kbd> <kbd>→</kbd> 翻页 · <kbd>F</kbd> 全屏</span>
+    <div class="hint"><kbd>←</kbd> <kbd>→</kbd> 翻页 · <kbd>F</kbd> 全屏</div>
     <div class="dots" id="dots"></div>
     <div class="btn" id="prev">‹ 上一张</div>
     <div class="btn" id="next">下一张 ›</div>
@@ -46,47 +106,51 @@
     <iframe id="view" src="about:blank" title="slide"></iframe>
   </div>
 
-  <!-- loading 遮罩:iframe 切换时短暂出现,挡住切换空窗 -->
-  <div id="loadingmask" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#0a0e1a;z-index:50;pointer-events:none">
-    <div style="width:42px;height:42px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--cyan);border-radius:50%;animation:spin 1s linear infinite"></div>
+  <!-- loading 遮罩 -->
+  <div id="loadingmask" style="
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background:
+      radial-gradient(1200px 700px at 18% -10%, rgba(78,168,255,.18), transparent 60%),
+      radial-gradient(1000px 600px at 110% 20%, rgba(155,107,255,.16), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1));
+    z-index:50; pointer-events:none;">
+    <div style="
+      width:44px; height:44px;
+      border:3px solid rgba(255,255,255,.12);
+      border-top-color:#37e6d8;
+      border-radius:50%;
+      box-shadow:0 0 20px rgba(55,230,216,.35);
+      animation:spin 1s linear infinite;"></div>
   </div>
   <style>
-    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 
 <script>
   const slides = [
-    {src:"fig-cover-vera-portraits.html",       name:"天玑·金融数据全景分析引擎"},
-    {src:"fig-era-opportunity.html",            name:"时代机会"},
-    {src:"fig-pain-triangle.html",              name:"行业痛点"},
-    {src:"fig1-cover.html",                     name:"Vera 定位简介"},
-    {src:"fig-vera-three-views.html",            name:"Vera Core Skills"},
-    {src:"fig-speed-benchmark.html",             name:"Vera vs 通用Bot"},
-    {src:"fig2-vera-overall-architecture.html", name:"图1 整体架构"},
-    {src:"fig3-trust-gate-flow.html",           name:"图2 Trust Gate"},
-    {src:"fig4-research-runtime.html",          name:"图3 Research Runtime"},
-    {src:"fig-daily-research-loop.html",        name:"全天研究闭环"},
-    {src:"fig-vera-production-arch.html",       name:"生产部署架构"},
-    {src:"fig-tongzhou-platform.html",           name:"同舟 投研平台"},
-    {src:"fig-hero-homepage.html",              name:"产品首页"},
-    {src:"fig-workbench.html",                  name:"投研工作台"},
+    {src:"fig-cover-vera-portraits.html",       name:"天玑"},
+    {src:"fig-contents.html",                   name:"目录"},
+    {src:"fig-hook-why-not-trust.html",         name:"为什么不敢相信 AI"},
+    {src:"fig-pain-triangle.html",              name:"AI 幻觉的成本"},
+    {src:"fig1-cover.html",                     name:"Vera 管理幻觉"},
+    {src:"fig3-trust-gate-flow.html",           name:"Trust Gate"},
+    {src:"fig-daily-research-loop.html",        name:"持续研究闭环"},
     {src:"fig-company-panorama.html",           name:"公司拜访速查卡"},
-    {src:"fig-enterprise-architecture-v1.html", name:"商业模式"},
-    {src:"fig6-market-positioning.html",        name:"市场定位"},
-    {src:"fig5-skill-ecosystem.html",           name:"图4 Skill 生态"},
-    {src:"fig7-closing.html",                    name:"收官金句"},
+    {src:"fig-workbench.html",                  name:"真实工作台"},
+    {src:"fig2-vera-overall-architecture.html", name:"可信如何建成"},
+    {src:"fig4-research-runtime.html",          name:"Research Runtime"},
+    {src:"fig-enterprise-architecture-v1.html", name:"未来展望"},
+    {src:"fig7-closing.html",                   name:"收官"},
   ];
   let i = 0;
   const view = document.getElementById('view');
   const dots = document.getElementById('dots');
   const frame = document.getElementById('frame');
 
-  /* HTTP(S) 下预加载页面资源；file:// 下 fetch 不受浏览器支持，直接交给 iframe。 */
-  const imgPreload = [];
+  /* 预加载 */
   if (location.protocol !== 'file:') {
-    slides.forEach(s=>{
-      const p = fetch(s.src, {credentials:'same-origin'}).then(r=>r.text()).catch(()=>null);
-      imgPreload.push(p);
+    slides.forEach(s => {
+      fetch(s.src, {credentials:'same-origin'}).then(r=>r.text()).catch(()=>null);
     });
   }
 
@@ -100,14 +164,12 @@
 
   function go(n){
     i = (n + slides.length) % slides.length;
-    /* 切换时显式重置 + loading mask,避免空窗 */
     const mask = document.getElementById('loadingmask');
     mask.style.display = 'flex';
     view.src = 'about:blank';
     requestAnimationFrame(()=>{
       view.src = slides[i].src;
       view.onload = ()=>{
-        /* 额外 80ms 让 SVG/CSS 动画稳定,再撤遮罩,避免一帧空白 */
         setTimeout(()=>{ mask.style.display = 'none'; }, 80);
       };
     });
@@ -124,7 +186,6 @@
     else if(e.key==='f'||e.key==='F'){ if(frame.requestFullscreen) frame.requestFullscreen(); }
   });
 
-  /* 初始化:加载首页,修复首屏空白(此前无 go(0),iframe 停在 about:blank) */
   go(0);
 </script>
 </body>

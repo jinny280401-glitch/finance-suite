@@ -2,130 +2,226 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>fig3 · 为什么我愿意相信 Vera</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vera · 可信闸门 Trust Gate</title>
 <link rel="stylesheet" href="deck.css">
 <style>
-  .hero-title{text-align:center; margin-top:10px; z-index:3; position:relative}
-  .hero-title .eyebrow{font-size:12px; color:var(--cyan); font-weight:700; letter-spacing:2px; margin-bottom:6px}
-  .hero-title h1{font-size:36px; font-weight:800; color:var(--ink); letter-spacing:1px}
-  .hero-title h1 .accent{background:linear-gradient(110deg,var(--cyan),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero-title .sub{margin-top:8px; font-size:16px; color:var(--sub)}
+  body{padding:0;display:block;overflow:hidden}
+  .slide{
+    width:100vw; height:100vh; aspect-ratio:auto;
+    border-radius:0; padding:44px 56px 22px;
+    display:flex; flex-direction:column;
+  }
 
-  /* 主体:左流程 + 右证据卡片 */
-  .main{display:grid; grid-template-columns:1.1fr 0.9fr; gap:16px; flex:1; min-height:0; margin-top:12px; z-index:2}
-  .card{display:flex; flex-direction:column; background:var(--glass); border:1px solid var(--stroke); border-radius:14px; padding:18px 22px}
-  .card .ct{font-size:16px; font-weight:800; color:var(--cyan); margin-bottom:10px}
+  /* ---- 标题 ---- */
+  .hero{text-align:center; z-index:3; margin-bottom:20px}
+  .hero .eyebrow{font-size:10.5px; font-weight:700; letter-spacing:2.5px; color:var(--cyan); margin-bottom:6px}
+  .hero h1{font-size:32px; font-weight:800; letter-spacing:1px; line-height:1.2}
+  .hero h1 .accent{
+    background:linear-gradient(105deg,var(--cyan),var(--blue),var(--violet));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .hero .sub{margin-top:8px; font-size:15px; color:var(--sub); font-weight:500; max-width:700px; margin-left:auto; margin-right:auto; line-height:1.5}
 
-  /* 左侧流程 */
-  .flow-steps{display:flex; flex-direction:column; gap:0}
-  .step{display:flex; align-items:center; gap:10px; padding:10px 0}
-  .step .dot{width:10px; height:10px; border-radius:50%; flex-shrink:0; background:var(--cyan); box-shadow:0 0 8px var(--cyan)}
-  .step .sl{font-size:16px; font-weight:700; color:var(--ink); width:90px; flex-shrink:0}
-  .step .sr{font-size:14px; color:var(--sub)}
-  .step .chip{display:inline-block; padding:4px 10px; border-radius:6px; font-size:13px; font-weight:700}
-  .chip.ok{background:rgba(55,230,216,.14); color:var(--cyan); border:1px solid rgba(55,230,216,.35)}
-  .chip.warn{background:rgba(255,176,86,.14); color:var(--orange); border:1px solid rgba(255,176,86,.35)}
-  .chip.no{background:rgba(255,107,107,.14); color:#ffb0b0; border:1px solid rgba(255,107,107,.35)}
+  /* ---- 主体 ---- */
+  .main{
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:40px; flex:1; min-height:0; z-index:2; align-items:stretch;
+  }
 
-  /* 右侧证据卡片 */
-  .evidence-stack{display:flex; flex-direction:column; gap:8px; flex:1}
-  .ev-card{padding:11px 14px; border-radius:10px; border:1px solid var(--stroke); background:rgba(255,255,255,.04); display:flex; align-items:center; gap:10px}
-  .ev-card .ev-icon{font-size:15px; width:28px; text-align:center; flex-shrink:0}
-  .ev-card .ev-title{font-size:15px; font-weight:700; color:var(--ink); flex-shrink:0; width:80px}
-  .ev-card .ev-desc{font-size:13px; color:var(--sub); flex:1}
-  .ev-card.real{border-color:rgba(55,230,216,.4); background:rgba(55,230,216,.08)}
-  .ev-card.real .ev-title{color:var(--cyan)}
-  .ev-card.fallback{border-color:rgba(78,168,255,.35); background:rgba(78,168,255,.06)}
-  .ev-card.fallback .ev-title{color:var(--blue)}
+  /* ---- 左：四步流程 ---- */
+  .flow{display:flex; flex-direction:column; gap:8px; justify-content:center}
+  .flow-label{font-size:12px; font-weight:700; color:var(--sub); letter-spacing:1.5px; margin-bottom:2px}
+  .step{
+    display:flex; align-items:center; gap:20px;
+    padding:15px 24px; border-radius:14px;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .step .num{
+    width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; font-weight:800; flex-shrink:0;
+  }
+  .step:nth-child(2) .num{background:rgba(78,168,255,.14); color:var(--blue); box-shadow:0 0 14px rgba(78,168,255,.30)}
+  .step:nth-child(3) .num{background:rgba(155,107,255,.12); color:var(--violet); box-shadow:0 0 14px rgba(155,107,255,.26)}
+  .step:nth-child(4) .num{background:rgba(255,176,86,.12); color:var(--orange); box-shadow:0 0 12px rgba(255,176,86,.26)}
+  .step:nth-child(5) .num{background:rgba(55,230,216,.12); color:var(--cyan); box-shadow:0 0 14px rgba(55,230,216,.30)}
+  .step .body{min-width:0}
+  .step .title{font-size:18px; font-weight:750; color:var(--ink); line-height:1.3}
+  .step .desc{font-size:12.5px; color:var(--sub); margin-top:2px; line-height:1.4}
 
-  /* 底部:案例 + 能力边界 */
-  .bottom{display:flex; gap:14px; margin-top:10px; z-index:2; min-height:0}
-  .example{width:26%; flex-shrink:0; background:rgba(255,107,107,.06); border:1px solid rgba(255,107,107,.3); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; justify-content:center}
-  .example .ex-label{font-size:11px; color:#ffb0b0; font-weight:700; letter-spacing:1px; margin-bottom:4px}
-  .example .ex-q{font-size:14px; color:var(--ink); font-weight:600; margin-bottom:4px}
-  .example .ex-a{font-size:13px; color:#ffb0b0; font-weight:700}
-  .example .ex-r{font-size:11px; color:var(--sub); margin-top:2px}
+  .flow-connector{
+    width:2px; height:8px; margin-left:19px;
+    background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,.04));
+  }
 
-  .boundary{flex:1; display:flex; gap:14px}
-  .b-col{flex:1; border-radius:12px; padding:14px 16px}
-  .b-col.no{background:rgba(255,107,107,.06); border:1px solid rgba(255,107,107,.25)}
-  .b-col.ok{background:rgba(55,230,216,.06); border:1px solid rgba(55,230,216,.3)}
-  .b-col .b-h{font-size:15px; font-weight:800; margin-bottom:8px}
-  .b-col.no .b-h{color:#ffb0b0}
-  .b-col.ok .b-h{color:var(--cyan)}
-  .b-col .b-item{font-size:14px; color:var(--ink); padding:3px 0}
+  /* ---- 右：四种回答方式 ---- */
+  .outcomes{display:flex; flex-direction:column; gap:0; justify-content:center}
+  .outcomes-label{font-size:14px; font-weight:700; color:var(--ink); letter-spacing:.5px; margin-bottom:8px}
+  .outcomes-label .hl{color:var(--cyan)}
+  .ev-row{
+    display:flex; align-items:flex-start; gap:16px;
+    padding:14px 22px; margin-bottom:8px; border-radius:14px;
+    border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
+  }
+  .ev-row .ev-icon{font-size:24px; flex-shrink:0; line-height:1; margin-top:2px}
+  .ev-row .ev-body{min-width:0}
+  .ev-row .ev-title{font-size:17px; font-weight:750; color:var(--ink); margin-bottom:2px}
+  .ev-row .ev-desc{font-size:13.5px; color:var(--sub); line-height:1.5}
+  .ev-row .ev-en{font-size:10.5px; color:rgba(255,255,255,.18); font-weight:500; margin-top:2px}
 
-  /* 底部金句发光条 */
-  .takeaway-bar{text-align:center; margin-top:8px; z-index:3; padding:10px 0 0}
-  .takeaway-bar span{display:inline-block; padding:10px 28px; font-size:17px; font-weight:700; color:var(--ink); letter-spacing:1px; border-radius:999px; background:linear-gradient(90deg,rgba(55,230,216,.14),rgba(78,168,255,.10)); border:1px solid rgba(55,230,216,.35); box-shadow:0 0 24px rgba(55,230,216,.12)}
+  /* ---- 底部示例 ---- */
+  .example-bar{
+    margin-top:18px; z-index:2;
+    display:flex; align-items:center; gap:20px;
+    padding:13px 28px; border-radius:14px;
+    background:linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
+    border:1px solid rgba(255,255,255,.07);
+  }
+  .example-bar .ex-label{font-size:12px; font-weight:700; color:var(--sub); letter-spacing:1px; flex-shrink:0}
+  .example-bar .ex-q{
+    font-size:16px; font-weight:700; color:var(--ink);
+    padding:7px 18px; border-radius:8px;
+    background:rgba(255,107,107,.06); border:1px solid rgba(255,107,107,.14);
+    white-space:nowrap; flex-shrink:0;
+  }
+  .example-bar .ex-arrow{font-size:18px; color:var(--sub); flex-shrink:0; margin:0 4px}
+  .example-bar .ex-result{display:flex; gap:16px; flex:1; align-items:center}
+  .example-bar .ex-denied{
+    font-size:14px; font-weight:700; color:#ffb0b0;
+    padding:6px 14px; border-radius:8px;
+    background:rgba(255,107,107,.04); border:1px solid rgba(255,107,107,.12);
+    white-space:nowrap;
+  }
+  .example-bar .ex-allowed{
+    font-size:14px; font-weight:700; color:var(--cyan);
+    padding:6px 14px; border-radius:8px;
+    background:rgba(55,230,216,.04); border:1px solid rgba(55,230,216,.12);
+    white-space:nowrap;
+  }
+
+  /* ---- 底栏 ---- */
+  .footer-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top:16px; z-index:3;
+  }
+  .footer-bar .slogan{
+    font-size:15px; font-weight:700; color:var(--ink);
+    padding:7px 22px; border-radius:999px;
+    background:linear-gradient(90deg,rgba(55,230,216,.10),rgba(78,168,255,.07));
+    border:1px solid rgba(55,230,216,.25);
+  }
+  .footer-bar .gov{
+    font-size:12px; color:var(--sub); text-align:right; line-height:1.6; font-weight:500;
+  }
+  .footer-bar .gov span{color:var(--cyan); font-weight:700}
 </style>
 </head>
 <body>
 <div class="slide">
 
-  <div class="hero-title">
-    <div class="eyebrow">VERA · 为什么可信（WHY TRUST）</div>
-    <h1>为什么我愿意 <span class="accent">相信 Vera</span>？</h1>
-    <div class="sub">可信，不来自模型，而来自可验证的数据与流程。</div>
+  <div class="hero">
+    <div class="eyebrow">VERA · TRUST GATE</div>
+    <h1>可信闸门：<span class="accent">先验证，再回答</span></h1>
+    <div class="sub">所有证据都会先经过可信检查，再决定 AI 能回答什么、不能回答什么。</div>
   </div>
 
-  <!-- 主体:左流程 + 右证据等级 -->
   <div class="main">
-    <!-- 左: Trust Gate 流程 -->
-    <div class="card">
-      <div class="ct">① 回答之前，先经过 Trust Gate</div>
-      <div class="flow-steps">
-        <div class="step"><span class="dot"></span><span class="sl">用户提问</span><span class="sr">研究员提出问题或需求</span></div>
-        <div class="step"><span class="dot" style="background:var(--blue);box-shadow:0 0 8px var(--blue)"></span><span class="sl">证据检查</span><span class="sr">验证数据来源与可信等级</span></div>
-        <div class="step"><span class="dot" style="background:var(--orange);box-shadow:0 0 8px var(--orange)"></span><span class="sl">能力边界</span><span class="sr">判断是否在 Vera 能力范围内</span></div>
-        <div class="step"><span class="dot" style="background:var(--cyan);box-shadow:0 0 8px var(--cyan)"></span><span class="sl">可信回答</span><span class="sr">仅输出有证据支撑的结论</span></div>
+
+    <!-- 左：四步流程 -->
+    <div>
+      <div class="flow-label">TRUST GATE 流程</div>
+      <div class="flow">
+        <div class="step">
+          <div class="num">1</div>
+          <div class="body">
+            <div class="title">用户提问</div>
+            <div class="desc">研究员提出研究问题或数据查询</div>
+          </div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="step">
+          <div class="num">2</div>
+          <div class="body">
+            <div class="title">证据检查</div>
+            <div class="desc">验证每条数据来源与可信等级</div>
+          </div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="step">
+          <div class="num">3</div>
+          <div class="body">
+            <div class="title">判断可用边界</div>
+            <div class="desc">确定 AI 能说什么、不能说什么</div>
+          </div>
+        </div>
+        <div class="flow-connector"></div>
+        <div class="step">
+          <div class="num">4</div>
+          <div class="body">
+            <div class="title">生成可信回答</div>
+            <div class="desc">仅输出有证据支撑的结论</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- 右: 证据等级卡片 -->
-    <div class="card">
-      <div class="ct">② 数据可信等级，决定 AI 的表达边界</div>
-      <div class="evidence-stack">
-        <div class="ev-card real"><span class="ev-icon">✓</span><span class="ev-title">Real Evidence</span><span class="ev-desc">生产级真实数据，可深度分析</span></div>
-        <div class="ev-card fallback"><span class="ev-icon">◐</span><span class="ev-title">Fallback</span><span class="ev-desc">降级数据源，仅提供基础信息</span></div>
-        <div class="ev-card"><span class="ev-icon">○</span><span class="ev-title">Mock</span><span class="ev-desc">测试数据，仅用于功能验证</span></div>
-        <div class="ev-card" style="border-color:rgba(255,107,107,.3);background:rgba(255,107,107,.04)"><span class="ev-icon" style="color:#ff6b6b">✕</span><span class="ev-title" style="color:#ffb0b0">Blocked</span><span class="ev-desc">超出能力边界，拒绝进入推理链</span></div>
+    <!-- 右：四种回答方式 -->
+    <div>
+      <div class="outcomes-label">Vera 会根据证据质量<span class="hl">自动选择</span>回答方式：</div>
+      <div class="outcomes">
+        <div class="ev-row">
+          <div class="ev-icon">✅</div>
+          <div class="ev-body">
+            <div class="ev-title">可信分析</div>
+            <div class="ev-desc">使用真实生产数据，可进行深入分析</div>
+            <div class="ev-en">Real Evidence</div>
+          </div>
+        </div>
+        <div class="ev-row">
+          <div class="ev-icon">⚠️</div>
+          <div class="ev-body">
+            <div class="ev-title">基础回答</div>
+            <div class="ev-desc">数据不足时，仅提供事实说明</div>
+            <div class="ev-en">Fallback</div>
+          </div>
+        </div>
+        <div class="ev-row">
+          <div class="ev-icon">🧪</div>
+          <div class="ev-body">
+            <div class="ev-title">演示模式</div>
+            <div class="ev-desc">使用测试数据，仅展示功能</div>
+            <div class="ev-en">Mock</div>
+          </div>
+        </div>
+        <div class="ev-row">
+          <div class="ev-icon">⛔</div>
+          <div class="ev-body">
+            <div class="ev-title">拒绝回答</div>
+            <div class="ev-desc">超出可信边界，不进入推理</div>
+            <div class="ev-en">Blocked</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- 底部:案例 + 能力边界 -->
-  <div class="bottom">
-    <!-- 左: 案例 -->
-    <div class="example">
-      <div class="ex-label">EXAMPLE · 越界拦截</div>
-      <div class="ex-q">"现在可以买吗？给仓位建议。"</div>
-      <div class="ex-a">→ 拒绝回答</div>
-      <div class="ex-r">原因：超出能力与合规边界；即使证据充分，交易及仓位建议也不自动放行</div>
-    </div>
-
-    <!-- 右: 能力边界 -->
-    <div class="boundary">
-      <div class="b-col no">
-        <div class="b-h">❌ 不回答</div>
-        <div class="b-item">交易建议</div>
-        <div class="b-item">仓位建议</div>
-        <div class="b-item">资金流推断</div>
-        <div class="b-item">短线预测</div>
-      </div>
-      <div class="b-col ok">
-        <div class="b-h">✓ 可以回答</div>
-        <div class="b-item">估值分析</div>
-        <div class="b-item">行业分析</div>
-        <div class="b-item">年报验证</div>
-        <div class="b-item">跨源对比</div>
-      </div>
+  <!-- 底部示例 -->
+  <div class="example-bar">
+    <div class="ex-label">示例</div>
+    <div class="ex-q">"现在可以买这只股票吗？"</div>
+    <div class="ex-arrow">→</div>
+    <div class="ex-result">
+      <div class="ex-denied">拒绝交易与仓位建议</div>
+      <div class="ex-allowed">允许估值、行业与年报分析</div>
     </div>
   </div>
 
-  <!-- 底部金句发光条 -->
-  <div class="takeaway-bar">
-    <span>可信，不来自模型，而来自可验证的数据与流程。</span>
+  <div class="footer-bar">
+    <div class="slogan">可信，不是 AI 更敢说，而是它知道什么时候不能说。</div>
+    <div class="gov">回答前先验证证据<br>不是回答后提示风险，而是在<span>回答前控制回答边界</span></div>
   </div>
 
 </div>
