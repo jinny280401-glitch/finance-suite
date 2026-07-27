@@ -1,5 +1,16 @@
 # Memory
 
+## 2026-07-27: Data Agent + Research Agent Fusion audit frozen
+
+- Engram curl result: `FAILED / DEFERRED` (`/profile` and `/lessons` returned HTTP 401); do not retry until the local Engram credential/service is corrected.
+- Research artifact: `DATA_AGENT_RESEARCH_AGENT_FUSION_20260727.md`.
+- Audit status: `ACCEPT WITH CORRECTIONS`.
+- Evidence boundary: external architecture observations, third-party measurements, and Vera x JuYuan proposal are kept separate.
+- Evidence Lifecycle proposal distinguishes `Expired` (time/rule driven) from `Superseded` (upstream replacement event); historical validity uses `valid_at`, not `retrieved_at`.
+- Trust Gate remains an existing D23 design; no Vera architecture, runtime, production capability, or implementation claim changed.
+- Buy-side Research Agent architecture gap remains open for a future evidence-recovery window.
+- Audit report: `New project 5/docs/research/DATA_AGENT_RESEARCH_AGENT_FUSION_AUDIT_20260727.md`.
+
 ## 2026-07-08: Company Panorama -> Vera candidate pre-integration gate
 
 - Engram curl result: `FAILED / DEFERRED` (`http_code=000`; local Engram API unreachable). Do not retry until Engram service is restored.
