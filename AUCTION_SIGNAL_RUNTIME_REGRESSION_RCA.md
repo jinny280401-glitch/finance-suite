@@ -436,3 +436,54 @@ Clash processes running:
 ```
 
 **Workaround attempted:** HTTPS 443 works (probed `/api/intel/market-context` successfully), but Web API does not expose `app/auction_data.py` code or internal `market_phase` logic.
+
+---
+
+## Appendix: Governance Principles — Why Binary PASS/FAIL Is the Common Root Cause
+
+*Added for Evidence Governance v1.0 alignment. Not part of the original 2026-07-31 RCA.*
+
+The six findings below come from a parallel audit (600439 Financial Freshness Fix, Codex re-review), but their root cause is identical to the pattern discovered in Auction P0 and Golden Pit v0.3: **the QC layer only emits PASS or FAIL, with no intermediate freshness/gap/unknown/partial states.** When data enters a grey zone, the QC either forces PASS (silent acceptance) or forces FAIL (spurious rejection), with no downgrade-and-continue option.
+
+| # | 600439 Condition | Auction / Golden Pit Isomorphism | Missing Governance Primitive |
+|---|---|---|---|
+| 1 | **`date_col is None` → defaults to oldest four periods** | `if s not in cd: continue` → tradable=0. Both patterns: guard check on a non-standard container (lazy dict / missing column) produces zero-count output that reads as "capability absent." | **`date_col is None ≠ data is oldest`.** Missing metadata should downgrade freshness to `UNKNOWN`, not silently pick a default. |
+| 2 | **Missing reporting period → forced into PASS/FAIL** | `_qc.status=partial` treated as failure. P0 HTTP 200 treated as "request observed" but content UNKNOWN. Both forced a binary frame onto a ternary reality. | **`UNKNOWN` / `PARTIAL` / `LIMITED` must be first-class states.** Forcing binary PASS/FAIL when data is incomplete causes the system to lie. |
+| 3 | **`len(stale)<=1` → aggregate mask** | `OVERALL: PASS` printed alongside `HISTORICAL_TRADABILITY_AVAILABLE: FAIL` (107×). `tradable=0` was the only dimension that failed, but the aggregate gate hid it. | **Freshness must be per-dimension, not aggregated.** revenue freshness ≠ balance-sheet freshness ≠ cashflow freshness. A single stale dimension that blocks a specific use case must not be averaged away. |
+| 4 | **completeness ≥ 0.8 + stale → passes** | HTTP 200 + empty body → "request succeeded." W1 probe: response body exists but auction dimensions may be empty. | **Completeness ≠ freshness.** 100 fields all from last year = complete ≠ fresh. Both dimensions must be tracked independently. |
+| 5 | **AkShare PASS ≠ Financial Runtime PASS** | Local script success ≠ production runtime capability. Provider credential ≠ provider capability. Both skip the adapter → normalization → freshness → trust gate chain. | **Provider contract must verify the full chain, not just the source.** AkShare→adapter→normalized evidence→freshness evaluator→trust gate. Each hop can fail independently. |
+| 6 | **`_qc_macro()` rules differ from `_qc_stock()`** | `scripts/auction_data.py` (no gate, 8196 bytes) ≠ `app/auction_data.py` (has gate, 15860 bytes). Two code paths produce different QC for the same underlying data. | **QC semantics must be uniform across all evidence dimensions.** Macro analysis should not be less trustworthy than stock analysis just because it uses a different QC path. |
+
+### Unified Root Cause
+
+```
+                    ┌─────────────────────────┐
+Current QC model:   │  input → PASS / FAIL    │  ← only two exits
+                    └─────────────────────────┘
+
+Required model:     ┌─────────────────────────┐
+                    │  input → freshness?     │
+                    │       → completeness?   │
+                    │       → provenance?     │
+                    │       → gap?            │
+                    │       → allowed_use?    │
+                    │       → blocked_use?    │
+                    └─────────────────────────┘
+```
+
+Both the 600439 Financial Freshness Fix (Codex re-review: `NOT PROVEN`) and the Auction P0 (`NOT FOUND`) failed because the system tried to express a multi-dimensional evidence assessment through a single-bit gate. The fix in both cases is not more correct code — it is an **Evidence Governance contract** that defines:
+
+1. **What states exist beyond PASS/FAIL** (PARTIAL, UNKNOWN, STALE, LIMITED)
+2. **What each state permits** (allowed_use) and forbids (blocked_use)
+3. **How freshness and completeness compose without masking each other**
+4. **How per-dimension verdicts propagate to downstream consumers without being aggregated away**
+
+### Status
+
+```
+600439 Freshness Fix:        Code PASS / Trust NOT PROVEN / Reason: Governance Contract Missing
+Auction P0:                  CLOSED / NOT FOUND / Regression NOT PROVEN
+Golden Pit Gate 2:           CLOSED / PARTIAL PASS / Historical Breadth NOT VERIFIED
+Common Blocker:              Evidence Governance v1.0 not yet implemented
+Next Window (all three):     Evidence Governance Contract → acceptance case → per-dimension freshness
+```
