@@ -1020,6 +1020,8 @@ Findings identified through proactive audit, architecture review, or governance 
 
 Tier B findings are not in the Learning Loop because they lack an originating incident. They remain tracked until converted through future incident evidence or validated governance scenarios.
 
+**P-01 Lock Condition**: P-01 is currently a governance finding derived from audit evidence — NOT a production incident. Proactive audit finding ≠ Production incident. Before promotion from `TRACKED` to `SPECIFIED`, P-01 requires: (1) a production incident where a declared provider capability was invoked but failed to produce evidence, OR (2) a runtime attestation test that independently verifies the credential → adapter → invocation → evidence → Trust Gate chain. Until then, it remains TRACKED (Tier B) and MUST NOT block the Architecture Freeze Gate.
+
 **Case promotion criteria (Tier A only)**:
 
 A case graduates from `SPECIFIED` to `PROVEN` when:
@@ -1047,6 +1049,8 @@ Runtime Enforcement Boundary Identified for each case
 ```
 
 Proactive governance findings without originating production incidents (Tier B) MUST NOT block Architecture Freeze. They remain tracked until converted through future incident evidence or validated governance scenarios.
+
+**Gate domains are explicitly declared, not dynamically selected from the registry.** The three required governance domains (Freshness, Runtime Evidence, Claim Strength) are fixed. A new incident in an existing domain replaces its predecessor; a new incident in a new domain requires a Gate amendment, not automatic inclusion.
 
 **The three required incident-derived cases (Freeze Gate)**:
 
