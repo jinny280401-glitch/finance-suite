@@ -1008,7 +1008,7 @@ Cases derived from real production incidents. These satisfy the One Incident →
 |---|---|---|---|---|---|
 | **F-03** | Freshness | 600439 financial freshness failure (2026-08-02) | §4.2: Critical-domain freshness gating — freshness cannot be inferred from completeness; critical dimension STALE → BLOCK | TC-FRESH-001 (critical stale → BLOCK), TC-FRESH-002 (non-critical stale → PARTIAL) | **SPECIFIED** |
 | **R-01** | Runtime Evidence Preservation | Auction Runtime Error 2026-08-03 + Auction P0 2026-07-31 | §7: Production Runtime MUST preserve incident evidence (request_id, status_code, content_type, response_hash, trace/log correlation); missing evidence → RCA confidence downgraded to LOW / Root Cause UNKNOWN | TC-RUNTIME-EVIDENCE-001 (§7.3): API returns unexpected response → evidence preserved → RCA can determine which layer failed | **SPECIFIED** |
-| **C-01** | Claim Strength | TBD — searching for production case where fact → interpretation → recommendation escalation occurred without evidence tier upgrade | Evidence confidence level MUST constrain allowed conclusion strength; descriptive ≠ predictive ≠ prescriptive; claim tier escalation requires evidence tier upgrade | TBD | **IDENTIFYING** |
+| **C-01** | Claim Strength | stock-analyst.md prompt design causing systematic unauthorized claim escalation — prompt structure combined with absence of claim authorization boundary generates L7 prescriptive output (position sizing, strategy selection, buy/sell/hold) from L1-L2 descriptive evidence without authorization gate | Evidence confidence and authorization level SHALL constrain allowed conclusion strength; descriptive ≠ predictive ≠ prescriptive; claim tier escalation requires evidence tier upgrade. Current enforcement: NOT IMPLEMENTED — specification only. Runtime blocking NOT CLAIMED. | TC-CLAIM-001 (no position% in output), TC-CLAIM-002 (no probability without model/methodology/error bounds) | **SPECIFIED** |
 
 **Tier B — Proactive Governance Findings (Tracked, non-blocking):**
 
@@ -1057,8 +1057,14 @@ Proactive governance findings without originating production incidents (Tier B) 
 | # | Case | Domain | What It Validates | Current Status |
 |---|---|---|---|---|
 | **Case 1 — Freshness** | F-03 | Data Quality | Complete data ≠ fresh data. A dimension can be present, non-empty, and pass completeness thresholds while carrying stale values. The Trust Gate must distinguish presence from currency. | **SPECIFIED** |
-| **Case 2 — Provider Capability** | P-01 | Provider Trust | Provider existence ≠ capability proven. Provider credential ≠ runtime capability. Declared capability MUST NOT exceed verified runtime capability. Originating incident: NONE (proactive governance gap identification). | **TRACKED** (Tier B — no originating incident) |
-| **Case 3 — Claim Strength** | C-01 | Conclusion Authorization | Evidence confidence ≠ allowed conclusion strength. Originating incident TBD — searching for production case where fact → interpretation → recommendation escalation occurred without evidence tier upgrade. | **IDENTIFYING** |
+| **Case 2 — Claim Strength** | C-01 | Conclusion Authorization | Evidence confidence ≠ allowed conclusion strength. Originating incident: stock-analyst.md prompt design causing systematic claim escalation from L1-L2 evidence to L7 prescriptive output (position sizing, strategy selection, buy/sell/hold) without authorization gate. Validation report: C-01_VALIDATION_REPORT.md. | **SPECIFIED** |
+| **Case 3 — [Pending]** | — | TBD by next production incident | Reserved for the next incident-derived governance domain. Will be assigned when a production failure exposes a governance gap in a domain not yet covered. | **PENDING INCIDENT** |
+
+**Explicitly excluded from Freeze Gate:**
+- **P-01 (Provider Capability)** — Tier B, proactive audit finding, no originating production incident
+- **R-01 (Runtime Evidence)** — separate governance track (§7), orthogonal to business evidence governance
+
+Gate count: **2/3 incident-derived cases**. P-01 and R-01 are tracked but MUST NOT satisfy the Gate requirement.
 
 **Additional governance track (tracked, not counted toward Freeze Gate)**:
 
