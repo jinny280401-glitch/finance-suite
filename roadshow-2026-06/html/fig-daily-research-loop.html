@@ -3,21 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vera · Daily Research Loop · 全天研究闭环</title>
+<title>Vera · Continuous Research Loop · 持续研究闭环</title>
 <link rel="stylesheet" href="deck.css">
 <style>
+  body{padding:16px 20px}
+  .slide{height:calc(100vh - 32px);aspect-ratio:auto;padding:30px 56px}
   .loop{flex:1;display:flex;align-items:stretch;gap:0;margin-top:16px;z-index:2}
   .phase{flex:1;display:flex;flex-direction:column;border-radius:18px;overflow:hidden;
          border:1px solid var(--stroke);background:var(--glass);position:relative}
-  .ph-top{text-align:center;padding:20px 14px 10px}
+  .ph-top{height:129px;flex-shrink:0;text-align:center;padding:20px 14px 10px}
   .ph-time{font-size:13px;color:var(--sub);font-weight:700;letter-spacing:2px}
   .ph-icon{font-size:30px;margin:4px 0 2px}
   .ph-title{font-size:22px;font-weight:800}
-  .ph-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 18px 14px}
-  .ph-hero{font-size:20px;font-weight:700;color:var(--ink);text-align:center;line-height:1.35}
+  .ph-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding:42px 18px 14px}
+  .ph-hero{height:32px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--ink);text-align:center;line-height:1.35}
   .ph-stat{font-size:16px;color:var(--sub);text-align:center;line-height:1.6}
-  .ph-thumb{width:100%;max-height:130px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.12);margin-top:4px}
+  .capture-card{width:100%;display:grid;gap:12px;padding:18px 16px;border-radius:10px;
+                background:rgba(7,11,22,.48);border:1px solid rgba(255,255,255,.12)}
+  .capture-row{display:grid;grid-template-columns:74px 1fr;gap:9px;align-items:start}
+  .capture-topic{font-size:13px;font-weight:800;line-height:1.45}
+  .capture-copy{font-size:13px;color:var(--sub);line-height:1.45}
+  .morning .capture-topic{color:var(--orange)}
+  .midday .capture-topic{color:var(--blue)}
+  .close .capture-topic{color:var(--violet)}
+  .close .capture-card{gap:26px;padding:30px 16px}
+  .close .capture-row{align-items:center}
+  .ph-thumb{width:100%;height:170px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.12);margin-top:4px}
   .ph-thumb img{width:100%;height:100%;object-fit:cover;object-position:top left;display:block}
+  .close .ph-thumb{width:228px;height:272px;margin-top:0;background:#fff}
+  .close .ph-thumb img{object-fit:contain;object-position:center top}
   .ph-status{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--sub);margin-top:2px}
   .dot{width:7px;height:7px;border-radius:50%}
   .dot.live{background:#37e6d8;box-shadow:0 0 8px #37e6d8}
@@ -39,23 +53,26 @@
 <div class="slide">
 
   <div class="head">
-    <div class="h-title">Vera <span style="background:linear-gradient(110deg,var(--orange),var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent">Daily Research Loop</span> · 全天研究闭环</div>
-    <div class="h-sub">Vera 不只是一个回答，Vera 是<span style="color:var(--cyan);font-weight:700">全天持续工作的研究员</span></div>
+    <div class="h-title">Vera <span style="background:linear-gradient(110deg,var(--orange),var(--cyan),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent">Continuous Research Loop</span> · 持续研究闭环</div>
+    <div class="h-sub">让研究从一次回答，变成<span style="color:var(--cyan);font-weight:700">全天持续验证</span></div>
   </div>
 
   <div class="loop">
     <!-- Morning -->
     <div class="phase morning">
       <div class="ph-top">
-        <div class="ph-time">09:15</div>
+        <div class="ph-time">09:25</div>
         <div class="ph-icon">&#x1F305;</div>
-        <div class="ph-title">Morning Brief</div>
+        <div class="ph-title">Opening Auction</div>
       </div>
       <div class="ph-body">
-        <div class="ph-hero">发现今日机会</div>
-        <div class="ph-stat">46 涨停 · 7 连板<br>龙头立新能源 4 连板</div>
-        <div class="ph-thumb"><img src="assets/morning-brief.png" alt="Morning Brief"></div>
-        <div class="ph-status"><span class="dot live"></span>Live</div>
+        <div class="ph-hero">集合竞价简报</div>
+        <div class="capture-card" aria-label="集合竞价抓取内容">
+          <div class="capture-row"><div class="capture-topic">市场温度</div><div class="capture-copy">涨停家数 · 连板高度 · 炸板率 · 昨日反馈</div></div>
+          <div class="capture-row"><div class="capture-topic">强势主线</div><div class="capture-copy">最强标的 · 封板资金 · 首封时间 · 热门板块</div></div>
+          <div class="capture-row"><div class="capture-topic">机会信号</div><div class="capture-copy">人气异动 · 多因子扫描 · 自选股命中</div></div>
+          <div class="capture-row"><div class="capture-topic">风险边界</div><div class="capture-copy">高位风险 · 情绪拐点 · 追高陷阱</div></div>
+        </div>
       </div>
     </div>
 
@@ -68,15 +85,18 @@
     <!-- Midday -->
     <div class="phase midday">
       <div class="ph-top">
-        <div class="ph-time">11:30</div>
+        <div class="ph-time">12:00</div>
         <div class="ph-icon">&#x2600;</div>
         <div class="ph-title">Midday Pulse</div>
       </div>
       <div class="ph-body">
-        <div class="ph-hero">验证市场主线</div>
-        <div class="ph-stat">创业板 +5.20%<br>半导体 / AI 算力领涨</div>
-        <div class="ph-thumb"><img src="assets/midday-pulse.png" alt="Midday Pulse"></div>
-        <div class="ph-status"><span class="dot live"></span>Live</div>
+        <div class="ph-hero">午盘快照</div>
+        <div class="capture-card" aria-label="午盘抓取内容">
+          <div class="capture-row"><div class="capture-topic">上午盘面</div><div class="capture-copy">指数涨跌 · 成交额 · 涨跌家数 · 市场风格</div></div>
+          <div class="capture-row"><div class="capture-topic">主线验证</div><div class="capture-copy">盘前预期 vs 上午走势 · 板块强弱 · 龙头表现</div></div>
+          <div class="capture-row"><div class="capture-topic">异动追踪</div><div class="capture-copy">资金流向 · 涨停炸板 · 自选股异动</div></div>
+          <div class="capture-row"><div class="capture-topic">午后观察</div><div class="capture-copy">延续 / 分歧信号 · 回落风险 · 关键观察点</div></div>
+        </div>
       </div>
     </div>
 
@@ -89,15 +109,18 @@
     <!-- Close -->
     <div class="phase close">
       <div class="ph-top">
-        <div class="ph-time">15:00</div>
+        <div class="ph-time">16:00</div>
         <div class="ph-icon">&#x1F307;</div>
         <div class="ph-title">Close Brief</div>
       </div>
       <div class="ph-body">
-        <div class="ph-hero">形成研究闭环</div>
-        <div class="ph-stat">资金复盘 · 板块热力图<br>次日观察清单</div>
-        <div class="ph-thumb"><img src="assets/close-brief.png" alt="Close Brief"></div>
-        <div class="ph-status"><span class="dot partial"></span>Partial</div>
+        <div class="ph-hero">今日市场情绪画像</div>
+        <div class="capture-card" aria-label="盘后市场情绪抓取内容">
+          <div class="capture-row"><div class="capture-topic">情绪画像</div><div class="capture-copy">活跃分化 · 市场温度 · 情绪强弱</div></div>
+          <div class="capture-row"><div class="capture-topic">赚钱效应</div><div class="capture-copy">涨停溢价 · 接力盈亏 · 昨日反馈</div></div>
+          <div class="capture-row"><div class="capture-topic">资金主线</div><div class="capture-copy">大票活跃 · 成交龙头 · 资金聚集</div></div>
+          <div class="capture-row"><div class="capture-topic">主线热度</div><div class="capture-copy">板块主线 · 人气排行 · 热度延续</div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -107,8 +130,8 @@
   </div>
 
   <div class="foot">
-    <div class="slogan">让研究员<span class="accent">始终站在市场节奏之前</span></div>
-    <div class="brand">Vera Daily Research Loop<br>全天候 AI 研究闭环</div>
+    <div class="slogan">让 Vera 成为同事们的<span class="accent">“眼”和“鼻”</span></div>
+    <div class="brand">Vera Continuous Research Loop<br>全天持续验证研究闭环</div>
   </div>
 
 </div>

@@ -91,3 +91,38 @@ body{
   .h-title{font-size:22px}
   .foot{flex-direction:column; align-items:flex-start}
 }
+
+/* 打印优化 - 移除页眉页脚和灰色背景 */
+@media print {
+  @page {
+    size: 1920px 1080px;
+    margin: 0;
+  }
+
+  html, body {
+    width: 1920px;
+    height: 1080px;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: linear-gradient(160deg, #0a0e1a, #111827) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    padding: 0 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .slide {
+    width: 1280px;
+    height: 720px;
+    page-break-after: always;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+}

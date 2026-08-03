@@ -1,0 +1,178 @@
+diff --git a/app/auth.py b/app/auth.py
+--- a/app/auth.py
++++ b/app/auth.py
+@@ -3,13 +3,17 @@
+ 
+ import bcrypt
+ import jwt
+-from fastapi import Depends, Request, HTTPException
++from fastapi import Request, HTTPException
++from sqlalchemy.exc import TimeoutError as SQLAlchemyTimeoutError
+ from sqlalchemy.orm import Session
+ 
+ from app.config import settings
+-from app.database import get_db, User
++from app.database import SessionLocal, User
+ 
+ 
++_DB_UNAVAILABLE_DETAIL = "认证服务资源暂时不可用，请稍后重试"
++
++
+ def hash_password(password: str) -> str:
+     """Hash a password with bcrypt."""
+     salt = bcrypt.gensalt()
+@@ -75,24 +79,42 @@
+     return db.query(User).filter(User.id == user_id, User.is_active == True).first()
+ 
+ 
+-def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
+-    """FastAPI dependency: extract and validate current user from auth tokens."""
++def get_current_user(request: Request) -> User:
++    """Authenticate in a short DB scope that ends before route work starts."""
+     tokens = _candidate_tokens(request)
+     if not tokens:
+         raise HTTPException(status_code=401, detail="未登录，请先登录")
+ 
+-    for token in tokens:
+-        user = _user_from_token(token, db)
+-        if user:
+-            return user
++    try:
++        with SessionLocal() as db:
++            for token in tokens:
++                user = _user_from_token(token, db)
++                if user:
++                    db.expunge(user)
++                    return user
++    except SQLAlchemyTimeoutError as exc:
++        raise HTTPException(
++            status_code=503,
++            detail=_DB_UNAVAILABLE_DETAIL,
++            headers={"Retry-After": "5"},
++        ) from exc
+ 
+     raise HTTPException(status_code=401, detail="登录已过期，请重新登录")
+ 
+ 
+-def get_optional_user(request: Request, db: Session = Depends(get_db)) -> Optional[User]:
+-    """FastAPI dependency: get current user or None (no error if not logged in)."""
+-    for token in _candidate_tokens(request):
+-        user = _user_from_token(token, db)
+-        if user:
+-            return user
++def get_optional_user(request: Request) -> Optional[User]:
++    """Resolve an optional user without holding a DB connection in the route."""
++    try:
++        with SessionLocal() as db:
++            for token in _candidate_tokens(request):
++                user = _user_from_token(token, db)
++                if user:
++                    db.expunge(user)
++                    return user
++    except SQLAlchemyTimeoutError as exc:
++        raise HTTPException(
++            status_code=503,
++            detail=_DB_UNAVAILABLE_DETAIL,
++            headers={"Retry-After": "5"},
++        ) from exc
+     return None
+diff --git a/app/routers/api.py b/app/routers/api.py
+--- a/app/routers/api.py
++++ b/app/routers/api.py
+@@ -1,6 +1,7 @@
+ from fastapi import APIRouter, Depends, HTTPException, Request
+ from fastapi.responses import JSONResponse, Response, StreamingResponse
+ from pydantic import BaseModel
++from sqlalchemy.exc import TimeoutError as SQLAlchemyTimeoutError
+ from sqlalchemy.orm import Session
+ from datetime import datetime
+ import html as html_lib
+@@ -22,7 +23,14 @@
+     get_current_user,
+     get_optional_user,
+ )
+-from app.database import get_db, User, Usage, check_usage_allowed, get_today_usage_count
++from app.database import (
++    get_db,
++    SessionLocal,
++    User,
++    Usage,
++    check_usage_allowed,
++    get_today_usage_count,
++)
+ from app.search import unified_search, format_search_results
+ from app.llm import generate_analysis, generate_analysis_stream, cache_get, cache_set
+ from app.skills import get_skill, get_skill_prompt, normalize_skill_type
+@@ -693,12 +701,36 @@
+ 
+ 
+ # ---- Analysis endpoint ----
++
++def _analysis_usage_status(user: User) -> tuple[bool, int, int | None]:
++    """Read quota in a short transaction before external analysis I/O."""
++    try:
++        with SessionLocal() as db:
++            return check_usage_allowed(db, user.id, user.tier)
++    except SQLAlchemyTimeoutError as exc:
++        raise HTTPException(
++            status_code=503,
++            detail="分析服务资源暂时不可用，请稍后重试",
++            headers={"Retry-After": "5"},
++        ) from exc
++
++
++def _record_analysis_usage(user_id: int, skill_type: str, query: str) -> None:
++    """Persist usage after analysis without spanning provider or LLM awaits."""
++    try:
++        with SessionLocal.begin() as db:
++            db.add(Usage(user_id=user_id, skill_type=skill_type, query=query[:500]))
++    except SQLAlchemyTimeoutError as exc:
++        raise HTTPException(
++            status_code=503,
++            detail="分析服务资源暂时不可用，请稍后重试",
++            headers={"Retry-After": "5"},
++        ) from exc
+ 
+ @router.post("/analyze")
+ async def analyze(
+     req: AnalyzeRequest,
+     user: User = Depends(get_current_user),
+-    db: Session = Depends(get_db),
+ ):
+     # Validate skill
+     req.skill_type = normalize_skill_type(req.skill_type)
+@@ -707,7 +739,7 @@
+         raise HTTPException(status_code=400, detail="未知的分析技能")
+ 
+     # Check usage
+-    allowed, used, limit = check_usage_allowed(db, user.id, user.tier)
++    allowed, used, limit = _analysis_usage_status(user)
+     if not allowed:
+         raise HTTPException(
+             status_code=429,
+@@ -735,9 +767,7 @@
+             except Exception:
+                 pass
+         # 记录用量
+-        usage = Usage(user_id=user.id, skill_type=req.skill_type, query=req.query[:500])
+-        db.add(usage)
+-        db.commit()
++        _record_analysis_usage(user.id, req.skill_type, req.query)
+         return _with_trust_contract(_attach_final_dispatch_trace({**cached, "usage_used": used + 1, "usage_limit": limit, "cached": True}, cached_trace))
+ 
+     # Search for data (if skill requires it)
+@@ -1090,13 +1120,7 @@
+             ]
+ 
+     # Record usage
+-    usage = Usage(
+-        user_id=user.id,
+-        skill_type=req.skill_type,
+-        query=req.query[:500],
+-    )
+-    db.add(usage)
+-    db.commit()
++    _record_analysis_usage(user.id, req.skill_type, req.query)
+ 
+     matched_sources = [s for s in sources if _source_matches_query(s, req.query)]
+     report_as_of_sources = matched_sources if matched_sources else []

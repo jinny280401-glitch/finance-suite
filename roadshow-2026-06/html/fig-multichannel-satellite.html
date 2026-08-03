@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多渠道部署</title>
+<link rel="stylesheet" href="deck.css">
+<style>
+  :root{
+    --bg0:#070b16;--ink:#f4f7ff;--sub:#9fb0d0;
+    --cyan:#37e6d8;--blue:#4ea8ff;--violet:#9b6bff;
+    --orange:#ffb056;--stroke:rgba(255,255,255,.12);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg0);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei",sans-serif;padding:0;display:block;overflow:hidden}
+
+  .slide{
+    width:100vw;height:100vh;min-height:620px;padding:6vh 4vw;border-radius:0;
+    display:flex;flex-direction:column;overflow:hidden;position:relative;
+    background:
+      radial-gradient(900px 560px at 50% 42%,rgba(78,168,255,.10),transparent 60%),
+      var(--bg0);
+  }
+
+  .header{margin-bottom:1vh; text-align:center; z-index:3}
+  .eyebrow{font-size:14px;color:var(--cyan);font-weight:700;letter-spacing:5px;margin-bottom:6px}
+  h1{font-size:clamp(32px,3.6vw,48px);font-weight:800;line-height:1.12;letter-spacing:1px}
+  h1 .hl{background:linear-gradient(100deg,var(--cyan),var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{font-size:16px;color:var(--sub);margin-top:6px;letter-spacing:.5px}
+
+  /* ---- 卫星图舞台 ---- */
+  .orbit-stage{
+    flex:1; position:relative; min-height:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  /* 轨道环 */
+  .orbit-ring{
+    position:absolute; border:1px dashed rgba(255,255,255,.14); border-radius:50%;
+    top:50%; left:50%; transform:translate(-50%,-50%);
+  }
+  .orbit-ring.r1{width:46vw; height:46vw; max-width:640px; max-height:640px}
+
+  /* 中心核心：core 单独绝对定位，圆心与舞台中心精确重合，箭头才能对齐发射 */
+  .core-wrap{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    z-index:5; width:150px; height:150px;
+  }
+  .core{
+    position:relative; width:150px; height:150px; border-radius:50%;
+    overflow:hidden;
+    background:radial-gradient(circle at 40% 32%, rgba(78,168,255,.28), rgba(20,26,46,.92) 70%);
+    border:1.5px solid rgba(120,180,255,.55);
+    box-shadow:0 0 60px rgba(78,168,255,.35), inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .core img{width:100%; height:100%; object-fit:cover; object-position:center 15%; display:block}
+  .core-label{
+    position:absolute; top:calc(100% + 18px); left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    width:380px; max-width:380px; white-space:nowrap;
+  }
+  .core-label .core-eyebrow{font-size:13px; font-weight:700; letter-spacing:2.5px; color:var(--cyan); margin-bottom:8px}
+  .core-label .core-name{font-size:32px; font-weight:850; letter-spacing:.8px; color:#fff; line-height:1.3; margin-bottom:4px}
+  .core-label .core-sub{font-size:14px; color:var(--sub); font-weight:600; line-height:1.5; padding:0 20px}
+
+  /* 卫星节点 */
+  .sat{
+    position:absolute; z-index:4;
+    width:260px; border-radius:18px; padding:22px 26px;
+    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+    border:1px solid var(--stroke);
+    box-shadow:0 12px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .sat::before{content:"";position:absolute;top:-1px;left:20px;right:20px;height:3px;border-radius:2px}
+  .sat .sat-name{font-size:22px;font-weight:750;color:var(--ink);line-height:1.2}
+  .sat .sat-desc{font-size:15px;color:var(--sub);line-height:1.5;margin-top:8px}
+
+  /* 连接线 */
+  .link{position:absolute; z-index:1; background:rgba(255,255,255,.14); transform-origin:0 0}
+
+  /* 从中心到四角的箭头连接线 */
+  .arrow{
+    position:absolute; z-index:2;
+    width:2px; height:0;
+    background:linear-gradient(180deg, transparent, var(--cyan) 20%, #ff5757 100%);
+    transform-origin:center top;
+  }
+  .arrow::after{
+    content:""; position:absolute; bottom:-8px; left:50%;
+    transform:translateX(-50%);
+    width:0; height:0;
+    border-left:5px solid transparent;
+    border-right:5px solid transparent;
+    border-top:10px solid #ff5757;
+  }
+  /* 四个方向箭头 */
+  .arrow.to-tl{top:50%; left:50%; height:28%; transform:translate(-50%,-100%) rotate(-45deg)}
+  .arrow.to-tr{top:50%; left:50%; height:28%; transform:translate(-50%,-100%) rotate(45deg)}
+  .arrow.to-bl{top:50%; left:50%; height:28%; transform:translate(-50%,0%) rotate(-135deg)}
+  .arrow.to-br{top:50%; left:50%; height:28%; transform:translate(-50%,0%) rotate(135deg)}
+
+  /* 四个角 */
+  .sat.pos-tl{top:4%; left:5%}
+  .sat.pos-tr{top:4%; right:5%}
+  .sat.pos-br{bottom:4%; right:5%}
+  .sat.pos-bl{bottom:4%; left:5%}
+
+  .sat.hero{
+    border:1px solid rgba(55,230,216,.4);
+    background:linear-gradient(180deg,rgba(55,230,216,.10),rgba(255,255,255,.02));
+    box-shadow:0 12px 30px rgba(0,0,0,.4), 0 0 24px rgba(55,230,216,.18);
+  }
+  .hero-tag{
+    display:inline-block; font-size:11px; font-weight:700; letter-spacing:.5px;
+    color:var(--cyan); background:rgba(55,230,216,.14); border:1px solid rgba(55,230,216,.4);
+    padding:2px 9px; border-radius:6px; margin-bottom:8px;
+  }
+
+  .sat.c1::before{background:var(--blue)}
+  .sat.c2::before{background:var(--violet)}
+  .sat.c3::before{background:var(--orange)}
+  .sat.c4::before{background:var(--cyan)}
+
+  .hero-tag{
+    display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:1px;
+    color:var(--cyan); padding:3px 10px; border-radius:999px;
+    background:rgba(55,230,216,.14); border:1px solid rgba(55,230,216,.4); margin-bottom:8px;
+  }
+
+  .foot{
+    display:flex;justify-content:center;align-items:center;gap:20px;
+    margin-top:1vh;padding-top:1vh;
+    font-size:17px;font-weight:700; text-align:center; z-index:3;
+  }
+  .foot .accent{color:var(--cyan)}
+
+  @media(max-width:900px){
+    .orbit-stage{transform:scale(.72)}
+  }
+</style>
+</head>
+<body>
+<main class="slide">
+
+  <div class="header">
+    <div class="eyebrow">FUTURE · MULTI-CHANNEL DEPLOYMENT</div>
+    <h1><span class="hl">多场景触达</span>，一套可信内核</h1>
+    <div class="sub">Vera 的能力不锁在一个界面里，随场景延伸到投资经理真正在用的入口</div>
+  </div>
+
+  <div class="orbit-stage">
+
+    <div class="orbit-ring r1"></div>
+
+    <!-- 中心核心：Vera 头像 -->
+    <div class="core-wrap">
+      <div class="core">
+        <img src="assets/vera-portrait-online.png" alt="Vera">
+      </div>
+      <div class="core-label">
+        <div class="core-eyebrow">VERA CORE</div>
+        <div class="core-name">信任阀门 + 研究工作流引擎</div>
+        <div class="core-sub">可信研究能力中枢</div>
+      </div>
+    </div>
+
+    <!-- 四个方向箭头：从中心向四角辐射 -->
+    <div class="arrow to-tl"></div>
+    <div class="arrow to-tr"></div>
+    <div class="arrow to-bl"></div>
+    <div class="arrow to-br"></div>
+
+    <!-- 左上角强调：华福证券 · 同舟系统 -->
+    <div class="sat pos-tl hero c0">
+      <span class="hero-tag">计划嵌入</span>
+      <div class="sat-name">华福证券 · 同舟系统</div>
+      <div class="sat-desc">MCP + REST 双通道，深度嵌入投研平台</div>
+    </div>
+
+    <!-- 右上角：飞书 -->
+    <div class="sat pos-tr c1">
+      <div class="sat-name">飞书</div>
+      <div class="sat-desc">日常办公场景快速调用</div>
+    </div>
+
+    <!-- 右下角：企业微信 + 微信 Bot 合并 -->
+    <div class="sat pos-br c2">
+      <div class="sat-name">企业微信 · 微信 Bot</div>
+      <div class="sat-desc">财富经理展业入口</div>
+    </div>
+
+    <!-- 左下角：网页工作台 -->
+    <div class="sat pos-bl c4">
+      <div class="sat-name">网页工作台</div>
+      <div class="sat-desc">研究人员完整工作空间</div>
+    </div>
+
+  </div>
+
+  <div class="foot">
+    <div style="font-size:19px; font-weight:800; margin-bottom:6px">入口可以变化，可信内核不变</div>
+    <div style="font-size:14px; color:var(--sub); font-weight:600">一套可信 AI 内核，连接财富、机构与企业协作场景</div>
+  </div>
+
+</main>
+</body>
+</html>

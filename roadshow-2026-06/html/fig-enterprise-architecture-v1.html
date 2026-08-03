@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>商业模式与机构落地路径</title>
+<title>业务验证与行业开放</title>
 <link rel="stylesheet" href="deck.css">
 <style>
   :root{
@@ -12,10 +12,10 @@
     --orange:#ffb056;--stroke:rgba(255,255,255,.12);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg0);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei",sans-serif}
+  body{background:var(--bg0);color:var(--ink);font-family:"PingFang SC","Microsoft YaHei",sans-serif;padding:0;display:block;overflow:hidden}
 
   .slide{
-    width:100vw;height:100vh;min-height:620px;padding:6vh 6vw 5vh;
+    width:100vw;height:100vh;min-height:620px;padding:5vh 2.5vw 3vh;border-radius:0;
     display:flex;flex-direction:column;overflow:hidden;
     background:
       radial-gradient(860px 480px at 18% 8%,rgba(78,168,255,.14),transparent 55%),
@@ -23,82 +23,168 @@
       var(--bg0);
   }
 
-  .header{margin-bottom:5vh}
-  .eyebrow{font-size:13px;color:var(--cyan);font-weight:700;letter-spacing:5px;margin-bottom:10px}
-  h1{font-size:clamp(32px,3.6vw,52px);font-weight:800;line-height:1.18;letter-spacing:1px}
+  .header{margin-bottom:2.2vh}
+  .eyebrow{font-size:14px;color:var(--cyan);font-weight:700;letter-spacing:5px;margin-bottom:6px}
+  h1{font-size:clamp(32px,3.4vw,46px);font-weight:800;line-height:1.16;letter-spacing:.5px}
   h1 .hl{background:linear-gradient(100deg,var(--cyan),var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .sub{font-size:17px;color:var(--sub);margin-top:8px;letter-spacing:.5px}
+  .sub{font-size:16px;color:var(--sub);margin-top:5px;letter-spacing:.5px}
 
-  /* 双栏 */
-  .columns{display:grid;grid-template-columns:1fr 1fr;gap:26px;flex:1}
+  /* 三阶段流 */
+  .flow{display:grid;grid-template-columns:0.92fr auto 1.22fr auto 0.92fr;gap:20px;flex:1;min-height:0;align-items:start}
 
-  .col{
-    border-radius:16px;padding:32px 30px 28px;
-    display:flex;flex-direction:column;gap:20px;
-    position:relative;overflow:hidden;
+  .stage{
+    display:flex;flex-direction:column;gap:14px;
+    position:relative;min-height:0;
   }
-  .col::before{
-    content:"";position:absolute;top:0;left:0;right:0;height:4px;
-    border-radius:4px 4px 0 0;
+
+  .stage .phase-tag{
+    font-size:13px;font-weight:700;letter-spacing:2.5px;
+    padding:5px 12px;border-radius:6px;display:inline-block;align-self:flex-start;
   }
-  .col.phase1{
-    background:rgba(255,255,255,.04);
+  .stage.today .phase-tag{
+    color:var(--orange);background:rgba(255,176,86,.10);border:1px solid rgba(255,176,86,.25);
+  }
+  .stage.core .phase-tag{
+    color:var(--cyan);background:rgba(55,230,216,.10);border:1px solid rgba(55,230,216,.28);
+  }
+  .stage.next .phase-tag{
+    color:var(--violet);background:rgba(155,107,255,.10);border:1px solid rgba(155,107,255,.25);
+  }
+
+  .stage .stage-title{
+    font-size:clamp(19px,1.9vw,24px);font-weight:800;line-height:1.3;color:var(--ink);
+  }
+  .stage-title--core{
+    font-size:clamp(23px,2.4vw,29px);
+    background:linear-gradient(100deg,var(--cyan),var(--blue));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+
+  .stage.core{
+    padding:18px 20px 20px;border-radius:18px;
+    background:linear-gradient(180deg,rgba(55,230,216,.06),rgba(78,168,255,.03));
+    border:1px solid rgba(55,230,216,.18);
+  }
+
+  /* 业务卡片 */
+  .biz-card{
+    padding:16px 16px;border-radius:14px;
     border:1px solid var(--stroke);
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+    display:flex;flex-direction:column;gap:9px;
   }
-  .col.phase1::before{background:linear-gradient(90deg,var(--orange),#ff718b)}
-  .col.phase2{
+  .biz-card .card-label{
+    font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  }
+  .biz-card.wealth .card-label{color:var(--blue)}
+  .biz-card.institutional .card-label{color:var(--violet)}
+
+  .biz-card .card-title{
+    font-size:18px;font-weight:800;line-height:1.3;
+  }
+  .biz-card .card-pain{
+    font-size:13px;line-height:1.55;color:var(--sub);
+    padding:8px 10px;border-radius:8px;
     background:rgba(255,255,255,.04);
+  }
+  .biz-card.wealth .card-pain{border-left:2px solid var(--blue)}
+  .biz-card.institutional .card-pain{border-left:2px solid var(--violet)}
+
+  .biz-card .card-items{display:flex;flex-direction:column;gap:6px}
+  .biz-card .card-item{
+    font-size:14px;line-height:1.5;color:var(--ink);
+    display:flex;align-items:flex-start;gap:8px;
+  }
+  .biz-card .card-item::before{
+    content:"·";flex:0 0 auto;color:var(--blue);font-weight:700;font-size:17px;
+  }
+  .biz-card.institutional .card-item::before{color:var(--violet)}
+
+  /* 分割线 */
+  .divider{
+    display:flex;align-items:center;justify-content:center;
+    height:100%;min-height:200px;
+  }
+  .divider .arrow-line{
+    width:32px;height:2px;
+    background:linear-gradient(90deg,rgba(255,255,255,.12),rgba(78,168,255,.35));
+    position:relative;
+  }
+  .divider .arrow-line::after{
+    content:"→";position:absolute;right:-16px;top:-12px;
+    font-size:18px;color:var(--blue);
+  }
+
+  /* 中间：能力飞轮（护城河） */
+  .flywheel{display:flex;flex-direction:column;gap:0}
+  .flywheel-item{
+    display:flex;gap:12px;position:relative;padding-bottom:18px;
+  }
+  .flywheel-item:last-child{padding-bottom:0}
+  .flywheel-item:not(:last-child)::after{
+    content:"";position:absolute;left:15px;top:32px;bottom:0;width:2px;
+    background:linear-gradient(180deg,rgba(55,230,216,.45),rgba(55,230,216,.10));
+  }
+  .fw-icon{
+    flex:0 0 32px;width:32px;height:32px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:800;position:relative;z-index:1;
+    background:rgba(55,230,216,.14);color:var(--cyan);
+    border:1px solid rgba(55,230,216,.35);
+  }
+  .fw-body{display:flex;flex-direction:column;gap:2px;padding-top:2px}
+  .fw-title{font-size:16px;font-weight:800;line-height:1.4;color:var(--ink)}
+  .fw-desc{font-size:13px;color:var(--sub);line-height:1.5}
+  .flywheel-item.final{
+    margin-top:4px;padding:12px 14px 12px 0;
+  }
+  .flywheel-item.final .fw-icon{
+    width:38px;height:38px;flex:0 0 38px;font-size:16px;
+    background:rgba(55,230,216,.28);border-color:rgba(55,230,216,.6);
+  }
+  .flywheel-item.final .fw-title{color:var(--cyan);font-size:18px}
+  .flywheel-item.final .fw-desc{color:var(--ink);opacity:.85}
+
+  .core-note{
+    margin-top:6px;font-size:13px;line-height:1.6;color:var(--sub);
+    padding:10px 12px;border-radius:8px;background:rgba(55,230,216,.06);
+    border:1px solid rgba(55,230,216,.18);
+  }
+
+  /* Next 阶段列表 */
+  .next-list{display:flex;flex-direction:column;gap:10px}
+  .next-list .next-item{
+    display:flex;align-items:flex-start;gap:11px;
+    padding:12px 14px;border-radius:10px;
     border:1px solid var(--stroke);
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
   }
-  .col.phase2::before{background:linear-gradient(90deg,var(--violet),var(--blue))}
+  .next-item .item-icon{
+    flex:0 0 30px;width:30px;height:30px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:700;
+  }
+  .next-item .item-icon.platform{background:rgba(78,168,255,.15);color:var(--blue)}
+  .next-item .item-icon.ecosystem{background:rgba(155,107,255,.15);color:var(--violet)}
+  .next-item .item-icon.trust{background:rgba(55,230,216,.15);color:var(--cyan)}
+  .next-item .item-icon.open{background:rgba(255,176,86,.15);color:var(--orange)}
 
-  .col .phase-label{
-    font-size:12px;font-weight:700;letter-spacing:3px;
-  }
-  .col.phase1 .phase-label{color:var(--orange)}
-  .col.phase2 .phase-label{color:var(--violet)}
-
-  .col .col-title{
-    font-size:26px;font-weight:800;line-height:1.2;
-  }
-  .col.phase1 .col-title{color:var(--ink)}
-  .col.phase2 .col-title{color:var(--ink)}
-
-  .col .points{display:flex;flex-direction:column;gap:14px}
-  .col .point{display:flex;align-items:flex-start;gap:10px}
-  .col .point .marker{
-    flex:0 0 6px;width:6px;height:6px;border-radius:50%;margin-top:8px;
-  }
-  .col.phase1 .point .marker{background:var(--orange)}
-  .col.phase2 .point .marker{background:var(--violet)}
-  .col .point .text{font-size:16px;line-height:1.5;color:var(--ink)}
-  .col .point .text strong{font-weight:700}
-  .col .point .text .note{color:var(--sub);font-size:14px;display:block}
-
-  .col .highlight-box{
-    padding:12px 16px;border-radius:10px;font-size:14px;line-height:1.5;
-    margin-top:auto;
-  }
-  .col.phase1 .highlight-box{
-    background:rgba(255,176,86,.08);border-left:3px solid var(--orange);color:#e8c98e;
-  }
-  .col.phase2 .highlight-box{
-    background:rgba(155,107,255,.08);border-left:3px solid var(--violet);color:#c8b8ee;
-  }
+  .next-item .item-body{display:flex;flex-direction:column;gap:3px}
+  .next-item .item-title{font-size:16px;font-weight:700;line-height:1.4}
+  .next-item .item-desc{font-size:13px;color:var(--sub);line-height:1.5}
 
   .foot{
     display:flex;justify-content:space-between;align-items:center;gap:20px;
-    margin-top:20px;padding-top:18px;border-top:1px solid var(--stroke);
-    font-size:clamp(17px,2vw,24px);font-weight:700;
+    margin-top:10px;padding-top:8px;border-top:1px solid var(--stroke);flex:0 0 30px;
+    font-size:16px;font-weight:700;
   }
-  .foot .accent{color:var(--orange)}
-  .foot small{font-size:13px;color:var(--sub);font-weight:500}
+  .foot .accent{color:var(--cyan)}
+  .foot small{font-size:12px;color:var(--sub);font-weight:500}
 
   @media(max-width:860px){
-    .columns{grid-template-columns:1fr}
-    .slide{min-height:900px}
-    .col{padding:22px 20px}
-    .col-title{font-size:22px}
+    .flow{grid-template-columns:1fr;gap:20px}
+    .slide{min-height:1200px}
+    .divider{display:none}
   }
 </style>
 </head>
@@ -106,68 +192,134 @@
 <main class="slide">
 
   <div class="header">
-    <div class="eyebrow">BUSINESS MODEL</div>
-    <h1>从机构场景落地，<span class="hl">构建可信研究基础设施</span></h1>
-    <div class="sub">以机构投研场景为切入点，逐步构建证券行业可信 AI 基础设施</div>
+    <div class="eyebrow">GO-TO-MARKET</div>
+    <h1>从业务验证到行业基础设施，构建<span class="hl">可信 AI 研究能力</span></h1>
+    <div class="sub">从内部业务场景验证价值，向证券行业开放可信研究能力</div>
   </div>
 
-  <section class="columns">
+  <section class="flow">
 
-    <!-- 阶段一 -->
-    <div class="col phase1">
-      <div class="phase-label">Today</div>
-      <div class="col-title">机构场景验证</div>
+    <!-- 阶段一：Today — 业务场景验证 -->
+    <div class="stage today">
+      <div class="phase-tag">TODAY</div>
+      <div class="stage-title">业务场景验证</div>
 
-      <div class="points">
-        <div class="point">
-          <div class="marker"></div>
-          <div class="text"><strong>同舟平台嫁接</strong><span class="note">投研平台集成 Vera 引擎，作为 AI 能力层嵌入</span></div>
-        </div>
-        <div class="point">
-          <div class="marker"></div>
-          <div class="text"><strong>研究员智能助手</strong><span class="note">公司拜访 · 行业研究 · 知识沉淀，覆盖分析师核心工作流</span></div>
-        </div>
-        <div class="point">
-          <div class="marker"></div>
-          <div class="text"><strong>商业验证</strong><span class="note">机构授权 SaaS + 项目合作 + 场景定制</span></div>
+      <div class="biz-card wealth">
+        <div class="card-label">WEALTH · 财富</div>
+        <div class="card-title">财富业务助手</div>
+        <div class="card-pain">解决财富经理"想用 AI 又怕失控"的问题</div>
+        <div class="card-items">
+          <div class="card-item">客户沟通材料快速生成</div>
+          <div class="card-item">产品解释与风险提示</div>
+          <div class="card-item">市场观点辅助形成</div>
         </div>
       </div>
 
-      <div class="highlight-box">验证价值 · 形成案例 · 完成 PMF</div>
+      <div class="biz-card institutional">
+        <div class="card-label">INSTITUTIONAL · 机构</div>
+        <div class="card-title">机构研究助手</div>
+        <div class="card-pain">解决研究人员"效率提升与研究可信"的问题</div>
+        <div class="card-items">
+          <div class="card-item">宏观与行业研究</div>
+          <div class="card-item">公司分析与估值</div>
+          <div class="card-item">投资组合辅助决策</div>
+        </div>
+      </div>
     </div>
 
-    <!-- 阶段二 -->
-    <div class="col phase2">
-      <div class="phase-label">Next</div>
-      <div class="col-title">行业基础设施构建</div>
+    <!-- 分割线 -->
+    <div class="divider">
+      <div class="arrow-line"></div>
+    </div>
 
-      <div class="points">
-        <div class="point">
-          <div class="marker"></div>
-          <div class="text"><strong>平台授权</strong><span class="note">向证券机构开放可信 AI 研究能力，形成行业级基础设施</span></div>
+    <!-- 阶段二：Core — Vera 能力飞轮（护城河） -->
+    <div class="stage core">
+      <div class="phase-tag">CORE · 护城河</div>
+      <div class="stage-title stage-title--core">Vera 可信能力中枢</div>
+
+      <div class="flywheel">
+        <div class="flywheel-item">
+          <div class="fw-icon">◈</div>
+          <div class="fw-body">
+            <div class="fw-title">Research Runtime</div>
+            <div class="fw-desc">AI研究工作流引擎</div>
+            <div class="fw-desc" style="font-size:11px; margin-top:4px; line-height:1.4">连接数据、工具与 Agent，让 AI 按金融研究流程执行任务</div>
+          </div>
         </div>
-        <div class="point">
-          <div class="marker"></div>
-          <div class="text"><strong>Agent / Skill 生态</strong><span class="note">第三方业务能力扩展，机构接入自有数据源与研究流程</span></div>
+        <div class="flywheel-item">
+          <div class="fw-icon">✓</div>
+          <div class="fw-body">
+            <div class="fw-title">Trust Gate</div>
+            <div class="fw-desc">回答之前验证证据边界</div>
+            <div class="fw-desc" style="font-size:11px; margin-top:4px; line-height:1.4">来源可追溯 · 结论可验证 · 风险可控制</div>
+          </div>
         </div>
-        <div class="point">
-          <div class="marker"></div>
-          <div class="text"><strong>Trust Gate 标准</strong><span class="note">推动金融 Agent 应用规范，让可信研究成为行业默认范式</span></div>
+        <div class="flywheel-item">
+          <div class="fw-icon">⚡</div>
+          <div class="fw-body">
+            <div class="fw-title">Research Agent</div>
+            <div class="fw-desc">场景化智能体自主编排任务</div>
+          </div>
         </div>
-        <div class="point">
-          <div class="marker"></div>
-          <div class="text"><strong>行业能力开放</strong><span class="note">规模复制，构建证券行业可信 AI 基础设施</span></div>
+        <div class="flywheel-item final">
+          <div class="fw-icon">▣</div>
+          <div class="fw-body">
+            <div class="fw-title">企业级能力沉淀</div>
+            <div class="fw-desc">知识资产结构化，降低人员流动风险</div>
+          </div>
         </div>
       </div>
 
-      <div class="highlight-box">平台授权 · Agent 生态 · 能力开放 · 规模复制</div>
+      <div class="core-note">财富 + 机构真实业务反复打磨，越用越可信</div>
+    </div>
+
+    <!-- 分割线 -->
+    <div class="divider">
+      <div class="arrow-line"></div>
+    </div>
+
+    <!-- 阶段三：Next — 行业基础设施构建 -->
+    <div class="stage next">
+      <div class="phase-tag">NEXT</div>
+      <div class="stage-title">行业开放路径</div>
+
+      <div class="next-list">
+        <div class="next-item">
+          <div class="item-icon platform">⊞</div>
+          <div class="item-body">
+            <div class="item-title">平台授权</div>
+            <div class="item-desc">经证券业务真实验证，以 SDK / API 形态向金融机构输出</div>
+          </div>
+        </div>
+        <div class="next-item">
+          <div class="item-icon ecosystem">⚙</div>
+          <div class="item-body">
+            <div class="item-title">Agent · Skill 生态</div>
+            <div class="item-desc">第三方开发可信金融 Skills，按场景编排 Agent 工作流</div>
+          </div>
+        </div>
+        <div class="next-item">
+          <div class="item-icon trust">✓</div>
+          <div class="item-body">
+            <div class="item-title">Trust Gate 标准</div>
+            <div class="item-desc">先验证再回答，向合作平台授权治理规范与验证能力</div>
+          </div>
+        </div>
+        <div class="next-item">
+          <div class="item-icon open">↗</div>
+          <div class="item-body">
+            <div class="item-title">行业能力开放</div>
+            <div class="item-desc">研究工具、数据验证、模型评估能力向行业生态开放</div>
+          </div>
+        </div>
+      </div>
     </div>
 
   </section>
 
   <div class="foot">
-    <div>从机构应用，<span class="accent">走向行业基础设施</span></div>
-    <small>不展示未经验证的商业事实或收入数字</small>
+    <div>Vera 不从概念出发，而从真实业务中验证价值；在金融流程中沉淀可信能力，<span class="accent">最终成为证券行业 AI 基础设施</span></div>
+    <small>财富+机构双场景验证 → 能力飞轮沉淀 → 行业规模复制</small>
   </div>
 
 </main>

@@ -1,0 +1,94 @@
+diff --git a/app/routers/api.py b/app/routers/api.py
+--- a/app/routers/api.py
++++ b/app/routers/api.py
+@@ -702,7 +702,24 @@
+ 
+ # ---- Analysis endpoint ----
+ 
+-def _analysis_usage_status(user: User) -> tuple[bool, int, int | None]:
++def _log_analysis_pool(trace_id: str, phase: str) -> None:
++    """Log pool state without exposing query text or user identity."""
++    bind = SessionLocal.kw.get("bind")
++    pool = getattr(bind, "pool", None)
++    if pool is None:
++        logger.warning("analysis_db_pool trace=%s phase=%s state=unavailable", trace_id, phase)
++        return
++    logger.info(
++        "analysis_db_pool trace=%s phase=%s checked_out=%s size=%s overflow=%s",
++        trace_id,
++        phase,
++        pool.checkedout(),
++        pool.size(),
++        pool.overflow(),
++    )
++
++
++def _analysis_usage_status(user: User, trace_id: str) -> tuple[bool, int, int | None]:
+     """Read quota in a short transaction before external analysis I/O."""
+     try:
+         with SessionLocal() as db:
+@@ -713,9 +730,11 @@
+             detail="分析服务资源暂时不可用，请稍后重试",
+             headers={"Retry-After": "5"},
+         ) from exc
++    finally:
++        _log_analysis_pool(trace_id, "quota_released")
+ 
+ 
+-def _record_analysis_usage(user_id: int, skill_type: str, query: str) -> None:
++def _record_analysis_usage(user_id: int, skill_type: str, query: str, trace_id: str) -> None:
+     """Persist usage after analysis without spanning provider or LLM awaits."""
+     try:
+         with SessionLocal.begin() as db:
+@@ -726,6 +745,8 @@
+             detail="分析服务资源暂时不可用，请稍后重试",
+             headers={"Retry-After": "5"},
+         ) from exc
++    finally:
++        _log_analysis_pool(trace_id, "usage_write_released")
+ 
+ @router.post("/analyze")
+ async def analyze(
+@@ -738,8 +759,10 @@
+     if not skill:
+         raise HTTPException(status_code=400, detail="未知的分析技能")
+ 
++    analysis_trace_id = os.urandom(8).hex()
++
+     # Check usage
+-    allowed, used, limit = _analysis_usage_status(user)
++    allowed, used, limit = _analysis_usage_status(user, analysis_trace_id)
+     if not allowed:
+         raise HTTPException(
+             status_code=429,
+@@ -767,7 +790,7 @@
+             except Exception:
+                 pass
+         # 记录用量
+-        _record_analysis_usage(user.id, req.skill_type, req.query)
++        _record_analysis_usage(user.id, req.skill_type, req.query, analysis_trace_id)
+         return _with_trust_contract(_attach_final_dispatch_trace({**cached, "usage_used": used + 1, "usage_limit": limit, "cached": True}, cached_trace))
+ 
+     # Search for data (if skill requires it)
+@@ -1024,7 +1047,11 @@
+ 
+     # Call LLM
+     system_prompt = get_skill_prompt(req.skill_type)
+-    result = await generate_analysis(system_prompt, user_content, search_results_text)
++    _log_analysis_pool(analysis_trace_id, "before_llm")
++    try:
++        result = await generate_analysis(system_prompt, user_content, search_results_text)
++    finally:
++        _log_analysis_pool(analysis_trace_id, "after_llm")
+     if req.skill_type == "macro" and isinstance(macro_event_facts, dict):
+         event_summary = None
+         rejected_reason = _macro_consistency_conflict(result, macro_event_facts)
+@@ -1120,7 +1147,7 @@
+             ]
+ 
+     # Record usage
+-    _record_analysis_usage(user.id, req.skill_type, req.query)
++    _record_analysis_usage(user.id, req.skill_type, req.query, analysis_trace_id)
+ 
+     matched_sources = [s for s in sources if _source_matches_query(s, req.query)]
+     report_as_of_sources = matched_sources if matched_sources else []

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>Vera 核心 Skills</title>
+<title>Trust Gate 守护下的可信能力</title>
 <link rel="stylesheet" href="deck.css">
 <style>
   *{box-sizing:border-box; margin:0; padding:0}
@@ -12,7 +12,7 @@
     position:relative; width:100%; min-height:100vh; overflow:hidden;
     background: radial-gradient(ellipse 80% 70% at 50% 50%, #1a1a2e 0%, #0a0a14 60%, #050510 100%);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
-    padding: 48px 48px 44px;
+    padding: 34px 48px 28px;
   }
   .stage::before{
     content:""; position:absolute; inset:0;
@@ -25,7 +25,7 @@
   /* 标题区 */
   .header{
     position:relative; z-index:3; text-align:center;
-    margin-bottom:28px;
+    margin-bottom:18px;
   }
   .header .eyebrow{
     font-size:11pt; font-weight:700; color: var(--cyan);
@@ -64,7 +64,7 @@
     width:100%; height:1px; background:rgba(255,255,255,.1); margin-bottom:16px;
   }
   .col .skill{
-    display:flex; align-items:flex-start; gap:10px; margin-bottom:14px;
+    display:flex; align-items:flex-start; gap:10px; margin-bottom:10px;
   }
   .col .marker{
     flex:0 0 3px; width:3px; height:36px; border-radius:2px; margin-top:2px;
@@ -84,10 +84,19 @@
     font-size:11pt; color: var(--sub); line-height:1.6;
   }
 
+  .trust-strip{
+    position:relative; z-index:3; width:min(1060px,92vw); margin-top:16px;
+    display:grid; grid-template-columns:150px repeat(4,1fr); align-items:center;
+    border:1px solid rgba(55,230,216,.26); background:rgba(55,230,216,.055);
+  }
+  .trust-strip .label{padding:12px 16px; color:var(--cyan); font-size:11pt; font-weight:800; letter-spacing:1px}
+  .trust-strip .guard{padding:12px 10px; border-left:1px solid rgba(255,255,255,.1); color:var(--ink); font-size:10.5pt; text-align:center}
+  .trust-strip .guard b{color:var(--cyan); margin-right:4px}
+
   /* 页脚 */
   .footer{
     position:relative; z-index:3;
-    margin-top:22px;
+    margin-top:12px;
     font-size:9pt; color: var(--sub); letter-spacing:1px;
     text-align:center;
   }
@@ -112,8 +121,8 @@
 
   <div class="header">
     <div class="eyebrow">VERA · FINANCIAL INTELLIGENCE</div>
-    <h2>Vera 核心 <span class="hl">Skills</span></h2>
-    <div class="sub">覆盖盘前、盘中、盘后，从研究决策到内容交付</div>
+    <h2>Trust Gate 守护下的<span class="hl">可信能力</span></h2>
+    <div class="sub">不是功能列表，而是可信的具象证明</div>
   </div>
 
   <div class="cols">
@@ -147,6 +156,14 @@
       <div class="skill"><div class="marker" style="background:#FFD166"></div><div class="skill-text"><span class="skill-en">Meeting Minutes</span><span class="skill-zh">会议纪要</span></div></div>
       <div class="skill"><div class="marker" style="background:#FFD166"></div><div class="skill-text"><span class="skill-en">Report Writing</span><span class="skill-zh">研报写作</span></div></div>
     </div>
+  </div>
+
+  <div class="trust-strip">
+    <div class="label">TRUST LAYER</div>
+    <div class="guard"><b>01</b> 数据身份</div>
+    <div class="guard"><b>02</b> Prompt 前准入</div>
+    <div class="guard"><b>03</b> 降级与阻断</div>
+    <div class="guard"><b>04</b> 引用与声明</div>
   </div>
 
   <div class="footer">Vera Enterprise · Core Skill Map</div>

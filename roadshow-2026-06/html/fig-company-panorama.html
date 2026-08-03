@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>Vera · 公司拜访速查卡 · 客户拜访准备卡</title>
+<title>Vera · 客户拜访准备卡 · 话题与业务线索</title>
 <link rel="stylesheet" href="deck.css">
 <style>
   .hero-title{ margin-top:0; z-index:3; position:relative; }
@@ -14,102 +14,149 @@
   }
   .hero-title .sub{ margin-top:7px; font-size:15px; color:var(--sub); letter-spacing:0; }
 
-  .main{ display:grid; grid-template-columns:.76fr 1.24fr; gap:18px; flex:1; margin-top:14px; z-index:2; min-height:0; }
+  .main{ display:grid; grid-template-columns:.84fr 1.16fr; gap:18px; flex:1; margin-top:14px; z-index:2; min-height:0; }
 
-  .steps{ display:flex; flex-direction:column; gap:12px; min-height:0; }
+  /* ===== LEFT: Workflow ===== */
+  .steps{ display:flex; flex-direction:column; gap:10px; min-height:0; }
   .step{
     flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center;
-    background:transparent; border:0; border-bottom:1px solid rgba(255,255,255,.14); border-radius:0; padding:14px 4px;
+    background:transparent; border:0; border-bottom:1px solid rgba(255,255,255,.12); border-radius:0; padding:12px 4px;
   }
-  .step:first-child{border-top:1px solid rgba(255,255,255,.14)}
-  .step.glow{
-    background:rgba(78,168,255,.08); border-left:4px solid var(--blue); padding-left:16px;
-  }
+  .step:first-child{border-top:1px solid rgba(255,255,255,.12)}
   .step .tag{
     align-self:flex-start; display:inline-block; font-size:11px; font-weight:800; letter-spacing:0;
-    padding:3px 9px; border-radius:999px; margin-bottom:8px;
+    padding:3px 9px; border-radius:999px; margin-bottom:7px;
   }
   .step.s1 .tag{ background:rgba(255,176,86,.16); color:var(--orange); border:1px solid rgba(255,176,86,.4); }
   .step.s2 .tag{ background:rgba(55,230,216,.14); color:var(--cyan); border:1px solid rgba(55,230,216,.4); }
   .step.s3 .tag{ background:rgba(78,168,255,.16); color:var(--blue); border:1px solid rgba(120,180,255,.45); }
-  .step .st{ font-size:17px; font-weight:700; color:var(--ink); margin-bottom:6px; }
+  .step .st{ font-size:17px; font-weight:700; color:var(--ink); margin-bottom:5px; }
   .step .sb{ font-size:13px; color:var(--sub); line-height:1.55; }
   .step .sb b{ color:var(--ink); font-weight:600; }
-  .chips{ display:flex; gap:6px; flex-wrap:wrap; margin-top:7px; }
-  .chip{
-    font-size:11px; padding:3px 8px; border-radius:7px; color:var(--ink);
+
+  /* 输入框模拟 */
+  .input-row{ display:flex; gap:8px; margin-top:8px; }
+  .input-field{
+    flex:1; padding:7px 12px; border-radius:8px; font-size:13px; font-weight:600;
+    background:rgba(255,255,255,.06); border:1px solid var(--stroke); color:var(--ink);
+  }
+  .input-field::placeholder{ color:rgba(255,255,255,.25); font-weight:500; }
+
+  /* 数据源 badges */
+  .src-row{ display:flex; gap:7px; flex-wrap:wrap; margin-top:8px; align-items:center; }
+  .src-badge{
+    font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;
+    background:rgba(55,230,216,.12); color:var(--cyan); border:1px solid rgba(55,230,216,.35);
+  }
+  .src-badge.aqc{ background:rgba(255,176,86,.12); color:var(--orange); border:1px solid rgba(255,176,86,.4); }
+  .src-plus{ font-size:11px; color:var(--sub); }
+
+  /* 输出话题 */
+  .topic-chips{ display:flex; gap:5px; flex-wrap:wrap; margin-top:6px; }
+  .topic-chip{
+    font-size:11px; padding:4px 9px; border-radius:7px; color:var(--ink);
     background:rgba(255,255,255,.06); border:1px solid var(--stroke);
   }
-  .chip.on{ background:linear-gradient(90deg,rgba(78,168,255,.22),rgba(155,107,255,.22)); border-color:rgba(140,170,255,.55); font-weight:700; }
+  .topic-chip.hl{ background:linear-gradient(90deg,rgba(78,168,255,.20),rgba(155,107,255,.18)); border-color:rgba(140,170,255,.50); font-weight:700; }
 
-  /* 右:跑通样例卡 */
+  /* ===== RIGHT: Example Card ===== */
   .proofcard{
     display:flex; flex-direction:column; min-height:0;
-    background:var(--glass); border:1px solid var(--stroke); border-radius:16px; padding:12px;
+    background:var(--glass); border:1px solid var(--stroke); border-radius:16px; padding:14px;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
   }
-  .proofcard .plabel{
-    font-size:12.5px; color:var(--sub); font-weight:600; margin-bottom:9px; display:flex; align-items:center; gap:10px;
-  }
-  .proofcard .plabel b{display:block;color:var(--ink);font-size:14px;margin-bottom:2px}.proofcard .plabel em{font-style:normal;color:var(--sub)}
-  .proofcard .plabel .live{
+  .proofcard .phead{ display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .proofcard .phead .live{
     font-size:10.5px; font-weight:800; letter-spacing:.5px; padding:2px 8px; border-radius:999px;
-    background:rgba(55,230,216,.14); color:var(--cyan); border:1px solid rgba(55,230,216,.4);
+    background:rgba(55,230,216,.14); color:var(--cyan); border:1px solid rgba(55,230,216,.4); white-space:nowrap;
   }
-  .proofcard .imgwrap{
-    flex:1; min-height:0; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,.1);
-    background:#fff;
-  }
-  .proofcard img{ width:100%; height:100%; object-fit:contain; object-position:center; display:block; }
+  .proofcard .phead .meta{ font-size:13px; color:var(--sub); font-weight:600; }
+  .proofcard .phead .meta b{ color:var(--ink); font-weight:700; }
 
-  .foot{ margin-top:12px; padding-top:10px; }
+  /* 卡片内部：话题列表 */
+  .topic-list{ display:flex; flex-direction:column; gap:0; flex:1; min-height:0; }
+  .topic-row{
+    display:grid; grid-template-columns:28px 1fr; gap:8px; align-items:start;
+    padding:9px 0; border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .topic-row:last-child{border-bottom:0}
+  .topic-num{
+    width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:800;color:var(--ink);
+  }
+  .topic-num.c1{background:linear-gradient(135deg,rgba(55,230,216,.35),rgba(55,230,216,.10))}
+  .topic-num.c2{background:linear-gradient(135deg,rgba(78,168,255,.35),rgba(78,168,255,.10))}
+  .topic-num.c3{background:linear-gradient(135deg,rgba(155,107,255,.35),rgba(155,107,255,.10))}
+  .topic-num.c4{background:linear-gradient(135deg,rgba(255,176,86,.35),rgba(255,176,86,.10))}
+  .topic-body .t-title{ font-size:14px; font-weight:700; color:var(--ink); line-height:1.35; }
+  .topic-body .t-lead{ font-size:12px; color:var(--sub); margin-top:2px; line-height:1.4; }
+  .topic-body .t-src{ font-size:10.5px; color:var(--orange); margin-top:2px; font-weight:600; }
+
+  .foot{ margin-top:10px; padding-top:8px; }
   .slogan{ font-size:16px; font-weight:700; }
-  @media(max-width:900px){.main{grid-template-columns:1fr}.proofcard{min-height:460px}.steps{min-height:520px}}
+
+  @media(max-width:900px){.main{grid-template-columns:1fr}.proofcard{min-height:420px}.steps{min-height:480px}}
 </style>
 </head>
 <body>
 <div class="slide">
 
   <div class="hero-title">
-    <div class="eyebrow">VERA · 公司拜访速查卡 · 可信研究技能</div>
-    <h1>3 分钟，生成一张<span class="accent">可信的客户拜访准备卡</span></h1>
-    <div class="sub">从公司名到证据分级、风险边界与核查清单，一页完成。</div>
+    <div class="eyebrow">VERA · 客户拜访准备卡 · 可信研究技能</div>
+    <h1>输入公司与客户名，<span class="accent">提取话题与业务线索</span></h1>
+    <div class="sub">接入爱企查工商数据 + Vera 研究引擎，一页生成拜访策略。</div>
   </div>
 
   <div class="main">
-    <!-- 左:三段 -->
+    <!-- 左:三步流程 -->
     <div class="steps">
       <div class="step s1">
-        <span class="tag">① 痛点</span>
-        <div class="st">拜访准备，不该靠临时拼材料</div>
-        <div class="sb">研报、公告、新闻散落多处；更危险的是把<b>未经验证的信息</b>带进客户现场。</div>
+        <span class="tag">① 输入</span>
+        <div class="st">同时输入目标公司与客户名称</div>
+        <div class="sb">不只搜一家公司——输入<b>你的客户名</b>和<b>目标公司名</b>，定位双方的业务交集。</div>
+        <div class="input-row">
+          <span class="input-field" style="color:var(--orange)">比亚迪</span>
+          <span class="input-field" style="color:var(--cyan)">宁德时代</span>
+        </div>
       </div>
       <div class="step s2">
-        <span class="tag">② 能力</span>
-        <div class="st">输入公司名，直接得到一页拜访卡</div>
-        <div class="sb">企业摘要 · 风险雷达 · 证据等级 · 结论边界 · 人工核查清单</div>
+        <span class="tag">② 分析</span>
+        <div class="st">接入爱企查 + Vera，交叉挖掘线索</div>
+        <div class="sb">爱企查提供<b>工商关联、股东穿透、对外投资</b>；Vera 叠加<b>研报观点、新闻情绪、行业动态</b>。</div>
+        <div class="src-row">
+          <span class="src-badge aqc">爱企查 · 工商数据</span>
+          <span class="src-plus">+</span>
+          <span class="src-badge">Vera · 研究引擎</span>
+        </div>
       </div>
-      <div class="step s3 glow">
-        <span class="tag">③ 可信</span>
-        <div class="st">不是先生成再补来源，而是先校验证据</div>
-        <div class="sb">证据进入模型<b>前</b>先分级、定用途；生成后再次检查风险边界。</div>
-        <div class="chips">
-          <span class="chip on">可信校验前置</span>
-          <span class="chip">证据分级</span>
-          <span class="chip">风险边界检查</span>
+      <div class="step s3">
+        <span class="tag">③ 输出</span>
+        <div class="st">生成话题清单与业务线索</div>
+        <div class="sb">提取可聊的<b>4–6 个话题</b>，每条标注<b>证据来源</b>与<b>可信等级</b>，现场不空谈。</div>
+        <div class="topic-chips">
+          <span class="topic-chip hl">供应链合作</span>
+          <span class="topic-chip">产能扩张</span>
+          <span class="topic-chip">技术路线</span>
+          <span class="topic-chip hl">海外布局</span>
+          <span class="topic-chip">ESG</span>
+          <span class="topic-chip">产业链位置</span>
         </div>
       </div>
     </div>
 
-    <!-- 右:跑通样例 -->
-    <div class="proofcard">
-      <div class="plabel"><span class="live">已跑通</span><div><b>宁德时代 · 公司拜访速查卡</b><em>原始证据 3 → 可信校验 → 采用 2 / 拦下 1</em></div></div>
-      <div class="imgwrap"><img src="company-panorama-card.png" alt="公司拜访速查卡拜访准备卡"></div>
+    <!-- 右:示例输出卡 -->
+    <div class="proofcard" style="justify-content:center;align-items:center;padding:12px">
+      <div class="phead" style="width:100%">
+        <span class="live">已跑通</span>
+        <span class="meta"><b>比亚迪</b> → <b>宁德时代</b> 拜访准备</span>
+      </div>
+      <img src="company-panorama-card.png" alt="比亚迪→宁德时代 拜访准备卡"
+           style="width:100%;border-radius:10px;border:1px solid rgba(255,255,255,.12);flex:1;object-fit:contain;object-position:top;min-height:0;">
     </div>
   </div>
 
   <div class="foot">
-    <div class="slogan">3 分钟，不只是更快；<span class="accent">每条信息都有来源、等级与边界</span></div>
+    <div class="slogan">不只搜一家公司——<span class="accent">找到双方的业务交集，带着线索去拜访</span></div>
   </div>
 
 </div>
