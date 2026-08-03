@@ -1000,9 +1000,9 @@ A governance case is **SPECIFIED** when stages Incident through Acceptance Test 
 
 The Case Registry is the single source of truth for which production failures and governance gaps have been absorbed into the governance model. It consists of two tiers:
 
-**Tier A — Incident-Derived Cases (Freeze Gate applicable):**
+**Tier A — Incident-Derived Cases:**
 
-Cases derived from real production incidents. These satisfy the One Incident → One Rule → One Test constraint and are eligible to count toward the Architecture Freeze Gate.
+Cases derived from real production incidents. These satisfy the One Incident → One Rule → One Test constraint. Whether a Tier A case counts toward the Architecture Freeze Gate depends on which governance domain it addresses — the Gate requires three specific domains (§10.4); cases in additional domains (e.g., R-01 Runtime Evidence) are tracked at Tier A but do not count toward the Gate.
 
 | Case ID | Domain | Origin | Governance Rule | Acceptance Test | Status |
 |---|---|---|---|---|---|
@@ -1048,15 +1048,20 @@ Runtime Enforcement Boundary Identified for each case
 
 Proactive governance findings without originating production incidents (Tier B) MUST NOT block Architecture Freeze. They remain tracked until converted through future incident evidence or validated governance scenarios.
 
-**The three required incident-derived cases**:
+**The three required incident-derived cases (Freeze Gate)**:
 
-| # | Case | What It Validates | Current Status |
+| # | Case | Domain | What It Validates | Current Status |
+|---|---|---|---|---|
+| **Case 1 — Freshness** | F-03 | Data Quality | Complete data ≠ fresh data. A dimension can be present, non-empty, and pass completeness thresholds while carrying stale values. The Trust Gate must distinguish presence from currency. | **SPECIFIED** |
+| **Case 2 — Provider Capability** | P-01 | Provider Trust | Provider existence ≠ capability proven. Provider credential ≠ runtime capability. Declared capability MUST NOT exceed verified runtime capability. Originating incident: NONE (proactive governance gap identification). | **TRACKED** (Tier B — no originating incident) |
+| **Case 3 — Claim Strength** | C-01 | Conclusion Authorization | Evidence confidence ≠ allowed conclusion strength. Originating incident TBD — searching for production case where fact → interpretation → recommendation escalation occurred without evidence tier upgrade. | **IDENTIFYING** |
+
+**Additional governance track (tracked, not counted toward Freeze Gate)**:
+
+| ID | Domain | Status | Origin |
 |---|---|---|---|
-| **Case 1 — Freshness** | F-03 | Complete data ≠ fresh data. A dimension can be present, non-empty, and pass completeness thresholds while carrying stale values. The Trust Gate must distinguish presence from currency. | **SPECIFIED** |
-| **Case 2 — Runtime Evidence** | R-01 | Production Runtime MUST preserve incident evidence. A Runtime that cannot answer "which layer failed?" is not trustworthy — regardless of how many successful responses it produces. | **SPECIFIED** |
-| **Case 3 — Claim Strength** | C-01 | Evidence confidence ≠ allowed conclusion strength. Originating incident TBD — searching for production case where fact → interpretation → recommendation escalation occurred without evidence tier upgrade. Must define: descriptive → comparative → directional → causal → predictive → prescriptive. | **IDENTIFYING** |
-
-**Note**: Case R-01 (Runtime Evidence Preservation) is an incident-derived case from two production failures (Auction P0 2026-07-31 + Auction Runtime Error 2026-08-03). P-01 (Provider Capability) is a proactive governance finding tracked in Tier B — it does not block the Freeze Gate.
+| **R-01** | Runtime Evidence Preservation | **SPECIFIED** | Auction Runtime Error 2026-08-03 + Auction P0 2026-07-31 (two production incidents) |
+| **P-01** | Provider Capability | **TRACKED** (Tier B) | IMA/Wind Integration Audit (D19/D27) — proactive audit, no incident |
 
 **Freeze boundary**:
 
