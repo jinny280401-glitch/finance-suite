@@ -113,6 +113,26 @@ def _qc_stock(data: dict, source: str, realtime_stale: bool = False) -> dict:
                         stale.append({"field": label, "last_date": last_date_str, "delay_days": delay_days})
                 except ValueError:
                     pass
+        elif key == "financials" and isinstance(val, list) and val:
+            # 检查最新报告期是否超过6个月（两个季报周期）
+            # 假设 financials 已按报告期降序排列，val[0] 是最新一期
+            latest = val[0] if val else {}
+            report_date_str = str(
+                latest.get("报告期") or latest.get("日期") or latest.get("date") or latest.get("report_date") or ""
+            )
+            if report_date_str:
+                try:
+                    report_date = datetime.strptime(report_date_str[:10], "%Y-%m-%d")
+                    age_days = (datetime.now() - report_date).days
+                    if age_days > 180:
+                        stale.append({
+                            "field": label,
+                            "issue": f"最新报告期 {report_date_str[:10]}，距今 {age_days} 天（超过6个月）",
+                            "latest_period": report_date_str[:10],
+                            "age_days": age_days,
+                        })
+                except ValueError:
+                    pass
 
     total = len(dimensions)
     present = total - len(missing)
@@ -133,8 +153,19 @@ def _qc_stock(data: dict, source: str, realtime_stale: bool = False) -> dict:
         }
     }
 
+    # Trust Gate: completeness + freshness 双重校验
+    # freshness_ok: stale 条目 <= 1（允许至多1个维度不新鲜）
+    freshness_ok = len(stale) <= 1
+
+    if completeness >= 0.8 and freshness_ok:
+        status = "success"
+    elif completeness > 0.5 or (completeness > 0 and not freshness_ok):
+        status = "partial"
+    else:
+        status = "failure"
+
     return {
-        "status": "success" if completeness >= 0.8 else ("partial" if completeness > 0 else "failure"),
+        "status": status,
         "completeness": completeness,
         "sources": [source],
         "fallback_source": "akshare" if source == "wind" else None,

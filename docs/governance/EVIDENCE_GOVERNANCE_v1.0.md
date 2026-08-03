@@ -1050,9 +1050,9 @@ Runtime Enforcement Boundary Identified for each case
 
 Proactive governance findings without originating production incidents (Tier B) MUST NOT block Architecture Freeze. They remain tracked until converted through future incident evidence or validated governance scenarios.
 
-**Gate domains are explicitly declared, not dynamically selected from the registry.** The three required governance domains (Freshness, Runtime Evidence, Claim Strength) are fixed. A new incident in an existing domain replaces its predecessor; a new incident in a new domain requires a Gate amendment, not automatic inclusion.
+**Gate domains are explicitly declared, not dynamically selected from the registry.** A new incident in an existing domain replaces its predecessor; a new incident in a new domain requires a Gate amendment, not automatic inclusion.
 
-**The three required incident-derived cases (Freeze Gate)**:
+### 10.4.1 Freeze Gate Domains (incident-derived, counted)
 
 | # | Case | Domain | What It Validates | Current Status |
 |---|---|---|---|---|
@@ -1066,7 +1066,9 @@ Proactive governance findings without originating production incidents (Tier B) 
 
 Gate count: **2/3 incident-derived cases**. P-01 and R-01 are tracked but MUST NOT satisfy the Gate requirement.
 
-**Additional governance track (tracked, not counted toward Freeze Gate)**:
+**Why 2/3, not 3/3**: The third case slot is intentionally held open. It can only be filled by a future production incident that exposes a governance gap in a domain not yet covered by F-03 (Freshness) or C-01 (Claim Strength). Artificial case creation — designing a governance rule first and then searching for an incident to justify it — would reverse the Learning Loop's causal direction from `Incident → Rule` to `Rule → Incident`. This Gate exists to protect that direction. The Architecture Freeze remains ACTIVE until a real failure demands the third domain.
+
+### 10.4.2 Separate Governance Track (not counted toward Freeze Gate)
 
 | ID | Domain | Status | Origin |
 |---|---|---|---|

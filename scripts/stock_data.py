@@ -307,8 +307,14 @@ def _fetch_financials(code: str) -> list[dict] | None:
             pass
     # 降级：AkShare 主要指标（8秒超时保护）
     try:
-        df = _with_timeout(ak.stock_financial_analysis_indicator, (), {"symbol": code, "start_year": "2024"}, timeout_seconds=8.0)
+        current_year = datetime.now().year
+        start_year = str(current_year - 2)  # 拉最近3年数据，避免硬编码年份滞后
+        df = _with_timeout(ak.stock_financial_analysis_indicator, (), {"symbol": code, "start_year": start_year}, timeout_seconds=8.0)
         if df is not None and len(df) > 0:
+            # 按报告期降序排列，取最新4期（默认升序，head(4)会取到最旧数据）
+            date_col = next((c for c in ["报告期", "日期", "date"] if c in df.columns), None)
+            if date_col:
+                df = df.sort_values(date_col, ascending=False)
             return df.head(4).to_dict(orient="records")
     except Exception:
         pass
