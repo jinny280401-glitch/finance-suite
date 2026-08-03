@@ -996,18 +996,31 @@ Each stage in the loop has a definition and a required output. A stage is comple
 
 A governance case is **SPECIFIED** when stages Incident through Acceptance Test are complete. It is **PROVEN** when Runtime Enforcement passes independent Verification.
 
-### 10.3 Current Governance Cases
+### 10.3 Case Registry
 
-Each governance case is identified by a stable Case ID. The Case Registry is the single source of truth for which production failures have been absorbed into the governance model.
+The Case Registry is the single source of truth for which production failures and governance gaps have been absorbed into the governance model. It consists of two tiers:
+
+**Tier A — Incident-Derived Cases (Freeze Gate applicable):**
+
+Cases derived from real production incidents. These satisfy the One Incident → One Rule → One Test constraint and are eligible to count toward the Architecture Freeze Gate.
 
 | Case ID | Domain | Origin | Governance Rule | Acceptance Test | Status |
 |---|---|---|---|---|---|
 | **F-03** | Freshness | 600439 financial freshness failure (2026-08-02) | §4.2: Critical-domain freshness gating — freshness cannot be inferred from completeness; critical dimension STALE → BLOCK | TC-FRESH-001 (critical stale → BLOCK), TC-FRESH-002 (non-critical stale → PARTIAL) | **SPECIFIED** |
-| **P-01** | Provider Capability | IMA / Wind Integration Audit (D19/D27) — credential found, skill assets found, runtime invocation NOT PROVEN, Trust Gate integration NOT PROVEN | Provider existence ≠ capability proven; Provider credential ≠ runtime capability; declared capability MUST NOT exceed verified runtime capability | Provider Attestation Test: credential → adapter → invocation → evidence → Trust Gate (full chain) | **IDENTIFYING** |
-| **C-01** | Claim Strength | TBD — searching for production case where fact → interpretation → recommendation escalation occurred without evidence tier upgrade | Evidence confidence level MUST constrain allowed conclusion strength; descriptive ≠ predictive ≠ prescriptive; claim tier escalation requires evidence tier upgrade | TBD | **IDENTIFYING** |
 | **R-01** | Runtime Evidence Preservation | Auction Runtime Error 2026-08-03 + Auction P0 2026-07-31 | §7: Production Runtime MUST preserve incident evidence (request_id, status_code, content_type, response_hash, trace/log correlation); missing evidence → RCA confidence downgraded to LOW / Root Cause UNKNOWN | TC-RUNTIME-EVIDENCE-001 (§7.3): API returns unexpected response → evidence preserved → RCA can determine which layer failed | **SPECIFIED** |
+| **C-01** | Claim Strength | TBD — searching for production case where fact → interpretation → recommendation escalation occurred without evidence tier upgrade | Evidence confidence level MUST constrain allowed conclusion strength; descriptive ≠ predictive ≠ prescriptive; claim tier escalation requires evidence tier upgrade | TBD | **IDENTIFYING** |
 
-**Case promotion criteria**:
+**Tier B — Proactive Governance Findings (Tracked, non-blocking):**
+
+Findings identified through proactive audit, architecture review, or governance gap analysis that do not originate from a specific production incident. These are tracked but MUST NOT block the Architecture Freeze Gate. A finding may be promoted to Tier A if a future production incident provides the required evidence chain.
+
+| Finding ID | Domain | Origin | Governance Rule | Status |
+|---|---|---|---|---|
+| **P-01** | Provider Capability | IMA / Wind Integration Audit (D19/D27) — proactive audit identified credential found, skill assets found, runtime invocation NOT PROVEN, Trust Gate integration NOT PROVEN. Originating incident: NONE (proactive governance gap identification) | Provider existence ≠ capability proven; Provider credential ≠ runtime capability; declared capability MUST NOT exceed verified runtime capability | **TRACKED** |
+
+Tier B findings are not in the Learning Loop because they lack an originating incident. They remain tracked until converted through future incident evidence or validated governance scenarios.
+
+**Case promotion criteria (Tier A only)**:
 
 A case graduates from `SPECIFIED` to `PROVEN` when:
 1. An acceptance test exists that encodes the counter-example from the originating incident
@@ -1015,7 +1028,7 @@ A case graduates from `SPECIFIED` to `PROVEN` when:
 3. An independent reviewer verifies the implementation against the test and issues a verdict
 4. The verdict delta is recorded in the Case Registry
 
-A case at `NOT STARTED` MUST have its origin incident identified before it can enter the loop. A case without a real incident is speculative design — it does not belong in the Learning Loop.
+A case at `NOT STARTED` or `IDENTIFYING` MUST have its origin incident identified before it can enter the loop. A case without a real incident is speculative design — it does not belong in the Learning Loop.
 
 ### 10.4 Architecture Freeze Gate
 
@@ -1026,22 +1039,24 @@ Vera Evidence Governance MUST NOT enter an Implementation Sprint until the Archi
 **Gate criteria** — all three conditions must hold:
 
 ```text
-Three Governance Cases at SPECIFIED or above
+Three incident-derived governance cases at SPECIFIED or above
         AND
 Acceptance Scenario Defined for each case
         AND
 Runtime Enforcement Boundary Identified for each case
 ```
 
-**The three required cases**:
+Proactive governance findings without originating production incidents (Tier B) MUST NOT block Architecture Freeze. They remain tracked until converted through future incident evidence or validated governance scenarios.
+
+**The three required incident-derived cases**:
 
 | # | Case | What It Validates | Current Status |
 |---|---|---|---|
 | **Case 1 — Freshness** | F-03 | Complete data ≠ fresh data. A dimension can be present, non-empty, and pass completeness thresholds while carrying stale values. The Trust Gate must distinguish presence from currency. | **SPECIFIED** |
-| **Case 2 — Provider Capability** | P-01 | Provider exists ≠ Provider available. Provider available ≠ Runtime capability proven. Originating from IMA/Wind Integration Audit (credential found, invocation NOT PROVEN). Must demonstrate: credential → adapter → field coverage → execution evidence. | **IDENTIFYING** |
+| **Case 2 — Runtime Evidence** | R-01 | Production Runtime MUST preserve incident evidence. A Runtime that cannot answer "which layer failed?" is not trustworthy — regardless of how many successful responses it produces. | **SPECIFIED** |
 | **Case 3 — Claim Strength** | C-01 | Evidence confidence ≠ allowed conclusion strength. Originating incident TBD — searching for production case where fact → interpretation → recommendation escalation occurred without evidence tier upgrade. Must define: descriptive → comparative → directional → causal → predictive → prescriptive. | **IDENTIFYING** |
 
-**Note**: Case R-01 (Runtime Evidence Preservation) is **SPECIFIED** but is not counted toward the three-case Freeze Gate. The Gate requires three cases across three distinct governance domains (Freshness, Provider Capability, Claim Strength). R-01 addresses a fourth domain (Runtime Evidence) and was absorbed through a parallel governance track (§7). Additional cases beyond the Gate three may be added as real incidents demand — the Gate sets the minimum, not the maximum.
+**Note**: Case R-01 (Runtime Evidence Preservation) is an incident-derived case from two production failures (Auction P0 2026-07-31 + Auction Runtime Error 2026-08-03). P-01 (Provider Capability) is a proactive governance finding tracked in Tier B — it does not block the Freeze Gate.
 
 **Freeze boundary**:
 
