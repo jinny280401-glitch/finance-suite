@@ -49,7 +49,7 @@ Principle 8: UNKNOWN SHALL NOT ESCALATE PRIVILEGE — the default when uncertain
 
 **Principle 7 (Declared Capability ≠ Effective Capability):** A configuration file, a registered provider, or a documented integration path proves intent, not runtime capacity. Every capability claim MUST be verified at the runtime boundary — what actually executed, with what evidence, producing what outcome. Audit the spawn snapshot, not the declaration. Aligned with [Capability Claim Governance Framework v1.0](Vera_Capability_Claim_Governance_Framework_v1.md) §2.
 
-**Principle 8 (UNKNOWN SHALL NOT ESCALATE PRIVILEGE):** When freshness, provenance, or confidence cannot be determined, the default judgment MUST restrict downstream use — never expand it. An UNKNOWN freshness is not PASS. An UNKNOWN source confidence is not MEDIUM. An UNKNOWN authorization boundary is not ALLOW. This principle prevents the silent privilege escalation that occurs when governance gaps are filled by optimistic defaults. Aligned with in-toto, SCITT, and OPA/Cedar fail-closed semantics identified in Phase 1 External Recon.
+**Principle 8 (UNKNOWN SHALL NOT ESCALATE PRIVILEGE):** When freshness, provenance, or confidence cannot be determined, the default judgment MUST restrict downstream use — never expand it. An UNKNOWN freshness is not PASS. An UNKNOWN source confidence is not MEDIUM. An UNKNOWN authorization boundary is not ALLOW. This principle prevents the silent privilege escalation that occurs when governance gaps are filled by optimistic defaults. Aligned with fail-closed semantics from in-toto, SCITT, and OPA/Cedar identified in Phase 1 External Recon. [Origin: External Standards] [Vera Status: Not Implemented]
 
 ### 1.2 Architecture Position
 
@@ -83,7 +83,7 @@ Context Assembly (evidence bundle for consumption)
 Agent / LLM Consumption
 ```
 
-**Critical architectural constraint:** Trust Evaluation and Authorization Decision are separate stages. Trust Evaluation answers "is this evidence valid?" Authorization Decision answers "what may this evidence be used for?" A Trust Evaluation PASS MUST NOT automatically authorize all downstream uses. This separation is Vera's core differentiator from existing industry patterns: in-toto proves provenance, SCITT proves durability, PIT proves temporal correctness — but none define an authorization boundary between evidence validity and evidence consumption. That boundary is Vera's.
+**Critical architectural constraint:** Trust Evaluation and Authorization Decision are separate stages. Trust Evaluation answers "is this evidence valid?" Authorization Decision answers "what may this evidence be used for?" A Trust Evaluation PASS MUST NOT automatically authorize all downstream uses. This separation is Vera's core differentiator from existing industry patterns: in-toto proves provenance [Origin: in-toto/v1.0], SCITT proves durability [Origin: IETF RFC 9943], PIT proves temporal correctness [Origin: Bloomberg/FactSet/LSEG] — but none define an authorization boundary between evidence validity and evidence consumption. That boundary is Vera's. [All external standards: Vera Status — Not Implemented. Architecture reference only.]
 
 Provider payloads MUST be normalized to Evidence Objects before Trust Evaluation. Raw provider fields MUST NOT reach the Agent layer ungoverned.
 
@@ -192,7 +192,7 @@ query_time <= knowledge_time → LEAKAGE → BLOCK
 knowledge_time < query_time  → ALLOWED (if freshness also PASS)
 ```
 
-This gate is Vera-defined. While Bloomberg, FactSet, and LSEG all provide PIT products that prevent look-ahead bias in backtesting, the automatic detection of temporal leakage at Agent query time — mapping the gap between `knowledge_time` and the Agent's stated `as_of` claim — is not a standardized industry feature. It is Vera's GAP to define.
+This gate is Vera-defined. While Bloomberg, FactSet, and LSEG all provide PIT products that prevent look-ahead bias in backtesting, the automatic detection of temporal leakage at Agent query time — mapping the gap between `knowledge_time` and the Agent's stated `as_of` claim — is not a standardized industry feature. It is Vera's GAP to define. [PIT: Origin — Bloomberg/FactSet/LSEG (external). Vera temporal leakage enforcement: Not Implemented — Specified GAP only.]
 
 **Freshness policy per data class:**
 
@@ -245,11 +245,13 @@ Each factor is evaluated independently. A HIGH-authority source (Wind) with expi
 
 The Evidence Object structure defined in §2.1 is the **operational data contract**. The **envelope** that wraps it for exchange and verification draws from:
 
-| Source | Absorbed concept | Vera mapping |
-|---|---|---|
-| in-toto Statement v1 | `subject + digest + predicateType + predicate` | `evidence_id` = subject, `raw_response_sha256` = digest, domain-specific fields = predicate |
-| W3C PROV | `Entity—Activity—Agent` with `wasGeneratedBy/used/wasAttributedTo` | Evidence Object = Entity, Provider invocation = Activity, Provider identity = Agent |
-| SCITT RFC 9943 | Signed Statement + Transparency Receipt | Provider signs Evidence Object → SCITT-compatible receipt stored in `durability` block |
+| Source | Absorbed concept | Vera mapping | Origin |
+|---|---|---|---|
+| in-toto Statement v1 | `subject + digest + predicateType + predicate` | `evidence_id` = subject, `raw_response_sha256` = digest | [in-toto/v1.0] |
+| W3C PROV | `Entity—Activity—Agent` with `wasGeneratedBy/used/wasAttributedTo` | Evidence Object = Entity, Provider invocation = Activity | [W3C PROV-O] |
+| SCITT RFC 9943 | Signed Statement + Transparency Receipt | Provider signs Evidence Object → SCITT-compatible receipt | [IETF RFC 9943] |
+
+**External Standard Attribution:** All standards referenced in this section are external. Vera Status: Not Implemented. Architecture reference only. No cryptographic evidence chain is operational in the Vera Runtime.
 
 The Evidence Object MUST carry a `durability` block for high-confidence evidence:
 
