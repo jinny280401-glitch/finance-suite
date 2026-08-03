@@ -53,6 +53,10 @@ import time
 import logging
 from datetime import datetime
 
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+
 # 确保 scripts/ 目录在 import 路径中
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts"))
 
@@ -109,18 +113,71 @@ def _qc_stock(data: dict, source: str, realtime_stale: bool = False) -> dict:
                         stale.append({"field": label, "last_date": last_date_str, "delay_days": delay_days})
                 except ValueError:
                     pass
+        elif key == "financials" and isinstance(val, list) and val:
+            # 检查最新报告期是否超过6个月（两个季报周期）
+            # 假设 financials 已按报告期降序排列，val[0] 是最新一期
+            latest = val[0] if val else {}
+            report_date_str = str(
+                latest.get("报告期") or latest.get("日期") or latest.get("date") or latest.get("report_date") or ""
+            )
+            if report_date_str:
+                try:
+                    report_date = datetime.strptime(report_date_str[:10], "%Y-%m-%d")
+                    age_days = (datetime.now() - report_date).days
+                    if age_days > 180:
+                        stale.append({
+                            "field": label,
+                            "issue": f"最新报告期 {report_date_str[:10]}，距今 {age_days} 天（超过6个月）",
+                            "latest_period": report_date_str[:10],
+                            "age_days": age_days,
+                        })
+                except ValueError:
+                    pass
 
     total = len(dimensions)
     present = total - len(missing)
     completeness = round(present / total, 2) if total else 0
+    realtime_availability = data.get("realtime_availability") or {}
+    realtime_blocked_fields = list(realtime_availability.get("blocked_fields") or [])
+    realtime_allowed_use = list(realtime_availability.get("allowed_use") or [])
+    data_availability = {
+        "realtime": realtime_availability or {
+            "status": "unavailable",
+            "source": None,
+            "source_type": "not_connected",
+            "as_of": None,
+            "available": [],
+            "missing": ["realtime"],
+            "allowed_use": [],
+            "blocked_fields": ["all_realtime_fields"],
+        }
+    }
+
+    # Trust Gate: completeness + freshness 双重校验
+    # freshness_ok: stale 条目 <= 1（允许至多1个维度不新鲜）
+    freshness_ok = len(stale) <= 1
+
+    if completeness >= 0.8 and freshness_ok:
+        status = "success"
+    elif completeness > 0.5 or (completeness > 0 and not freshness_ok):
+        status = "partial"
+    else:
+        status = "failure"
 
     return {
-        "status": "success" if completeness >= 0.8 else ("partial" if completeness > 0 else "failure"),
+        "status": status,
         "completeness": completeness,
         "sources": [source],
         "fallback_source": "akshare" if source == "wind" else None,
         "missing_dimensions": missing,
         "stale_data": stale,
+        "data_availability": data_availability,
+        "allowed_use": {
+            "realtime": realtime_allowed_use,
+        },
+        "blocked_fields": {
+            "realtime": realtime_blocked_fields,
+        },
     }
 
 
@@ -316,11 +373,37 @@ async def stock_analysis(query: str) -> str:
         import stock_data
 
         stock_data._load_stock_cache()
-        resolved = stock_data.resolve_stock(query)
-        if not resolved:
+        if hasattr(stock_data, "resolve_stock_detail"):
+            resolved_detail = stock_data.resolve_stock_detail(query)
+        else:
+            legacy_resolved = stock_data.resolve_stock(query)
+            resolved_detail = (
+                {
+                    "code": legacy_resolved[0],
+                    "name": legacy_resolved[1],
+                    "resolver_source": "legacy_resolve_stock",
+                    "matched_text": legacy_resolved[1],
+                    "input_text": query,
+                }
+                if legacy_resolved else None
+            )
+        if not resolved_detail:
             return _make_error_response(f"未找到匹配的股票: {query}")
 
-        code, name = resolved
+        code = resolved_detail["code"]
+        name = resolved_detail["name"]
+        dispatch_trace = {
+            "input_text": query,
+            "resolved_name": name,
+            "resolved_symbol": code,
+            "resolver_source": resolved_detail.get("resolver_source"),
+            "matched_text": resolved_detail.get("matched_text"),
+            "selected_route": "stock_analysis",
+            "backend_endpoint": "mcp://finance-suite/stock_analysis",
+            "final_seal_called": True,
+            "dispatch_called": True,
+            "engine_called": True,
+        }
 
         # 增量判断：自动比对 watchlist
         incremental = _check_incremental(code)
@@ -328,6 +411,13 @@ async def stock_analysis(query: str) -> str:
         data = await stock_data.get_stock_full_data(code)
         source = stock_data.get_active_source()
         qc = _qc_stock(data, source, realtime_stale=stock_data._is_realtime_stale())
+        qc["dispatch_trace"] = dispatch_trace
+        qc["final_seal"] = {
+            "called": True,
+            "selected_route": dispatch_trace["selected_route"],
+            "resolved_symbol": code,
+            "resolved_name": name,
+        }
 
         # 如果 Wind 失败降级到 AkShare，标注降级
         if source == "akshare" and stock_data._DATA_SOURCE == "auto":
@@ -420,6 +510,39 @@ async def search(query: str, search_type: str = "stock") -> str:
         if search_type == "stock":
             results = await search_mod.multi_search_stock(query)
             formatted = search_mod.format_search_results_grouped(results)
+        elif search_type == "news":
+            import news_providers
+
+            results, provider_results = await news_providers.unified_news_search_v2(query)
+            formatted = search_mod.format_search_results(results)
+
+            runtime_detail = [
+                {
+                    "provider": result.provider,
+                    "runtime_state": result.runtime_state.value,
+                    "reason": result.reason,
+                    "elapsed_ms": result.elapsed_ms,
+                }
+                for result in provider_results
+            ]
+            qc = {
+                "search_type": search_type,
+                "query": query,
+                "sources": [result.provider for result in provider_results],
+                "runtime_detail": runtime_detail,
+                "unavailable_providers": [
+                    result.provider
+                    for result in provider_results
+                    if result.runtime_state.value == "unavailable"
+                ],
+                "mock_providers": [
+                    result.provider
+                    for result in provider_results
+                    if result.runtime_state.value == "mock"
+                ],
+                "result_count": len(results) if results else 0,
+            }
+            return _wrap_response(qc, formatted)
         else:
             results = await search_mod.unified_search(query, search_type)
             formatted = search_mod.format_search_results(results)
@@ -746,13 +869,23 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
     try:
         import wind_data
         import tushare_data
-        import joinquant_data
+        try:
+            import joinquant_data
+        except ImportError as exc:
+            if exc.name != "joinquant_data":
+                raise
+            joinquant_data = None
+            logger.warning("wind_query optional JoinQuant provider unavailable: %s", exc)
 
         if action == "connect":
             # 检查所有数据源连接状态
             wind_status = wind_data.check_connection()
             tushare_status = tushare_data.check_connection()
-            jq_status = joinquant_data.check_connection()
+            jq_status = (
+                joinquant_data.check_connection()
+                if joinquant_data is not None
+                else {"connected": False, "available": False, "reason": "provider module unavailable"}
+            )
 
             sources = []
             if wind_status.get("connected"):
@@ -772,6 +905,7 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
                 "stale_data": [],
             }
             result = {
+                "connected": wind_status.get("connected", False),
                 "wind": wind_status.get("connected", False),
                 "tushare": tushare_status.get("connected", False),
                 "joinquant": jq_status.get("connected", False),
@@ -825,6 +959,8 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
             return fn() if fn else None
 
         def _try_joinquant() -> dict | None:
+            if joinquant_data is None:
+                return None
             actions_map = {
                 "stock": lambda: joinquant_data.get_stock_snapshot(code),
                 "valuation": lambda: joinquant_data.get_valuation_history(code),

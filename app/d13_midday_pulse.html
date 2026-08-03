@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>D13 Midday Pulse — 2026-07-17</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  /* ===== Token system (FROZEN — same as morning/close brief) ===== */
+  :root {
+    --ink:       #0F1419;
+    --surface:   #1A1F2E;
+    --surface-2: #232938;
+    --rule:      #2D3447;
+    --text:      #E8E4D9;
+    --text-soft: #B8B4AB;
+    --muted:     #8B8680;
+    --amber:     #D4A574;
+    --amber-dim: #8C6E4E;
+    --caution:   #C97A6B;
+    --caution-dim: #7E4A40;
+    --positive:  #7FA968;
+    --positive-dim: #4A6A3C;
+    --serif:   'Fraunces', 'Songti SC', serif;
+    --sans:    'IBM Plex Sans', 'PingFang SC', sans-serif;
+    --mono:    'JetBrains Mono', 'SF Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #05070A;
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "tnum" 1, "ss01" 1;
+    line-height: 1.55;
+  }
+
+  .stage {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 24px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 880px;
+    background: var(--ink);
+    border: 1px solid var(--rule);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 30px 80px -20px rgba(0,0,0,0.6),
+      0 10px 30px -10px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Top status bar */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 28px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .topbar .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+    margin-right: 8px;
+    vertical-align: middle;
+    box-shadow: 0 0 8px var(--amber);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .topbar-right { color: var(--text-soft); }
+  .topbar-right span + span::before { content: "·"; padding: 0 8px; color: var(--rule); }
+
+  /* Header */
+  .header {
+    padding: 36px 40px 28px;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  .header-eyebrow {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .header-eyebrow .brief-id { color: var(--amber); font-weight: 700; }
+  .header h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 44px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    font-variation-settings: "opsz" 96;
+  }
+  .header h1 em {
+    font-style: italic;
+    color: var(--amber);
+    font-weight: 400;
+  }
+  .header-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 14px;
+    letter-spacing: 0.06em;
+  }
+  .signal-tags {
+    display: flex;
+    gap: 16px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+  }
+  .signal-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+    padding: 5px 10px;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  .signal-tag strong { color: var(--amber); font-weight: 500; }
+  .signal-tag .cross { color: var(--caution); margin-right: 6px; font-weight: 700; }
+
+  /* Verdict */
+  .verdict {
+    padding: 36px 40px 32px;
+    border-bottom: 1px solid var(--rule);
+    background: linear-gradient(180deg, rgba(212,165,116,0.04) 0%, transparent 100%);
+  }
+  .verdict-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .verdict-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  .verdict-text {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 28px;
+    line-height: 1.4;
+    color: var(--text);
+    letter-spacing: -0.005em;
+    font-variation-settings: "opsz" 60;
+  }
+  .verdict-text .accent { color: var(--amber); font-style: italic; }
+  .verdict-text .muted { color: var(--text-soft); }
+
+  /* Morning summary */
+  .morning-summary {
+    padding: 28px 40px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  .morning-summary .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .morning-summary .label strong { color: var(--text-soft); font-weight: 500; }
+  .morning-summary p {
+    font-size: 14px;
+    color: var(--text-soft);
+    line-height: 1.7;
+  }
+  .morning-summary p strong { color: var(--text); font-weight: 500; }
+
+  /* Comparison grid — 4 seats */
+  .comparisons {
+    padding: 28px 40px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .comparisons-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .comparisons-label strong { color: var(--text-soft); font-weight: 500; }
+  .comparisons-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border: 1px solid var(--rule);
+  }
+  .cmp {
+    padding: 20px 18px;
+    border-right: 1px solid var(--rule);
+    position: relative;
+  }
+  .cmp:last-child { border-right: 0; }
+  .cmp .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    margin-bottom: 12px;
+  }
+  .badge.confirmed { color: var(--positive); border: 1px solid var(--positive-dim); background: rgba(127,169,104,0.08); }
+  .badge.deviated  { color: var(--caution); border: 1px solid var(--caution-dim); background: rgba(201,122,107,0.08); }
+  .cmp-key {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .cmp-expect {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .cmp-expect strong { color: var(--text-soft); font-weight: 400; }
+  .cmp-actual {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 10px;
+    font-variation-settings: "opsz" 40;
+  }
+  .cmp-reason {
+    font-size: 12px;
+    color: var(--text-soft);
+    line-height: 1.45;
+  }
+
+  /* Sentiment snapshot — market emotion card */
+  .sentiment {
+    padding: 28px 40px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface-2);
+  }
+  .sentiment-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sentiment-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  .sentiment-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .sentiment-card {
+    padding: 16px;
+    background: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+  }
+  .sentiment-card .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.08em;
+  }
+  .sentiment-card .value {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 6px;
+    font-variation-settings: "opsz" 60;
+  }
+  .sentiment-card .sub {
+    font-size: 11px;
+    color: var(--text-soft);
+    line-height: 1.4;
+  }
+  .sector-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .sector-tag {
+    padding: 8px 14px;
+    background: var(--ink);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text);
+    letter-spacing: 0.04em;
+  }
+  .sector-tag strong { color: var(--positive); font-weight: 500; }
+
+  /* Afternoon watchlist */
+  .watchlist {
+    padding: 32px 40px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  .watch-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 6px;
+  }
+  .watch-head .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+  .watch-head .title {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 22px;
+    color: var(--text);
+  }
+  .watch-head .bar { flex: 1; height: 1px; background: var(--rule); }
+  .watch-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 22px;
+    letter-spacing: 0.04em;
+  }
+  .watch-list { display: flex; flex-direction: column; gap: 0; }
+  .watch {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 16px;
+    align-items: center;
+    padding: 16px 0;
+    border-top: 1px solid var(--rule);
+  }
+  .watch:last-child { border-bottom: 1px solid var(--rule); }
+  .watch .ind {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 1px solid var(--amber);
+    background: transparent;
+    margin: 0 auto;
+    box-shadow: 0 0 0 3px rgba(212,165,116,0.12);
+  }
+  .watch-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .watch-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Ticker tape */
+  .ticker-wrap {
+    background: var(--ink);
+    border-top: 1px solid var(--rule);
+    overflow: hidden;
+    position: relative;
+  }
+  .ticker-wrap::before, .ticker-wrap::after {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 60px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .ticker-wrap::before { left: 0;  background: linear-gradient(90deg, var(--ink), transparent); }
+  .ticker-wrap::after  { right: 0; background: linear-gradient(270deg, var(--ink), transparent); }
+  .ticker {
+    display: flex;
+    gap: 48px;
+    padding: 14px 0;
+    white-space: nowrap;
+    animation: scroll 40s linear infinite;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+  }
+  .ticker .tk {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ticker .tk strong { color: var(--amber); font-weight: 500; }
+  @keyframes scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* Footer */
+  .footer {
+    padding: 18px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .footer .left { color: var(--text-soft); }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    .stage { padding: 0; }
+    .card { border: 0; }
+    .header { padding: 28px 22px; }
+    .header h1 { font-size: 32px; }
+    .verdict { padding: 24px 22px; }
+    .verdict-text { font-size: 21px; }
+    .comparisons, .sentiment, .morning-summary { padding: 22px; }
+    .comparisons-grid { grid-template-columns: repeat(2, 1fr); }
+    .cmp:nth-child(2) { border-right: 0; }
+    .cmp:nth-child(1), .cmp:nth-child(2) { border-bottom: 1px solid var(--rule); }
+    .sentiment-grid { grid-template-columns: repeat(2, 1fr); }
+    .watchlist { padding: 24px 22px; }
+    .footer { padding: 14px 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ticker { animation: none; }
+    .topbar .dot { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <article class="card" role="article">
+
+    <!-- Top status bar -->
+    <div class="topbar">
+      <div><span class="dot"></span>MIDDAY · A-SHARE DESK</div>
+      <div class="topbar-right">
+        <span>SESSION A · ASIA</span>
+        <span>12:05 CST · 自动化</span>
+        <span>2026-07-17</span>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-eyebrow">
+        <span class="brief-id">D13</span>
+        <span>MIDDAY PULSE</span>
+        <span>· 午间验证</span>
+      </div>
+      <h1>防守<em>未转为</em>企稳<br/>上午低开低走</h1>
+      <div class="header-sub">晨间 4 项预期午间验证：3 CONFIRMED · 1 DEVIATED — 流动性未缓冲权益</div>
+      <div class="signal-tags">
+        <span class="signal-tag"><strong>Confidence</strong>&nbsp;&nbsp;HIGH</span>
+        <span class="signal-tag"><strong>Use</strong>&nbsp;&nbsp;宏观观察 + 午间修正</span>
+        <span class="signal-tag"><span class="cross">×</span><strong>NOT</strong>&nbsp;&nbsp;交易建议</span>
+      </div>
+    </header>
+
+    <!-- Verdict -->
+    <section class="verdict">
+      <div class="verdict-label">Verdict · 上午判断</div>
+      <p class="verdict-text">晨间对增长与科技风险的压制判断得到验证，且汇率保持有序；<span class="accent">主要偏差是4305亿元净投放未形成足够的股市缓冲</span>，上午跌幅明显超过"先防守、再观察企稳"的温和情景。</p>
+    </section>
+
+    <!-- Morning summary -->
+    <section class="morning-summary">
+      <div class="label">MORNING <strong>· 上午回顾（09:30 → 11:30）</strong></div>
+      <p>截至午间，<strong>上证指数3818.59（-1.64%）、深证成指13953.26（-3.70%）、创业板指3518.65（-4.71%）</strong>、北证50为1093.97（-0.71%）；沪深成交额约1.602万亿元。电力、公用事业相对强，数字芯片设计、医疗服务等跌幅居前，呈明显防御与高估值成长分化。宏观端，二季度GDP同比4.3%、上半年4.7%。政策端，央行开展4505亿元7天期逆回购、利率1.40%，净投放4305亿元。FX端，USD/CNY中间价6.7934，在岸即期12:01报6.7744。</p>
+    </section>
+
+    <!-- Expectation Comparison Grid -->
+    <section class="comparisons">
+      <div class="comparisons-label">EXPECTATION <strong>· 晨间预期 vs 午间验证</strong></div>
+      <div class="comparisons-grid">
+        <div class="cmp">
+          <span class="badge confirmed">CONFIRMED</span>
+          <div class="cmp-key">GDP · 二季度</div>
+          <div class="cmp-expect">预期 <strong>4.3% · down</strong></div>
+          <div class="cmp-actual">4.3% · 上半年4.7%</div>
+          <div class="cmp-reason">增长放缓与上午风险偏好走弱方向一致。</div>
+        </div>
+        <div class="cmp">
+          <span class="badge deviated">DEVIATED</span>
+          <div class="cmp-key">央行净投放 · 7-17</div>
+          <div class="cmp-expect">预期 <strong>4305亿 · up</strong></div>
+          <div class="cmp-actual">4305亿 · 未缓冲</div>
+          <div class="cmp-reason">金额确认，但流动性未转化为上午企稳。</div>
+        </div>
+        <div class="cmp">
+          <span class="badge confirmed">CONFIRMED</span>
+          <div class="cmp-key">USD/CNY 中间价</div>
+          <div class="cmp-expect">预期 <strong>6.7934 · down</strong></div>
+          <div class="cmp-actual">6.7934 · 即期6.7744</div>
+          <div class="cmp-reason">在岸即期位于中间价下方，汇率锚未失序。</div>
+        </div>
+        <div class="cmp">
+          <span class="badge confirmed">CONFIRMED</span>
+          <div class="cmp-key">上证指数 · 前收</div>
+          <div class="cmp-expect">预期 <strong>3882.41 · down</strong></div>
+          <div class="cmp-actual">3818.59 · -1.64%</div>
+          <div class="cmp-reason">进一步下探，防守未转企稳，方向一致。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sentiment Snapshot — Emotion Card -->
+    <section class="sentiment">
+      <div class="sentiment-label">SENTIMENT · 午间情绪快照</div>
+      <div class="sentiment-grid">
+        <div class="sentiment-card">
+          <div class="label">涨停数量</div>
+          <div class="value">—</div>
+          <div class="sub">数据待盘后统计</div>
+        </div>
+        <div class="sentiment-card">
+          <div class="label">连板高度</div>
+          <div class="value">—</div>
+          <div class="sub">午盘未封板</div>
+        </div>
+        <div class="sentiment-card">
+          <div class="label">昨日涨停反馈</div>
+          <div class="value">—</div>
+          <div class="sub">待收盘后计算</div>
+        </div>
+        <div class="sentiment-card">
+          <div class="label">风险偏好</div>
+          <div class="value">低</div>
+          <div class="sub">防御板块领涨</div>
+        </div>
+      </div>
+      <div class="sector-tags">
+        <span class="sector-tag">电力 <strong>相对强</strong></span>
+        <span class="sector-tag">公用事业 <strong>相对强</strong></span>
+        <span class="sector-tag">数字芯片设计 <strong>跌幅居前</strong></span>
+        <span class="sector-tag">医疗服务 <strong>跌幅居前</strong></span>
+      </div>
+    </section>
+
+    <!-- Afternoon watchlist -->
+    <section class="watchlist">
+      <div class="watch-head">
+        <span class="label">AFTERNOON · WATCHLIST</span>
+        <span class="title">下午重点看三件事</span>
+        <span class="bar"></span>
+      </div>
+      <div class="watch-sub">— 午间修正，下午观察，不作交易指令 —</div>
+      <div class="watch-list">
+        <div class="watch">
+          <div class="ind"></div>
+          <div class="watch-text">13:00复市后观察上证能否脱离上午低点<strong>3806.39</strong>并收窄跌幅，用于核验防守是否转为企稳。</div>
+          <div class="watch-tag">OBS-01</div>
+        </div>
+        <div class="watch">
+          <div class="ind"></div>
+          <div class="watch-text">观察<strong>电力、公用事业</strong>的相对强势能否延续，以及数字芯片设计、医疗服务的急跌是否继续扩散。</div>
+          <div class="watch-tag">OBS-02</div>
+        </div>
+        <div class="watch">
+          <div class="ind"></div>
+          <div class="watch-text">观察在岸USD/CNY是否继续低于<strong>6.7934</strong>中间价，以及原油走强与铜走弱的商品分化是否放大周期压力。</div>
+          <div class="watch-tag">OBS-03</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ticker tape -->
+    <div class="ticker-wrap" aria-hidden="true">
+      <div class="ticker">
+        <span class="tk">上证 <strong>3818.59</strong> -1.64%</span>
+        <span class="tk">深证 <strong>13953.26</strong> -3.70%</span>
+        <span class="tk">创业板 <strong>3518.65</strong> -4.71%</span>
+        <span class="tk">北证50 <strong>1093.97</strong> -0.71%</span>
+        <span class="tk">成交 <strong>1.60万亿</strong></span>
+        <span class="tk">USD/CNY <strong>6.7744</strong></span>
+        <span class="tk">WTI <strong>79.13</strong> +1.09%</span>
+        <span class="tk">Gold <strong>3994.9</strong> +0.07%</span>
+        <span class="tk">Copper <strong>13468</strong> -0.95%</span>
+        <!-- duplicate for seamless loop -->
+        <span class="tk">上证 <strong>3818.59</strong> -1.64%</span>
+        <span class="tk">深证 <strong>13953.26</strong> -3.70%</span>
+        <span class="tk">创业板 <strong>3518.65</strong> -4.71%</span>
+        <span class="tk">北证50 <strong>1093.97</strong> -0.71%</span>
+        <span class="tk">成交 <strong>1.60万亿</strong></span>
+        <span class="tk">USD/CNY <strong>6.7744</strong></span>
+        <span class="tk">WTI <strong>79.13</strong> +1.09%</span>
+        <span class="tk">Gold <strong>3994.9</strong> +0.07%</span>
+        <span class="tk">Copper <strong>13468</strong> -0.95%</span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span class="left">DATA CONFIDENCE · HIGH（午盘数据完整）</span>
+      <span>Allowed use · 宏观观察 + 午间修正 · <span style="color:var(--caution);">不作交易建议</span></span>
+    </footer>
+
+  </article>
+</div>
+</body>
+</html>

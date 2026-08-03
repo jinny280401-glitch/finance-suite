@@ -9,3 +9,20 @@ logs/*.log
 .venv/
 venv/
 logs/
+
+# Runtime generated artifacts
+data/morning_brief/latest.*
+data/morning_brief/loop_state.json
+
+# Tool caches
+.playwright-cli/
+
+# Build outputs and temp directories
+roadshow-2026-06/html/output/
+roadshow-2026-06/html/tmp/
+roadshow-2026-06/output/
+roadshow-2026-06/tmp/
+docs/incidents/w1_evidence_*/
+
+# Archive files (build artifacts)
+roadshow-2026-06/**/*.zip
