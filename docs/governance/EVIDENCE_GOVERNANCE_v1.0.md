@@ -1,14 +1,14 @@
 # Finance Suite Evidence Governance v1.0
 
-**Document Status:** Architecture Freeze Draft
-**Evidence Basis:** Derived from production failure case (600439 F-03 Counter-Example)
-**Case Study:** [§9 F-03 Financial Freshness Counter-Example](#9-freshness-policy-case-study-600439-f-03-counter-example)
-**Governance Maturity:** SPECIFICATION READY
+**Document Status:** Architecture Freeze Draft (Phase 2 Absorption Enhanced)
+**Evidence Basis:** Derived from production failure case (600439 F-03 Counter-Example) + Phase 1 External Architecture Recon (2026-08-03)
+**Phase 1 Input:** [ARCHITECTURE_PATTERN_REVIEW.md](../research/ARCHITECTURE_PATTERN_REVIEW.md), [FINANCIAL_DATA_GOVERNANCE_PATTERN.md](../research/FINANCIAL_DATA_GOVERNANCE_PATTERN.md), [OPEN_SOURCE_GOVERNANCE_SCAN.md](../research/OPEN_SOURCE_GOVERNANCE_SCAN.md), [PHASE1_ABSORPTION_SYNTHESIS.md](../research/PHASE1_ABSORPTION_SYNTHESIS.md)
+**Governance Maturity:** SPECIFICATION READY (L0→L1 on Capability Maturity Ladder)
 **Runtime Implementation:** NOT STARTED
 **Production Capability:** NOT CLAIMED
 **Effective date:** 2026-08-03
-**Supersedes:** None (new asset)
-**Aligns with:** [Capability Claim Governance Framework v1.0](Vera_Capability_Claim_Governance_Framework_v1.md), [Evidence Manifest Protocol v0.1](../evidence/Vera_Evidence_Manifest_Protocol_v0.1.md), [Institutional Provider Architecture v0.1](INSTITUTIONAL_PROVIDER_ARCHITECTURE_v0.1.md)
+**Supersedes:** None (new asset; enhanced from Phase 1 absorption)
+**Aligns with:** [Capability Claim Governance Framework v1.0](Vera_Capability_Claim_Governance_Framework_v1.md), [Evidence Manifest Protocol v0.1](../evidence/Vera_Evidence_Manifest_Protocol_v0.1.md), [Institutional Provider Architecture v0.1](INSTITUTIONAL_PROVIDER_ARCHITECTURE_v0.1.md), [Vera Enterprise Architecture v1.0](../architecture/VERA_ENTERPRISE_ARCHITECTURE_v1.0.md)
 
 ---
 
@@ -36,11 +36,20 @@ Principle 2: QC passed ≠ Consumer safe
 Principle 3: Fetch timestamp ≠ Data period
 Principle 4: Code fixed ≠ Root cause proven
 Principle 5: Evidence retention is a Runtime contract, not a post-incident supplement
+Principle 6: Schema ≠ Data Contract — fields existing does not mean semantics hold
+Principle 7: Declared Capability ≠ Effective Capability — what is claimed must be independently verified at runtime
+Principle 8: UNKNOWN SHALL NOT ESCALATE PRIVILEGE — the default when uncertain is to restrict, not to permit
 ```
 
 **Principle 4 (Code fixed ≠ Root cause proven):** A code fix that restores correct behavior proves that the current code path is correct. It does not prove what caused the original failure. The original HTTP status code, Content-Type, response body, request ID, and correlated logs must be preserved to complete a deterministic RCA. Without them, the root cause can only be classified as a candidate hypothesis, never CONFIRMED.
 
 **Principle 5 (Evidence retention is a Runtime contract):** Evidence preservation is not a retrospective action taken after an incident. It is a base capability that the production Runtime MUST provide. A Runtime that cannot answer "which layer produced this error response?" or "was the Provider invoked?" is not trustworthy — regardless of how many successful responses it produces. Pre-Decision Evidence governs whether data can enter a conclusion. Post-Incident Evidence governs whether the system can prove what happened after a failure. Both are required for a Trustworthy Runtime.
+
+**Principle 6 (Schema ≠ Data Contract):** A JSON field named `as_of` that exists in the schema but carries fetch time while implying data currency is a contract violation, not a schema defect. Schema validates structure. Contract validates semantics. A field that passes schema validation has not satisfied its data contract until its meaning, temporal scope, and provenance are independently verified.
+
+**Principle 7 (Declared Capability ≠ Effective Capability):** A configuration file, a registered provider, or a documented integration path proves intent, not runtime capacity. Every capability claim MUST be verified at the runtime boundary — what actually executed, with what evidence, producing what outcome. Audit the spawn snapshot, not the declaration. Aligned with [Capability Claim Governance Framework v1.0](Vera_Capability_Claim_Governance_Framework_v1.md) §2.
+
+**Principle 8 (UNKNOWN SHALL NOT ESCALATE PRIVILEGE):** When freshness, provenance, or confidence cannot be determined, the default judgment MUST restrict downstream use — never expand it. An UNKNOWN freshness is not PASS. An UNKNOWN source confidence is not MEDIUM. An UNKNOWN authorization boundary is not ALLOW. This principle prevents the silent privilege escalation that occurs when governance gaps are filled by optimistic defaults. Aligned with in-toto, SCITT, and OPA/Cedar fail-closed semantics identified in Phase 1 External Recon.
 
 ### 1.2 Architecture Position
 
@@ -65,16 +74,18 @@ Provider Layer (Wind / Choice / iFinD / Tushare / AkShare)
         ↓
 Provider Normalization (→ Evidence Object)
         ↓
-Quality Control (freshness + completeness + confidence)
+Trust Evaluation (freshness + completeness + confidence + provenance)
         ↓
-Evidence Bundle
+Authorization Decision (allowed_use / blocked_use / claim_strength)
         ↓
-Trust Gate (allowed_use / blocked_use decision)
+Context Assembly (evidence bundle for consumption)
         ↓
 Agent / LLM Consumption
 ```
 
-Provider payloads MUST be normalized to Evidence Objects before QC evaluation. Raw provider fields MUST NOT reach the Agent layer ungoverned.
+**Critical architectural constraint:** Trust Evaluation and Authorization Decision are separate stages. Trust Evaluation answers "is this evidence valid?" Authorization Decision answers "what may this evidence be used for?" A Trust Evaluation PASS MUST NOT automatically authorize all downstream uses. This separation is Vera's core differentiator from existing industry patterns: in-toto proves provenance, SCITT proves durability, PIT proves temporal correctness — but none define an authorization boundary between evidence validity and evidence consumption. That boundary is Vera's.
+
+Provider payloads MUST be normalized to Evidence Objects before Trust Evaluation. Raw provider fields MUST NOT reach the Agent layer ungoverned.
 
 The Pre-Decision branch governs data before it enters a conclusion. The Post-Incident branch governs whether the system can prove what happened after a failure. A Runtime that cannot satisfy both is not trustworthy — regardless of its success rate under normal conditions.
 
@@ -147,27 +158,55 @@ Every data point that enters the Trust Gate MUST carry:
 | `governance.block_reason` | string | Conditional | Why blocked. Required when `blocked_use` is non-empty. |
 | `governance.requires_human_review` | boolean | Yes | Whether Agent may consume without human review |
 
-### 2.3 Time Semantics — The Three-Date Rule
+### 2.3 Time Semantics — The Bitemporal Contract (MUST)
 
-The 600439 incident's root schema defect was conflating fetch time with data period. The Evidence Object enforces three distinct timestamps:
+The 600439 incident's root schema defect was conflating fetch time with data period. Phase 1 External Recon confirmed that the financial data industry standard is **bitemporal governance**: every fact carries two independent time axes. The Evidence Object enforces this as a normative requirement.
 
 ```text
-data_period_end    "What time does this data describe?"
-                   → 2025-12-31 (the balance sheet date)
+valid_time          "What period does this fact describe?"
+                    → 2026 Q1 financials: valid_time = 2026-01-01 ~ 2026-03-31
 
-announced_at       "When was this officially disclosed?"
-                   → 2026-04-20 (the filing date)
+knowledge_time      "When did the market/system first know this fact?"
+                    → 2026 Q1 report published: knowledge_time = 2026-04-28 15:00
 
-fetched_at         "When did our system retrieve it?"
-                   → 2026-08-03T00:34:00+08:00
+fetched_at          "When did our system retrieve it?"
+                    → 2026-08-03T00:34:00+08:00
 ```
 
-These three dates serve different governance functions:
-- `data_period_end` drives **freshness** (is the data current?)
-- `announced_at` drives **availability expectation** (should newer data exist?)
-- `fetched_at` drives **latency** and **cache invalidation**
+**Upgrade from v0 (three-date) to v1.0 (bitemporal):**
 
-A single `as_of` field that carries `fetched_at` while implying `data_period_end` is a **schema contract violation**. Consumers reasonably interpret `as_of` as data currency, producing false freshness conclusions.
+The v0 draft used `data_period_end`, `announced_at`, and `fetched_at` as three independent fields. Phase 1 absorption of Bloomberg/FactSet Point-in-Time (PIT) semantics and the bitemporal model requires upgrading this to a formal two-axis contract:
+
+| Axis | v0 field | v1.0 field | Governance function |
+|---|---|---|---|
+| **Validity axis** | `data_period_end` | `valid_time` (MUST) | "What time period does this fact describe?" Drives freshness. |
+| **Knowledge axis** | `announced_at` | `knowledge_time` (MUST) | "When did the market/system first know this?" Drives availability expectation and temporal leakage detection. |
+| **Observation axis** | `fetched_at` | `fetched_at` (MUST) | "When did our system retrieve it?" Drives latency and cache invalidation. |
+
+**Temporal Leakage Gate:**
+
+If an Agent answers "As of 2026-04-01, the company's financial position is…" using evidence with `knowledge_time = 2026-04-28`, the Trust Gate MUST detect and BLOCK the temporal leakage:
+
+```text
+query_time <= knowledge_time → LEAKAGE → BLOCK
+knowledge_time < query_time  → ALLOWED (if freshness also PASS)
+```
+
+This gate is Vera-defined. While Bloomberg, FactSet, and LSEG all provide PIT products that prevent look-ahead bias in backtesting, the automatic detection of temporal leakage at Agent query time — mapping the gap between `knowledge_time` and the Agent's stated `as_of` claim — is not a standardized industry feature. It is Vera's GAP to define.
+
+**Freshness policy per data class:**
+
+The temporal contract applies differently by data class, as identified in Phase 1 Financial Data Governance Scout:
+
+| Data Class | valid_time meaning | knowledge_time meaning | Max age |
+|---|---|---|---|
+| Financial statements | `period_end` of reporting period | Filing/publication date | Latest filing cycle + 90 days |
+| Market data | Trade/quote timestamp | Exchange receipt time | 1 trading day (intraday: 15 min) |
+| Announcements | Event effective date | Disclosure timestamp | Event-driven (superseded by newer) |
+| Estimates | Horizon period end | Analyst publication date | `as_of` + revision age |
+| Macro indicators | Measurement period end | Official release date | Expected release + 30 days |
+
+A single `as_of` field that carries `fetched_at` while implying `valid_time` is a **schema contract violation**. Consumers reasonably interpret `as_of` as data currency, producing false freshness conclusions.
 
 ### 2.4 Source Confidence Model
 
@@ -179,6 +218,54 @@ A single `as_of` field that carries `fetched_at` while implying `data_period_end
 | `UNKNOWN` | Cannot determine provenance | Fallback, cache-only, derived without lineage | ALL downstream conclusions |
 
 Confidence degrades at each fallback step. A data point retrieved from AkShare after Wind + Tushare both failed carries `LOW` confidence regardless of the data's factual accuracy.
+
+### 2.5 Cross-Source Confidence Formula (Vera-Defined GAP)
+
+Phase 1 External Recon confirmed that no public vendor standard defines a unified cross-source confidence model. This formula is **Vera-defined**, not industry-standard. It MUST NOT be presented as a Bloomberg, FactSet, or LSEG specification.
+
+```text
+confidence = authority
+           × authenticity
+           × transformation_quality
+           × corroboration
+           × temporal_validity
+```
+
+| Factor | Definition | Degradation trigger |
+|---|---|---|
+| `authority` | Source's legal/institutional standing | Fallback to lower-tier provider |
+| `authenticity` | Cryptographic or procedural proof of origin | Unsigned, unverifiable, or relayed through untrusted intermediary |
+| `transformation_quality` | Correctness of mapping, normalization, computation | Manual mapping, unversioned transform, known data-type mismatch |
+| `corroboration` | Independent confirmation from separate source | Single-source, uncorroborated, or contradicted |
+| `temporal_validity` | Data is within its valid time window | Stale, expired, or missing `valid_time` |
+
+Each factor is evaluated independently. A HIGH-authority source (Wind) with expired temporal validity produces UNKNOWN overall confidence — not HIGH. Authority cannot compensate for staleness.
+
+### 2.6 Evidence Object Envelope (Phase 1 Absorption)
+
+The Evidence Object structure defined in §2.1 is the **operational data contract**. The **envelope** that wraps it for exchange and verification draws from:
+
+| Source | Absorbed concept | Vera mapping |
+|---|---|---|
+| in-toto Statement v1 | `subject + digest + predicateType + predicate` | `evidence_id` = subject, `raw_response_sha256` = digest, domain-specific fields = predicate |
+| W3C PROV | `Entity—Activity—Agent` with `wasGeneratedBy/used/wasAttributedTo` | Evidence Object = Entity, Provider invocation = Activity, Provider identity = Agent |
+| SCITT RFC 9943 | Signed Statement + Transparency Receipt | Provider signs Evidence Object → SCITT-compatible receipt stored in `durability` block |
+
+The Evidence Object MUST carry a `durability` block for high-confidence evidence:
+
+```json
+{
+  "durability": {
+    "receipt_type": "scitt|sigstore|none",
+    "receipt_uri": "",
+    "signed_at": "",
+    "signer_identity": "",
+    "content_hash": ""
+  }
+}
+```
+
+`receipt_type = "none"` is valid for LOW-confidence sources (AkShare, web scraping). It MUST NOT be used for HIGH-confidence institutional providers without explicit justification.
 
 ---
 
@@ -348,6 +435,88 @@ Confidence degrades at each fallback step. A data point retrieved from AkShare a
    }
    ```
    Evidence based on a preliminary value that was later revised downward is evidence of *what was believed at the time*, not evidence of *what happened*.
+
+---
+
+## 3A. Evidence → Decision Authorization Model
+
+### 3A.1 The Missing Layer
+
+Phase 1 External Recon confirmed that the industry has mature solutions for individual governance dimensions — in-toto for provenance, SCITT for durability, PIT for temporal correctness, OPA/Cedar for authorization. But none of these systems answer the question Vera exists to answer:
+
+> **This evidence is valid. What conclusions may it support, and at what strength?**
+
+The Authorization Model defines the boundary between "this evidence passes quality checks" and "this evidence may enter this specific conclusion at this specific strength." It is Vera's core architectural differentiator.
+
+### 3A.2 Trust Evaluation → Authorization Decision Separation
+
+```text
+Phase 1: Trust Evaluation             Phase 2: Authorization Decision
+─────────────────────                 ────────────────────────────
+Is the evidence valid?                What may this evidence be used for?
+- provenance verified                 - allowed_use
+- freshness within policy             - blocked_use  
+- completeness >= threshold           - claim_strength
+- source_confidence assessed          - consumer scope
+- temporal leakage checked            - requires_human_review
+```
+
+**Critical invariant:** Trust Evaluation PASS MUST NOT automatically authorize all downstream uses. A `HIGH` confidence financial statement with perfect freshness supports `fundamental_analysis` but does NOT support `predictive_claim`. A `LOW` confidence news article supports `context` but does NOT support `investment_signal`. This separation is normative, not advisory.
+
+### 3A.3 Authorization Decision Object
+
+```json
+{
+  "decision_id": "dec:<uuid>",
+  "evidence_ids": ["ev:...", "ev:..."],
+  "policy_version": "evidence-governance-v1.0",
+  "verdict": "ALLOW|LIMIT|BLOCK",
+  "allowed_use": ["fundamental_analysis", "historical_context"],
+  "blocked_use": ["investment_signal", "predictive_claim"],
+  "max_claim_strength": "comparative",
+  "requires_human_review": false,
+  "expires_at": "2026-08-04T01:00:00+08:00",
+  "reason": "Financial evidence fresh within policy; confidence HIGH"
+}
+```
+
+If any required field is UNKNOWN or missing, fail closed: `verdict → BLOCK`, `max_claim_strength → descriptive`. UNKNOWN SHALL NOT ESCALATE PRIVILEGE (Principle 8).
+
+---
+
+## 3B. Claim Strength Contract
+
+### 3B.1 Evidence Tier → Claim Strength Mapping
+
+| Confidence | Freshness | Max Claim Strength | Example |
+|---|---|---|---|
+| `HIGH` | `PASS` | `directional` | "Revenue grew 15% YoY for 3 consecutive quarters" |
+| `HIGH` | `PASS` + human review + validated model | `predictive` | "Based on disclosed assumptions and model, revenue may reach X" |
+| `MEDIUM` | `PASS` | `comparative` | "Company A's PE is lower than industry average" |
+| `MEDIUM` | `STALE` | `descriptive` | "Company A's last reported PE was 15.2 (as of 2025-12-31)" |
+| `LOW` | `PASS` | `descriptive` | "According to public aggregation, Company A reported revenue of X" |
+| `LOW` | `STALE` or `UNKNOWN` | `descriptive` (with caveat) | "Historical data suggests… (verify independently)" |
+| `UNKNOWN` | Any | `descriptive` (with UNKNOWN marker) | "Retrieved data; provenance and currency unverified" |
+
+### 3B.2 Claim Escalation Gate
+
+```text
+Claim tier upgrade = new evidence required
+Evidence tier downgrade = claim tier MUST downgrade
+```
+
+This prevents **rhetorical escalation without evidential escalation** — the most common failure mode in AI-generated financial analysis.
+
+### 3B.3 Six-Tier Claim Strength Ladder
+
+| Tier | Type | Definition | Minimum Evidence |
+|---|---|---|---|
+| `descriptive` | "This is what the data says" | Factual restatement | Any confidence, freshness PASS |
+| `comparative` | "X vs Y" | Relative comparison | ≥ MEDIUM, both comparands independently verified |
+| `directional` | "X is trending" | Observed trend (≥3 points) | ≥ MEDIUM, valid_time for all points |
+| `causal` | "X caused Y" | Attribution | HIGH confidence, temporal precedence, confounders addressed |
+| `predictive` | "X will happen" | Forward-looking | HIGH confidence + validated model + error bounds + human review |
+| `prescriptive` | "You should do X" | Action recommendation | All above + regulatory compliance + human authorization |
 
 ---
 
@@ -978,17 +1147,31 @@ This constraint exists to prevent three failure patterns observed in governance 
 
 Design review of this document should verify:
 
-- [ ] Evidence Object schema covers all five domains (§3.1–§3.5)
-- [ ] Three-date rule (§2.3) is enforceable for all time-bearing domains
+- [ ] Evidence Object schema covers all five domains (§5.1–§5.5)
+- [ ] Bitemporal contract (§2.3) enforces valid_time + knowledge_time as MUST for all time-bearing domains
+- [ ] Temporal Leakage Gate (§2.3) prevents `query_time <= knowledge_time` for Agent claims
 - [ ] Freshness Policy (§4) replaces `len(stale) <= 1` with per-domain criticality
-- [ ] Trust Gate target states (§5.2) include `BLOCKED` with clear governance criteria
-- [ ] Source confidence model (§2.4) distinguishes provider classes
+- [ ] Evidence → Decision separation (§3A.2) is normative: Trust Evaluation PASS != auto-authorize all uses
+- [ ] Authorization Decision Object (§3A.3) enforces fail-closed when fields are UNKNOWN
+- [ ] Claim Strength Contract (§3B) maps evidence tier to maximum claim strength
+- [ ] Claim Escalation Gate (§3B.2) prevents rhetorical escalation without evidential escalation
+- [ ] Cross-source confidence formula (§2.5) treats authority and temporal validity as independent factors
+- [ ] Durability receipt (§2.6) is required for HIGH-confidence providers
+- [ ] All eight Governing Principles (§1.1) have corresponding normative rules
+- [ ] Source confidence model (§2.4) distinguishes provider classes and degrades on fallback
 - [ ] Provider normalization requirement (§6.1) is testable
-- [ ] Alignment with Capability Framework, Manifest Protocol, and Provider Architecture is explicit (§7)
+- [ ] Alignment with Capability Framework, Manifest Protocol, Provider Architecture, and Enterprise Architecture is explicit (§8)
 - [ ] Case Study (§9) maps 600439 defects to governance rules with acceptance tests
-- [ ] Governance Learning Loop (§10) defines: lifecycle stages, Case Registry, Architecture Freeze Gate, change control, and the One Incident → One Rule → One Test constraint
+- [ ] Governance Learning Loop (§10) defines lifecycle stages, Case Registry, Architecture Freeze Gate, change control, and One Incident → One Rule → One Test
 - [ ] Migration boundary (§11) is clear: design only, no implementation claim, freeze gate active
-- [ ] Reader can answer: why does this rule exist? Which real case derived it? How is it verified? Who implements? Who approves?
+
+### Phase 2 Acceptance: Five Exit Questions
+
+1. **Why is this evidence trustworthy?** → Provenance + source + valid_time + knowledge_time + provider attestation (§2)
+2. **What conclusions can this evidence support?** → allowed_use + claim_strength + consumer scope (§3A, §3B)
+3. **Why can't it support stronger conclusions?** → blocked_use + missing evidence + temporal limitation + authorization boundary (§3A.3, §3B.1)
+4. **How does the system prevent temporal leakage?** → Bitemporal contract + knowledge_time ≤ query_time gate + per-data-class freshness (§2.3, §4)
+5. **How does the system prevent Agent privilege escalation?** → Evidence→Decision separation + Claim Escalation Gate + UNKNOWN fail-closed (§3A.2, §3B.2, Principle 8)
 
 ---
 
