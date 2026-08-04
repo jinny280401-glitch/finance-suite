@@ -172,9 +172,31 @@ Threshold T-RC-05: The admission rule has run to closure (no new alternatives
                    admitted after the threshold evaluation began)
 ```
 
-**Explicit rule (per F-01):** Demonstrating the five named counter-cases permits an **explanation** classification (State 2), NOT a `Root Cause: CONFIRMED` classification (State 3). Five cases do not bound the hypothesis universe. A successful five-case exercise supports the explanation's discriminating power against five selected hypotheses; it does not prove causation.
+**Pre-evaluation baseline (per F-02 third review):** A root-cause determination is only meaningful against a hypothesis universe fixed BEFORE the incident evidence is reviewed. Otherwise the investigator can choose a narrow universe, refute it, and close the admission rule without demonstrating causal sufficiency. Required pre-evaluation contract:
 
-**Fallback classification:** If State 3 cannot be reached (any threshold fails), the incident MUST be classified as:
+| Element | Definition |
+|---|---|
+| `universe_version` | Versioned identifier (semver or date-stamp) for the hypothesis universe in use |
+| `universe_membership_criteria` | Explicit rule for what counts as a candidate alternative (e.g., "all plausible failure modes listed in R-01a R-01b table 113–123, plus any discovered during the R-01a acquisition") |
+| `universe_baseline_timestamp` | UTC, with clock source, recorded before evidence review begins |
+| `evaluator_identity` | Who (role + identity) defined and froze the universe |
+| `evaluator_evidence_access_boundary` | What evidence sources the evaluator MAY see before locking the universe (must NOT include the R-01a-i incident package itself) |
+| `universe_change_log` | Any alternative added to the universe after baseline MUST be recorded with timestamp + admission reason + whether it was admitted before or after evidence review |
+
+**Causal sufficiency test (per F-02 third review):** Thresholds T-RC-01..T-RC-05 prove the *negative* (alternatives are excluded) but not the *positive* (the named cause actually produces the observed outcome). Causal sufficiency requires a controlled reproduction:
+
+| Element | Definition |
+|---|---|
+| `reproduction_conditions` | The environmental, input, and timing conditions under which the cause was reproduced |
+| `reproduced_attributes` | Which attributes of the original occurrence the reproduction matched (status code, content type, request identity, timing distribution) |
+| `reproduction_diff_from_occurrence` | Which attributes the reproduction did NOT match, and the rationale for treating them as immaterial |
+| `discrimination_against_active_alternatives` | For each alternative still in the active universe, the reproduction result that distinguishes the named cause from that alternative |
+
+**Governance consequence:** T-RC-01..T-RC-05 alone permit `Root Cause: UNKNOWN` or `Root Cause: EXCLUDED-NO-REPRODUCTION`. The label `Root Cause: CONFIRMED` requires BOTH the threshold package AND the causal sufficiency test. If the reproduction cannot be conducted (production risk, lost evidence, environmental impossibility), the fallback is `Root Cause: UNKNOWN (causal test infeasible)`, NOT CONFIRMED.
+
+**Explicit rule (per F-01 + F-02):** Demonstrating the five named counter-cases permits an **explanation** classification (State 2), NOT a `Root Cause: CONFIRMED` classification (State 3). Five cases do not bound the hypothesis universe. A successful five-case exercise supports the explanation's discriminating power against five selected hypotheses; it does not prove causation.
+
+**Fallback classification:** If State 3 cannot be reached (any threshold fails, or pre-evaluation contract violated, or causal sufficiency test infeasible), the incident MUST be classified as:
 - `Root Cause: UNKNOWN (insufficient evidence)` — per Evidence Governance v1.0 §7.1
 - `Evidence Confidence: LOW`
 - An explanation narrative MAY be published with the UNKNOWN marker preserved
@@ -245,13 +267,32 @@ model configured  ≠  model resolved  ≠  gateway accepted  ≠  model execute
 
 A receipt R without the Y → Z → R chain is **observability, not identity**.
 
-**Acceptance condition (revised per F-03):** For a single scheduler run, the system MUST produce a record chain:
+**Contractual execution attestation (per F-03 third review):** "Observed" is not the same as "attested." Every record in the chain MUST carry the following keys and integrity/provenance metadata:
+
+| Record | Required keys (every field MUST be present and non-null) | Integrity / provenance |
+|---|---|---|
+| Gateway acceptance | `scheduler_run_id`, `gateway_attempt_id`, `accepted_model_identity`, `timestamp`, `decision` (accept/reject/alias-rewrite/route-substitute) | Hash of record + signing key identity if available |
+| Invocation event | `scheduler_run_id`, `gateway_attempt_id`, `provider_attempt_id`, `invoked_at`, `requested_model` | Hash of record |
+| Provider attempt | `provider_attempt_id`, `attempt_started_at`, `attempt_outcome` (success/failure/timeout), `attempted_model` | Hash of record |
+| Provider receipt | `provider_attempt_id`, `receipt_received_at`, `serving_model_identity`, `response_status`, `usage_tokens` (if any) | Hash of record |
+
+**Provider-attested execution (per F-03 third review):** The provider receipt MUST be **attested by the provider** in a form that contractually identifies the serving model. A response-body `model` field captured by the gateway is observation, not attestation. The plan REQUIRES one of:
+
+1. A signed provider receipt (signature key custody specified, signing time bounded to the attempt window)
+2. A provider-published response identifier that contractually maps to the serving model (the provider's published schema is the contract)
+3. A local receipt that records the **attestation method** with explicit reason why the provider does not offer (1) or (2) and what compensating evidence is recorded
+
+Without one of the above, the `serving_model_identity` field is observation, NOT identity, and R-02 execution identity is NOT established. The unresolved provider/gateway receipt question (OQ-4) MUST be closed or a known UNKNOWN compensation recorded.
+
+**Mandatory correlation keys (per F-03 third review):** Every record in the chain MUST carry `scheduler_run_id` AND `gateway_attempt_id` AND `provider_attempt_id` (whichever are within scope for that record). Records missing any of these keys cannot be joined across the chain. The plan does NOT permit "join via inference" or "join via timestamp proximity" as a substitute for explicit keys.
+
+**Acceptance condition (revised per F-03 third review):** For a single scheduler run, the system MUST produce a record chain:
 
 ```
 configured → resolved → gateway_accepted → invocation_event → provider_attempt → receipt
 ```
 
-Each link MUST be observed. A response-body `model` field alone does NOT satisfy any layer.
+Each link MUST be observed AND each record MUST carry the mandatory correlation keys AND the receipt MUST be provider-attested (per the three options above). A response-body `model` field alone does NOT satisfy any layer. A record without its mandatory correlation keys does NOT satisfy its layer.
 
 **Forbidden claims while R-02 is open:**
 - "The system uses model X" (without specifying which of the three layers)
@@ -318,17 +359,27 @@ reviewed source  →  compiled artifact  →  runtime-loaded artifact  →  serv
 
 A `worker_id` reused across process restarts, an inspection after the response, or an undefined closure do NOT satisfy R-03 acceptance.
 
-**Acceptance condition (revised per F-04):** For a served response, the system MUST produce a request-correlated proof chain:
+**Acceptance condition (revised per F-04 + F-01 third review):** For a served response, the system MUST produce a request-correlated proof chain across **all four** links:
 
 ```
-process_incarnation_id
+reviewed source
         ↓
-runtime-loaded artifact (closure + digest + timestamp)
+build record (source digest → compiled artifact digest)
+        ↓
+runtime-loaded artifact (process_incarnation_id + closure + digest + pre-request timestamp)
         ↓
 served response (marker derived from same closure)
 ```
 
-Each link MUST be independently observed. A deployment record plus a response marker does NOT establish parity.
+Each link MUST be independently observed AND the runtime closure digest MUST be bound to the build artifact digest (not merely a marker, not merely a deployment record):
+
+| Link | Required evidence | Failure mode the link excludes |
+|---|---|---|
+| source → compiled | build record linking source commit digest to compiled artifact digest | Unreviewed source compiled into production artifact |
+| compiled → runtime-loaded | process_incarnation_id + closure digest + timestamp ≤ request timestamp | Stale worker, hot-reload, copied package, dynamic module |
+| runtime-loaded → served | served marker derived from same closure at request time | Marker detached from code; post-response inspection |
+
+A `worker_id` reused across process restarts, an inspection after the response, an undefined closure, or a missing build record do NOT satisfy R-03 acceptance. A deployment record plus a response marker satisfies only the last link.
 
 **Forbidden claims while R-03 is open:**
 - "Production runs commit X"
@@ -404,16 +455,20 @@ R-02 acceptance PARTIALLY requires R-01: the four-layer model chain
 
 **Governance consequence (revised):** R-01 is the enabling track **for R-03 fully, and for R-02 partially**. The v0.1 draft's unqualified claim that R-01 enables both tracks is narrowed here per F-05. This is a dependency ordering, not a priority ranking.
 
-### 3.3 Correlation Join Rules (per F-05 re-review)
+### 3.3 Correlation Join Rules (per F-05 third review)
 
 The v0.1 second-revision added three join groups but did not specify them deterministically. Per F-05, each join MUST state:
 
-| Join | Required rule |
-|---|---|
-| `gateway_attempt_id → provider_attempt_id` | Explicit 1:1 / 1:N / N:N; for N, the join key is recorded on both sides. Without this rule, a receipt cannot be matched to a specific gateway decision. |
-| `worker_id → process_incarnation_id` | A `worker_id` is reusable across restarts only if `process_incarnation_id` (PID + start timestamp + container ID) is recorded on every request. Otherwise, a reused worker_id across processes confuses identity. |
-| `request_id → served_response_marker` | The served marker MUST be derived from the runtime-loaded artifact at request time, not from a static config value. The marker MUST NOT be derivable without a live load event. |
-| Non-HTTP automation paths | When a scheduler run writes to storage without an inbound HTTP request, the served-response join is not applicable. The proof chain terminates at the storage write event. R-02/R-03 acceptance for these paths MUST specify the storage event identity, not the served marker. |
+| Join | Required rule | Cardinality |
+|---|---|---|
+| `gateway_attempt_id → provider_attempt_id` | Explicit 1:1 / 1:N / N:N; for N, the join key is recorded on both sides. Without this rule, a receipt cannot be matched to a specific gateway decision. | **1:N (canonical)** — one gateway decision can produce multiple provider attempts (retry, fallback, route substitute). The plan REQUIRES this cardinality; 1:1 is a special case that requires justification. |
+| `worker_id → process_incarnation_id` | A `worker_id` is reusable across restarts only if `process_incarnation_id` (PID + start timestamp + container ID) is recorded on every request. Otherwise, a reused worker_id across processes confuses identity. | **1:1 per process lifetime** — a `process_incarnation_id` is bound to one process; a `worker_id` reused across incarnations MUST distinguish them by incarnation. |
+| `request_id → served_response_marker` | The served marker MUST be derived from the runtime-loaded artifact at request time, not from a static config value. The marker MUST NOT be derivable without a live load event. | **1:1 per request** — one served response per request, marker derived from the same closure that produced the response. |
+| Non-HTTP automation paths | When a scheduler run writes to storage without an inbound HTTP request, the served-response join is not applicable. The proof chain terminates at the storage write event. R-02/R-03 acceptance for these paths MUST specify the storage event identity, not the served marker. | **Storage event identity**: a `storage_write_event_id` (UUID or content-addressed hash) recorded in the storage system. Each automation path MUST declare which storage event identity it uses. |
+
+**Consequence (per F-05 third review):** Until each join's cardinality is canonicalized and each non-HTTP path's storage event identity is declared, the affected acceptance paths are declared **acceptance-pending**: they MAY proceed through the planning window but MUST NOT be claimed as closed until path-specific contracts are versioned and independently reviewed.
+
+The four pending joins are recorded as new OQ items in §4.
 
 **Consequence:** the dependency claim between R-02 and R-01 is further narrowed. Automation-triggered work that does not produce an inbound HTTP request has no served-marker join to R-01; its identity chain terminates at the storage write event, and that storage event MUST be specified per automation path.
 
@@ -468,17 +523,36 @@ Source: [RUNTIME_REMEDIATION_ADVERSARIAL_REVIEW_v0.1.md](../../../Documents/New%
 | OQ-8 | Cross | Fan-in behavior — when multiple scheduler runs write to one served artifact, which run is attributable to a served response? |
 | OQ-9 | R-02 | Retry identity — does a retry reuse `gateway_attempt_id` or mint a new one? |
 
+### 4.3b New from Third-Pass Adversarial Review of this Plan (4 items)
+
+Source: third-pass review (Repo B), F-05 third review. The cited Repo B file `RUNTIME_REMEDIATION_ADVERSARIAL_REVIEW_v0.1.md` is overwritten on each re-review; see §4.5b for source-pinning discipline.
+
+| ID | Track | Question |
+|---|---|---|
+| OQ-10 | R-02 | Canonical cardinality of `gateway_attempt_id → provider_attempt_id` join (plan assumes 1:N canonical; must be declared as a contract) |
+| OQ-11 | R-03 | Storage write event identity for non-HTTP automation paths (UUID vs content-addressed hash; per automation path) |
+| OQ-12 | R-03 | Whether the R-03 runtime-loaded artifact digest MUST be bound to the build artifact digest before acceptance (currently missing from acceptance chain per F-01) |
+| OQ-13 | R-01 | Whether the pre-evaluation hypothesis universe (per F-02) MUST be owned by an evaluator independent of the evidence reviewer (currently unspecified) |
+
 ### 4.4 Reconciliation
 
 ```
 Carried forward (v0.1 Final Report):        15
 New from Evidence Requirements review:       5
-New from Adversarial Review (F-05):          4
+New from first-pass Adversarial Review:      4   (OQ-6..OQ-9)
+New from third-pass Adversarial Review:      4   (OQ-10..OQ-13)
 ─────────────────────────────────────────────
-Total registered UNKNOWN:                   24
+Total registered UNKNOWN:                   28
 ```
 
-**Change from v0.1 draft:** the draft stated 20. The adversarial review of this plan surfaced 4 additional correlation-contract questions (OQ-6..OQ-9). The count increases to 24.
+**Change history (per F-05 third review):**
+
+| Inventory version | Count | Trigger |
+|---|---|---|
+| v0.1 draft (REVISE) | 20 | Planner's initial synthesis |
+| First revision (`1ec9bc3`) | 24 | +4 first-pass adversarial review (F-05) |
+| Second revision (`f2af5c9`) | 24 | (no new UNKNOWNs) |
+| Third revision (current) | 28 | +4 third-pass adversarial review (F-05) |
 
 **Governance note:** an increasing UNKNOWN count during a planning window is expected and correct. It indicates that adversarial review is finding real gaps, not that the system is degrading. No item has been cleared, merged, or reclassified.
 
@@ -500,6 +574,17 @@ Per F-06, the OQ-6..OQ-9 items were derived from the revised plan's correlation 
 | OQ-6..OQ-9 | First-pass Adversarial Review of this Plan (F-05) | [link](../../../Documents/New%20project%206/finance-suite/docs/reviews/RUNTIME_REMEDIATION_ADVERSARIAL_REVIEW_v0.1.md) |
 
 **Discipline:** no item is merged with another; no item is cleared on the basis of either review; if a future review closes an item, the closure record (evidence + decision rationale) MUST be appended to this register. The next inventory version is the one that records at least one closure.
+
+### 4.5b Source-pinning discipline (per F-05 third review)
+
+The cited Repo B review file `RUNTIME_REMEDIATION_ADVERSARIAL_REVIEW_v0.1.md` is **overwritten on each re-review**. The plan's provenance narrative must not depend on a mutable artifact. The discipline:
+
+| Item | Source review revision | Pinned by |
+|---|---|---|
+| OQ-6..OQ-9 (first-pass adversarial) | First-pass review of this Plan | The `f2af5c9` commit of this Plan, which contains the introduction point AND a content digest of the source review revision. |
+| OQ-10..OQ-13 (third-pass adversarial) | Third-pass review of this Plan | **A frozen copy is REQUIRED.** Until a frozen copy exists, the introduction point of OQ-10..OQ-13 is **declared pending**: the items are recorded in the register, but their source is not yet pin-able. The next review cycle MUST record the frozen-copy reference, or the items MUST be re-derived by an independent review. |
+
+**Discipline (per F-05 third review):** until the third-pass source is frozen, the third-pass items (OQ-10..OQ-13) are **declared pending** rather than **established**. They are recorded in the register; they are NOT counted as introduced from a pin-able source. The register's 28-item count is correct, but the introduction-point table marks these four as "pending source freeze" rather than "introduced."
 
 ---
 
@@ -530,20 +615,25 @@ Per F-06, the OQ-6..OQ-9 items were derived from the revised plan's correlation 
 
 ```
 Runtime Governance Remediation Planning v0.1
-Status:                       DRAFT (second revision per C re-review REVISE)
+Status:                       DRAFT (third revision per C re-review REVISE)
 Evidence gaps identified:     3 (R-01, R-02, R-03)
-  R-01:  R-01a incident preservation + R-01a-i anchored acquisition manifest
-        + R-01b 3-state separation + bounded hypothesis universe + admission
-        rule + threshold T-RC-01..T-RC-05 for CONFIRMED
-  R-02:  4-layer model chain (configured/resolved/gateway-accepted/executed)
-        + invoked→provider_attempt→receipt binding + retry/fallback cardinality
-  R-03:  3-link artifact chain (source/compiled/runtime-loaded/served)
-        + process-incarnation identity + artifact closure + digest method
-        + inspection timestamp + dynamic-module inclusion
-UNKNOWN registered:           24 (versioned register §4.5; 15+5+4)
-Cross-track dependency:       R-01 enables R-03 fully, R-02 partially
-                             (narrowed per F-05; non-HTTP automation paths
-                             terminate at storage event, not served marker)
+  R-01:  R-01a + R-01a-i + R-01b + bounded hypothesis universe +
+        pre-evaluation baseline (per F-02) + 5 thresholds (T-RC-01..05) +
+        causal sufficiency test (positive reproduction)
+  R-02:  6-link chain (configured/resolved/gateway-accepted/invocation_event/
+        provider_attempt/receipt) + provider-attested receipt per F-03
+        + mandatory correlation keys (scheduler_run_id, gateway_attempt_id,
+        provider_attempt_id) per record
+  R-03:  4-link chain (reviewed source → compiled artifact → runtime-loaded
+        artifact → served response, per F-01) + process-incarnation
+        + closure definition + digest method + pre-request timestamp
+        + dynamic-module inclusion
+UNKNOWN registered:           28 (versioned register §4.4; 15+5+4+4)
+  OQ-10..OQ-13: source freeze PENDING (per F-05 third review)
+Join rules:                   canonical cardinalities declared (1:N gateway→provider;
+                              1:1 per process lifetime worker→incarnation;
+                              1:1 per request request→served marker);
+                              non-HTTP paths: storage event identity required
 Implementation:               NOT AUTHORIZED
 Production change:            NONE
 Frozen assets:                UNTOUCHED
@@ -553,4 +643,4 @@ Frozen assets:                UNTOUCHED
 
 *This plan defines what evidence is required to close three governance gaps. It does not close them, does not authorize work toward closing them, and does not claim any capability. Each track's forbidden-claims list remains in force until that track's acceptance condition is independently demonstrated.*
 
-*This Plan is under second-revision. Five findings (F-01..F-05 BLOCKING/MAJOR + F-06 MINOR) from C's second re-review have been addressed; the Plan is ready for third-pass review.*
+*This Plan is under third-revision. Five findings (F-01..F-05 BLOCKING/MAJOR + F-06 MINOR) from C's third re-review have been addressed; the Plan is ready for fourth-pass review.*
