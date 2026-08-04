@@ -1,169 +1,102 @@
 # Release Readiness Adversarial Review v0.1
 
-**observed_at:** `2026-08-04T09:07:58Z`  
+**observed_at:** 2026-08-04T09:09:52Z  
 **Reviewer:** C  
-**Target:** `docs/reviews/RELEASE_READINESS_ASSESSMENT_v0.1.md`  
+**Target:** `RELEASE_READINESS_ASSESSMENT_v0.1.md`  
 **Baseline:** `12649ca874a987094e7b4665bdc4a8907db519a4`  
-**Current governance marker:** `b7b0fed947982a44cb1a038b262ac144dbb3ec82` (reference evidence only)
+**Review mode:** Read-only except for this required review artifact  
+**Production:** UNCHANGED  
+**Implementation:** NOT AUTHORIZED
 
----
+This review inspected the `12649ca` committed tree and current workspace state. It did not execute the application, contact providers, fetch a remote, deploy, or validate any credential.
 
 ## 1. Baseline Integrity Findings
 
-### 1.1 Evaluated tree matches declared scope
+### BI-01 — Committed-tree boundary is reproducible; workspace exclusion is a time-bounded observation
 
-**Claim reviewed:** Freeze point `12649ca` is the evaluated tree (215 tracked paths).
+**Claim:** Freeze point `12649ca` is stable, reproducible, and scope-bounded.  
+**Evidence:** `git rev-parse 12649ca` returned the stated SHA; `git ls-tree -r --name-only 12649ca` returned 215 paths. All four named workspace directories returned zero paths in that tree. The current `git status --short` showed exactly the stated modified remediation plan and four untracked directories; `git diff --numstat 12649ca -- docs/governance/RUNTIME_REMEDIATION_PLAN_v0.1.md` returned `26 7`.  
+**Finding:** PARTIAL. The committed tree is reproducible and the named paths are absent from it. The workspace exclusion claim is valid only at the stated observation time; it is not a property of the commit object and must not be used as evidence that the workspace remains unchanged.  
 
-**Evidence:**
-- `git rev-parse 12649ca` → `12649ca874a987094e7b4665bdc4a8907db519a4`
-- `git ls-tree -r 12649ca | wc -l` → `215`
-- Current HEAD `b7b0fed` is not evaluated; the assessment correctly states this.
+### BI-02 — No baseline path was found that is one of the four explicitly excluded workspace assets
 
-**Finding:** PASS
+**Claim:** The four external workspace directories are outside RRA input.  
+**Evidence:** `git ls-tree` at `12649ca` contains zero paths under `aws-idea-to-frontier/`, `docs/operations/`, `opc-competition/`, and `scripts/alice_poc/`.  
+**Finding:** PASS for the committed-tree claim. This is not an assertion that equivalent material cannot exist under another baseline path; only the four named path prefixes were tested.
 
-### 1.2 Untracked directories are absent from the baseline
+### BI-03 — The assessment overstates the local remote-tracking reference as reproducible remote state
 
-**Claim reviewed:** `aws-idea-to-frontier/`, `docs/operations/`, `opc-competition/`, `scripts/alice_poc/` are excluded.
-
-**Evidence:**
-- `git ls-tree -r 12649ca -- aws-idea-to-frontier/` → empty
-- `git ls-tree -r 12649ca -- docs/operations/` → empty
-- `git ls-tree -r 12649ca -- opc-competition/` → empty
-- `git ls-tree -r 12649ca -- scripts/alice_poc/` → empty
-
-**Finding:** PASS
-
-### 1.3 Working-tree modification is excluded
-
-**Claim reviewed:** Uncommitted changes to `docs/governance/RUNTIME_REMEDIATION_PLAN_v0.1.md` are excluded from the baseline.
-
-**Evidence:**
-- `git ls-tree 12649ca -- docs/governance/RUNTIME_REMEDIATION_PLAN_v0.1.md` → `blob 8f4988fb2725a22777ad3d04c9886f9c9c0bcdaa`
-- `git status` shows the same file as modified in working tree (`M`).
-- `git diff --stat` on the file shows `+26 / −7`.
-
-The committed blob at `12649ca` is not the working-tree version. Exclusion is correct.
-
-**Finding:** PASS
-
-### 1.4 Main reconstruction method is not a single committed runbook
-
-**Claim reviewed:** "main reconstruction is executable with documented method."
-
-**Evidence:**
-- The reconstruction method is recorded in project memory and `REPOSITORY_HANDOFF_FINAL_REPORT_v0.1.md`.
-- There is no single committed file titled "Canonical Main Reconstruction Runbook" with copy-pasteable commands.
-
-**Finding:** NEEDS EVIDENCE — the documentation exists but is distributed. For a human developer handoff, this should either be accepted as-is or a dedicated runbook window should be added.
-
----
+**Claim:** Canonical main is reproducible from remote.  
+**Evidence:** The assessment §2.1 cites local `origin/main → cefc660`. The freeze declaration Appendix C narrows that fact to a local remote-tracking reference and records that no fetch occurred.  
+**Finding:** NEEDS EVIDENCE. A local remote-tracking ref proves the locally recorded commit identity, not the present live remote state or that a fresh clone can reproduce the claimed reconstruction.  
 
 ## 2. Claim Boundary Findings
 
-### 2.1 No release-readiness escalation
+### CB-01 — “Repository readiness PASS” is unsupported while the assessment itself retains unresolved backend and endpoint blockers
 
-**Claim reviewed:** The assessment concludes "It is **not release-ready today**."
+**Claim reviewed:** Assessment §5 assigns `Repository readiness` a PASS for both Release Preparation and Release.  
+**CC's wording:** “Freeze point `12649ca` is a stable, reproducible, and scope-bounded baseline” and the only named exit conditions are README reconciliation and credential remediation.  
+**Adversarial finding:** BLOCKING. The referenced handoff report identifies the absent committed `market_context` module and unresolved backend deployment chain as BLOCKING. The assessment §6 still lists `Backend Deployment Chain v0.1` as BLOCKED until remediation, but §5 gives repository readiness a PASS for Release and does not add backend/endpoint remediation to its exit conditions.  
+**Suggested correction:** Downgrade repository readiness to CONDITIONAL/BLOCKING for release and name committed `market_context` resolution plus a reproducible backend deployment chain as explicit exit gates.
 
-**Evidence:** Target file `RELEASE_READINESS_ASSESSMENT_v0.1.md:118`.
+### CB-02 — README and deployment-script claims are calibrated correctly, but the handoff remains misleading
 
-**Finding:** PASS — the assessment does not overstate readiness.
+**Claim reviewed:** Existence of README or `deploy-backend.sh` establishes runnable local reproduction or backend deployment.  
+**CC's wording:** Assessment §3 says Local Reproduction is not executable as written; it also says `deploy.sh` does not deploy a backend artifact.  
+**Adversarial finding:** PASS. This does not collapse artifact existence into proven capability and is consistent with Boundary Rule C.  
+**Suggested correction:** None to the claim boundary; the underlying documentation defect remains an exit gate.
 
-### 2.2 Preparation wording may be misread
+### CB-03 — No unsupported MCP, Auction P0, or `market_context` success claim was found, but omission does not remove the known endpoint blocker
 
-**Claim reviewed:** "`README Reconciliation v0.1` is scheduled and must close before release."
+**Claim reviewed:** Presence of `mcp_server.py`, `scripts/auction_data.py`, or an import establishes production behavior.  
+**CC's wording:** The assessment makes no affirmative MCP, Auction P0, or endpoint-success claim.  
+**Adversarial finding:** PASS for non-escalation. However, the assessment's overall readiness matrix omits the handoff report’s `market_context` blocker, so silence cannot support the PASS given in CB-01.  
+**Suggested correction:** Carry the endpoint blocker into the readiness matrix and exit conditions.
 
-**Evidence:** Target file `RELEASE_READINESS_ASSESSMENT_v0.1.md:113`.
+### CB-04 — “CONDITIONAL” is not a promise that planned corrections will occur
 
-**Finding:** OVERSTATED — CC cannot schedule owner windows. The statement implies a schedule already exists. Correction: "`README Reconciliation v0.1` **must be scheduled by the owner** and must close before release."
-
-### 2.3 Credential window wording
-
-**Claim reviewed:** "`Credential History Purge v0.1` / Tushare token rotation is scheduled and must close before release."
-
-**Evidence:** Target file `RELEASE_READINESS_ASSESSMENT_v0.1.md:114`.
-
-**Finding:** OVERSTATED — same reason as 2.2. Correction: "`Credential History Purge v0.1` / Tushare token rotation **must be scheduled by the owner** and must close before release."
-
-### 2.4 Conditional vs release verdict is clear
-
-**Claim reviewed:** The overall verdict table distinguishes "for Release Preparation" from "for Release."
-
-**Evidence:** Target file `RELEASE_READINESS_ASSESSMENT_v0.1.md:101-107`.
-
-**Finding:** PASS — the two-column table prevents the most common readiness escalation.
-
-### 2.5 Capability claims are bounded
-
-**Claim reviewed:** No statement in the assessment implies that any runtime endpoint works in production.
-
-**Evidence:** Scan of §2–§5.
-
-**Finding:** PASS — the assessment stays in repository-state space and does not collapse presence into capability.
-
----
+**Claim reviewed:** Scheduled README and credential windows make release preparation safe by themselves.  
+**CC's wording:** Assessment §5 calls release preparation suitable if those windows are scheduled.  
+**Adversarial finding:** NEEDS EVIDENCE. Scheduling is a planning state, not evidence that either condition will be met. The credential incident record remains OPEN, rotation required, and push forbidden.  
+**Suggested correction:** State that RRA may document preparation risks, but no release-readiness progression or release artifact claim follows from scheduling alone.
 
 ## 3. Human Developer Handoff Findings
 
-### 3.1 New developer cannot follow README verbatim
+### HD-01 — Commands are named but their operational meaning is not determinable
 
-**Evidence:**
-- `README.md:139-144` requires `DATABASE_URL`, `SECRET_KEY`, `OPENAI_API_KEY`, `TAVILY_API_KEY`.
-- `.env.example` contains none of those exact keys. It contains `TAVILY_KEYS` (plural), `BRAVE_KEYS`, `CACHE_DIR`, `EM_USERNAME/PASSWORD`, `SUPADATA_API_KEY`, `THS_TOKEN`.
-- `README.md:104, 126` requires Node 18+ and `npm install`.
-- `git ls-tree 12649ca -- package.json` returns empty.
+A developer can see `python mcp_server.py`, `bash deploy-backend.sh`, and a static-server command in `README.md` §3.4. They cannot determine a single supported run path: `deploy-backend.sh` is an interactive deployment/update script with environment-specific paths, fetch/pull behavior, and manual restart instructions, rather than a deterministic service-start contract. The README’s phrase “start the backend service directly” is therefore misleading.
 
-**Finding:** CONFIRMED — README Local Reproduction is non-executable. The assessment correctly identifies this.
+### HD-02 — Required environment variables are not determinable from the supplied handoff documents
 
-### 3.2 Backend deployment path is undocumented
+The README names required variables that are absent from `.env.example`; it also names a singular search variable while baseline code/template use a plural form. `.env.example` contains additional provider variables without a statement of the minimum viable configuration. A clone user cannot determine a valid configuration without inventing values or reading code beyond the handoff surface.
 
-**Evidence:**
-- `README.md:170, 173-174` says "Start backend / MCP server: `python mcp_server.py`" or "`bash deploy-backend.sh`".
-- `deploy.sh:14-38` fetches only static `app/*.html` files from unpinned `main` URLs.
-- `deploy.sh` contains no step that deploys `server_scripts/`, `mcp_server.py`, backend dependencies, or invokes `deploy-backend.sh`.
-- `deploy-backend.sh` exists but is not integrated into the main deployment script.
+### HD-03 — Missing `market_context.py` cannot be determined from the five handoff documents alone
 
-**Finding:** CONFIRMED — a new developer cannot determine how the backend reaches production. The assessment notes the missing backend deployment chain.
+The absence is discoverable only by inspecting `server_scripts/intel_api.py` and the committed tree. The README, `.env.example`, `deploy.sh`, `deploy-backend.sh`, and top-level MCP imports do not tell a clone user that `/api/intel/market-context` depends on a module absent from `12649ca`.
 
-### 3.3 Missing committed module for documented endpoint
+### HD-04 — `deploy.sh` visibly deploys static content, but backend provenance remains indeterminate
 
-**Evidence:**
-- `server_scripts/intel_api.py:230` does `import market_context`.
-- `git ls-tree 12649ca -- scripts/market_context.py` returns empty.
-- The endpoint `/api/intel/market-context` is named in README but has no committed module behind it.
+`deploy.sh` retrieves static files and configures an upstream proxy; it does not identify or deploy the backend revision. `deploy-backend.sh` can pull a moving branch and asks the operator to choose restart behavior, so it also does not establish what backend artifact is serving. A human can identify inconsistency, but cannot derive a reproducible deployment contract.
 
-**Finding:** CONFIRMED — presence of import statement does not imply the endpoint works. The assessment does not claim otherwise.
+### HD-05 — The four untracked directories are absent after clone, but the clone user cannot know their historical boundary status
 
-### 3.4 Most misleading statement for a new developer
+The README gives a general boundary statement, not an inventory of the four filesystem-only assets. A clone user can infer they are not committed, but cannot know whether their omission is intentional, required for runtime, or incidental without the freeze declaration and handoff report.
 
-> "Copy `.env.example` to `.env` and fill in required values" (`README.md:131-135`)
-
-The table of "Required Environment Variables" (`README.md:139-144`) does not match `.env.example`. A new developer will search for keys that do not exist in the template and will not know which optional keys are actually required by the code.
-
-**Finding:** This is the highest-risk drift for human handoff.
-
----
+**Single most misleading statement:** README §3.4’s instruction that `bash deploy-backend.sh` can “start the backend service directly.” The inspected script performs an interactive update workflow and only prints possible manual restart commands; it is not a declared runtime start interface.
 
 ## 4. Overall Adversarial Verdict
 
-**CONDITIONAL**
+**BLOCKED**
 
-CC's assessment is sound in structure and does not overstate readiness. It correctly separates "Release Preparation" from "release-ready." However, two wording corrections are required before the assessment can be relied upon as governance evidence:
+The baseline commit is a valid, reproducible input tree, but the CC assessment cannot be trusted as a readiness assessment as written. It gives repository readiness PASS while preserving two backend/endpoint BLOCKING findings outside its explicit release exit conditions. Its local `origin/main` observation also does not prove current remote reproducibility. The assessment must be corrected before it can serve as a reliable RRA counterpart.
 
-1. Change "is scheduled" to "must be scheduled by the owner" for both README Reconciliation and Credential History Purge windows.
-2. Add an explicit statement that no release artifact — including a tagged release candidate — may be produced until both the README drift and the credential exposure are closed.
+## 5. Required Corrections (if any)
 
-Additionally, the distributed nature of the main reconstruction documentation (1.4) should be noted as a residual risk for human handoff.
+1. Reconcile the §5 readiness matrix with the handoff report: backend deployment provenance and the absent committed `market_context` module must be release blockers/exit gates, not omitted conditions.
+2. Replace the “reproducible from remote” wording with the stronger evidence actually available, or obtain separately authorized fresh-clone/remote evidence.
+3. State that scheduling README or credential work is not evidence of remediation and does not authorize a release claim.
+4. Correct the README/deployment handoff wording in its authorized remediation window; do not represent `deploy-backend.sh` as a backend start command until an executable deployment contract exists.
 
----
+## Capability Verdict
 
-## 5. Required Corrections
-
-| # | Location | Current wording | Required correction |
-|---|---|---|---|
-| 1 | `RELEASE_READINESS_ASSESSMENT_v0.1.md:113` | "`README Reconciliation v0.1` is scheduled" | "`README Reconciliation v0.1` must be scheduled by the owner" |
-| 2 | `RELEASE_READINESS_ASSESSMENT_v0.1.md:114` | "`Credential History Purge v0.1` / Tushare token rotation is scheduled" | "`Credential History Purge v0.1` / Tushare token rotation must be scheduled by the owner" |
-| 3 | `RELEASE_READINESS_ASSESSMENT_v0.1.md:111-116` | Conditions list | Add: "No release artifact, including a tagged release candidate, may be produced until the above conditions close." |
-
----
-
-**End of review**
+NOT PROVEN
