@@ -110,10 +110,11 @@ Source: `docs/security/CREDENTIAL_EXPOSURE_TUSHARE_v0.1.md`.
 
 Freeze point `12649ca` is a **stable, reproducible, and scope-bounded baseline**. It is suitable as the input to **Release Preparation** under the following conditions:
 
-1. `README Reconciliation v0.1` is scheduled and must close before release.
-2. `Credential History Purge v0.1` / Tushare token rotation is scheduled and must close before release.
+1. `README Reconciliation v0.1` must be scheduled by the owner and must close before release.
+2. `Credential History Purge v0.1` / Tushare token rotation must be scheduled by the owner and must close before release.
 3. No release artifact is produced until both conditions are met.
-4. The evaluated tree remains `12649ca`; later governance markers are audit evidence only.
+4. No release artifact — including a tagged release candidate — may be produced until the above conditions close.
+5. The evaluated tree remains `12649ca`; later governance markers are audit evidence only.
 
 It is **not release-ready today**.
 
