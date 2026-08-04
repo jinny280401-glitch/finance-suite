@@ -199,7 +199,7 @@ does not exist in cefc660.
 | UB-F5 | Scheduler | LLM model fallback behavior |
 | UB-F6 | Scheduler | Research demo model path |
 
-**Total:** 11 UNKNOWN (Auction) + 6 UNKNOWN (Scheduler) = **17 UNKNOWN items carried forward**
+**Total:** 9 UNKNOWN (Auction, UA-F1..UA-F9) + 6 UNKNOWN (Scheduler, UB-F1..UB-F6) = **15 UNKNOWN items carried forward**
 
 ---
 
@@ -262,7 +262,7 @@ These remain LOCKED:
 
 | Role | Verdict |
 |---|---|
-| **Validator (CC)** | Validation complete. 17 UNKNOWN items identified. No capability claims upgraded. |
+| **Validator (CC)** | Validation complete. 15 UNKNOWN items identified. No capability claims upgraded. |
 | **Baseline** | cefc660 (v0.1-main-consolidation) |
 | **Frozen Assets** | Not modified |
 | **Window Status** | **CLOSED** |
