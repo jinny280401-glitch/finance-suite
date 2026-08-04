@@ -216,4 +216,52 @@ This is a claim about the local `origin/main` ref only, not about the live remot
 
 ---
 
+## Appendix E — Release Readiness Assessment v0.1 OPEN Record
+
+**RRA v0.1 status:** OPEN  
+**Opened at:** 2026-08-04  
+**Authorized by:** Human principal `Zhuanz`  
+**Mode:** Assessment Only  
+**Production:** UNCHANGED  
+**Push:** FORBIDDEN
+
+### Input boundary
+
+```
+RRA Input Baseline:    12649ca
+Evaluated tree:        12649ca
+Governance markers:    038e030, ffa0390
+Marker role:           Reference evidence only
+NOT included:          ffa0390 tree state, future commits, working tree changes
+```
+
+### Scope of the assessment
+
+The assessment answers:
+
+> Does freeze point `12649ca` meet the conditions to enter **Release Preparation**?
+
+It does **not** answer:
+
+> Is the project ready to release today?
+
+### Prohibited until RRA closes
+
+- merge `main`
+- push to GitHub
+- modify `README.md`
+- rotate or handle credentials
+- move / archive untracked assets
+- production deployment
+- any implementation work
+
+### Outputs expected
+
+1. `docs/reviews/RELEASE_READINESS_ASSESSMENT_v0.1.md` — CC, Release Readiness Owner
+2. `docs/reviews/RELEASE_READINESS_ADVERSARIAL_REVIEW_v0.1.md` — C, Independent Reviewer
+
+Only after both outputs are reviewed may a decision be made to enter Main Release Preparation.
+
+---
+
 **End of declaration**
