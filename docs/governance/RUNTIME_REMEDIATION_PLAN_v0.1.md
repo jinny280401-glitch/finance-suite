@@ -91,6 +91,38 @@ The five fields above establish *answerability* but do not establish that the an
 
 **Governance rule:** Evidence collected *after* a restart is post-fix verification evidence, not incident evidence. The two MUST NOT be conflated (Evidence Governance v1.0 §7.2).
 
+#### R-01a-i — Acquisition Manifest (per F-02)
+
+A package hash alone is replaceable. A signature is useful only if its signer and key custody are defined. The package MUST include an **acquisition manifest** that binds capture metadata independently of the package contents:
+
+| Field | Definition |
+|---|---|
+| `acquisition_query` | Exact query, filter, time window, and source system used to fetch each record |
+| `collector_identity` | Which collector process / agent / human fetched the record |
+| `source_system_identity` | Which system served the record (nginx host, backend host, log aggregator) |
+| `collector_timestamp` | UTC, with precision, with clock source, per record fetched |
+| `unavailable_records` | Explicit list of records that SHOULD exist but could not be obtained |
+| `completeness_check` | Per-record presence assertion (e.g., expected log lines vs retrieved log lines) |
+| `package_digest` | Hash over the assembled contents, computed AFTER all records are written |
+| `package_signature` | Optional; key custody and signing time MUST be defined if used |
+
+**Anchored integrity mechanism (per F-02):** The package MUST be anchored in at least one **independent store** that:
+
+1. Is not the system whose behavior is being investigated (no circular trust)
+2. Records the package digest and acquisition timestamp at write time
+3. Is append-only (no retroactive modification)
+4. Returns a receipt (record ID + timestamp) usable to prove "this digest was anchored at this time"
+
+A package hash stored in the same system's own log is NOT an anchor; it can be rewritten with the log. Examples of acceptable anchors (illustrative, not authoritative): external WORM storage, separately administered S3 with object-lock, third-party timestamp authority, dedicated evidence-only database.
+
+**Absence and partial collection:** When a record SHOULD exist but cannot be obtained:
+
+- The manifest MUST record its absence (not silently omit it)
+- The redaction rule MUST be applied *before* writing the package to the anchor (so absence of redacted fields is detectable as redaction, not loss)
+- The collection completeness check MUST report the gap (e.g., "expected 12 nginx access log lines, retrieved 9, missing entries at times T1, T2, T3")
+
+**Governance consequence (per F-02):** An R-01 incident package without acquisition manifest + anchored integrity + absence handling is treated as **partial preservation**, equivalent in capability to R-01 evidence without R-01a. It does NOT satisfy the R-01 acceptance condition.
+
 #### R-01b — Three-State Separation (per F-02)
 
 The acceptance condition MUST require three separately-recorded states. Evidence of the first two does NOT certify the third:
@@ -104,29 +136,48 @@ State 2: Explanation
   What: this event chain is consistent with the observed occurrence
   Evidence: correlated trace across layers
 
-State 3: Root Cause Proven
+State 3: Root Cause Proven (per F-01)
   What: this cause produced the occurrence, and alternatives are excluded
-  Evidence: State 2 + falsifiable hypothesis + counter-cases that
-            distinguish it from every competing explanation
+  Evidence: State 2 + falsifiable hypothesis + bounded hypothesis universe
+            + counter-cases that distinguish it from each named alternative
+            + admission rule for newly-discovered alternatives
 ```
 
-**Required counter-cases:** the proposed evidence MUST be shown to distinguish between at least these five failure modes, each producing a similar client-visible symptom:
+**Hypothesis universe (per F-01):** The five named counter-cases are not an exhaustive list. The hypothesis universe MUST be **bounded and versioned**, listing every candidate explanation considered, not only the five common ones:
 
-| Counter-case | Distinguishing evidence needed |
+| Tier | Examples |
 |---|---|
-| Edge-generated HTML (nginx error page) | nginx status ≠ upstream status; no backend record |
-| Upstream-generated HTML (backend error page) | backend record exists with HTML content_type |
-| Proxy transformation (nginx rewrote upstream response) | upstream headers ≠ final headers |
-| Provider error surfaced as HTML | provider attempt record with non-JSON response |
-| Client-side parsing defect | server records show valid JSON; failure is client-only |
+| Layer-generated | edge HTML, upstream HTML, proxy transformation |
+| Provider | provider error surfaced as HTML, provider slow timeout |
+| Client | client parsing defect, client transport mutation |
+| Infrastructure | CDN/WAF injection, cache replay, serialization middleware, DNS |
+| Dependency | dependency failure, version mismatch, runtime config mismatch |
+| Combined | a single fault arising from multiple interacting components |
 
-**Acceptance condition (revised):** For a synthetic or real incident, the system MUST:
-1. Produce a preserved incident package per R-01a
-2. Record occurrence, explanation, and root-cause-proof as three distinct states per R-01b
-3. Demonstrate, via controlled fault injection, that the evidence distinguishes all five counter-cases
-4. Answer all four questions in Evidence Governance v1.0 §7.3 TC-RUNTIME-EVIDENCE-001
+**Admission rule for new alternatives (per F-01):** The hypothesis universe is **closed only at the boundary of the acceptance evaluation**. New alternatives discovered during investigation MUST be:
 
-**Explicit rule:** Satisfying (1) and (2) alone permits an explanation. It does NOT permit a `Root Cause: CONFIRMED` classification. Only (3) plus excluded alternatives permits that.
+1. Recorded in the hypothesis universe with name + provenance + dismissal rationale
+2. Either refuted via evidence in the preserved package, OR admitted to the active set
+3. If admitted: another counter-case injection cycle is required
+
+**Exact evidence threshold for `Root Cause: CONFIRMED`:** ALL of the following MUST hold:
+
+```
+Threshold T-RC-01: A named root cause is identified (not "various causes")
+Threshold T-RC-02: All listed alternatives in the active universe are refuted
+Threshold T-RC-03: Refutation evidence is preserved (not asserted)
+Threshold T-RC-04: The preserved evidence package binds the cause to the
+                   specific occurrence (not to a similar but unrelated event)
+Threshold T-RC-05: The admission rule has run to closure (no new alternatives
+                   admitted after the threshold evaluation began)
+```
+
+**Explicit rule (per F-01):** Demonstrating the five named counter-cases permits an **explanation** classification (State 2), NOT a `Root Cause: CONFIRMED` classification (State 3). Five cases do not bound the hypothesis universe. A successful five-case exercise supports the explanation's discriminating power against five selected hypotheses; it does not prove causation.
+
+**Fallback classification:** If State 3 cannot be reached (any threshold fails), the incident MUST be classified as:
+- `Root Cause: UNKNOWN (insufficient evidence)` — per Evidence Governance v1.0 §7.1
+- `Evidence Confidence: LOW`
+- An explanation narrative MAY be published with the UNKNOWN marker preserved
 
 **Forbidden claims while R-01 is open:**
 - "Auction P0 is fixed"
@@ -175,7 +226,32 @@ model configured  ≠  model resolved  ≠  gateway accepted  ≠  model execute
 | **Invoked** | Gateway forwarded to a provider (accepted ≠ invoked; admission may be followed by a routing failure) |
 | **Successfully executed** | Provider returned a completed inference (invoked ≠ executed; a 503 is invoked-but-not-executed) |
 
-**Acceptance condition (revised):** For a single scheduler run, the system MUST produce a record that independently identifies all **four** model-identity states, bound to a common run identifier AND a gateway attempt identifier. A response-body `model` field alone does NOT satisfy any layer.
+**Invoked→Executed binding (per F-03 re-review):** A gateway acceptance does NOT prove which provider invocation actually completed. A gateway can issue multiple provider attempts (retry, fallback, route substitution), each with its own outcome. The execution receipt MUST be bound to a specific invocation event, not just to a gateway attempt.
+
+| Binding element | Requirement |
+|---|---|
+| `invocation_event` | A separately recorded event indicating the gateway dispatched the request to a specific provider. Distinct from the acceptance decision. |
+| `provider_attempt_identity` | Provider-side identifier (request ID, transaction ID) returned by the provider for this specific invocation |
+| `invocation→receipt join` | For each invocation, the receipt (or failure record) MUST be joinable via `provider_attempt_identity` |
+| `retry / fallback cardinality` | If a gateway attempt produces N provider invocations, ALL N MUST be recorded (not only the successful one) |
+| `gateway_attempt → provider_invocation cardinality` | One-to-many allowed; the join rule MUST specify the relationship |
+
+**Consequence:** R-02 execution identity is established only when:
+
+1. Gateway accepted identity X (recorded)
+2. Gateway invocation event Y to provider (recorded, with X → Y link)
+3. Provider attempt Z executed (recorded, with Y → Z link)
+4. Receipt R from Z (recorded, with Z → R link)
+
+A receipt R without the Y → Z → R chain is **observability, not identity**.
+
+**Acceptance condition (revised per F-03):** For a single scheduler run, the system MUST produce a record chain:
+
+```
+configured → resolved → gateway_accepted → invocation_event → provider_attempt → receipt
+```
+
+Each link MUST be observed. A response-body `model` field alone does NOT satisfy any layer.
 
 **Forbidden claims while R-02 is open:**
 - "The system uses model X" (without specifying which of the three layers)
@@ -221,12 +297,38 @@ reviewed source  →  compiled artifact  →  runtime-loaded artifact  →  serv
 | Manually copied package | Digest matches the copy source | Copy diverged from reviewed commit |
 | Marker detached from code | Marker is a constant string | Marker cannot detect drift by construction |
 
-**Acceptance condition (revised):** For a served response, the system MUST produce a request-correlated proof chain across **all three** transitions. Each link MUST be independently observed:
-1. Build record proves source → compiled artifact
-2. Live process inspection proves compiled artifact → runtime-loaded artifact
-3. Request correlation proves runtime-loaded artifact → served response
+**Process-incarnation binding + measured artifact closure (per F-04 re-review):** A recycled `worker_id` or post-response inspection can appear to prove what served an earlier request. The runtime-loaded link MUST be tightened:
 
-A deployment record plus a response marker satisfies only links 1 and 3. That combination does NOT establish parity.
+| Binding element | Requirement |
+|---|---|
+| `process_incarnation_id` | OS-level process identifier (PID + start timestamp + parent process + boot ID or container ID). Reused across requests only if the start timestamp matches. |
+| `artifact_closure_definition` | Explicit enumeration of what is included in the runtime digest: executable, all loaded shared libraries, all loaded configuration files, all dynamically-loaded modules, all hot-reloaded extensions. Anything not listed is not part of the "runtime-loaded" claim. |
+| `digest_method` | Concrete algorithm: hash over what bytes, in what order, with what excludes. A digest without a method is unverifiable. |
+| `inspection_timestamp` | UTC, with clock source, recorded AT the moment of inspection. |
+| `request_to_load_window` | Each served response MUST be associated with the inspection that captured the loaded state AT or BEFORE that response was served. An inspection AFTER the response does NOT prove the served artifact. |
+| `dynamic_module_inclusion` | Hot-reloaded / lazy-loaded / dynamically-linked modules MUST either be in the closure definition or excluded by name. An undefined dynamic load cannot be proved absent. |
+
+**Consequence (per F-04):** R-03 runtime-loaded identity is established only when:
+
+1. Process-incarnation identity exists at request time
+2. The artifact closure is fully enumerated
+3. The digest method is concrete and reproducible
+4. Inspection occurred at or before the request was served
+5. Dynamic / hot-loaded modules are explicitly included or excluded
+
+A `worker_id` reused across process restarts, an inspection after the response, or an undefined closure do NOT satisfy R-03 acceptance.
+
+**Acceptance condition (revised per F-04):** For a served response, the system MUST produce a request-correlated proof chain:
+
+```
+process_incarnation_id
+        ↓
+runtime-loaded artifact (closure + digest + timestamp)
+        ↓
+served response (marker derived from same closure)
+```
+
+Each link MUST be independently observed. A deployment record plus a response marker does NOT establish parity.
 
 **Forbidden claims while R-03 is open:**
 - "Production runs commit X"
@@ -302,6 +404,19 @@ R-02 acceptance PARTIALLY requires R-01: the four-layer model chain
 
 **Governance consequence (revised):** R-01 is the enabling track **for R-03 fully, and for R-02 partially**. The v0.1 draft's unqualified claim that R-01 enables both tracks is narrowed here per F-05. This is a dependency ordering, not a priority ranking.
 
+### 3.3 Correlation Join Rules (per F-05 re-review)
+
+The v0.1 second-revision added three join groups but did not specify them deterministically. Per F-05, each join MUST state:
+
+| Join | Required rule |
+|---|---|
+| `gateway_attempt_id → provider_attempt_id` | Explicit 1:1 / 1:N / N:N; for N, the join key is recorded on both sides. Without this rule, a receipt cannot be matched to a specific gateway decision. |
+| `worker_id → process_incarnation_id` | A `worker_id` is reusable across restarts only if `process_incarnation_id` (PID + start timestamp + container ID) is recorded on every request. Otherwise, a reused worker_id across processes confuses identity. |
+| `request_id → served_response_marker` | The served marker MUST be derived from the runtime-loaded artifact at request time, not from a static config value. The marker MUST NOT be derivable without a live load event. |
+| Non-HTTP automation paths | When a scheduler run writes to storage without an inbound HTTP request, the served-response join is not applicable. The proof chain terminates at the storage write event. R-02/R-03 acceptance for these paths MUST specify the storage event identity, not the served marker. |
+
+**Consequence:** the dependency claim between R-02 and R-01 is further narrowed. Automation-triggered work that does not produce an inbound HTTP request has no served-marker join to R-01; its identity chain terminates at the storage write event, and that storage event MUST be specified per automation path.
+
 ---
 
 ## 4. UNKNOWN Register (per F-06)
@@ -367,6 +482,25 @@ Total registered UNKNOWN:                   24
 
 **Governance note:** an increasing UNKNOWN count during a planning window is expected and correct. It indicates that adversarial review is finding real gaps, not that the system is degrading. No item has been cleared, merged, or reclassified.
 
+### 4.5 Versioned UNKNOWN Register (per F-06 re-review)
+
+Per F-06, the OQ-6..OQ-9 items were derived from the revised plan's correlation analysis, not from the original Evidence Requirements document or a separately frozen register. The original task-window declaration named 20 items; the revised plan transparently supersedes that count to 24. The versioned basis for this inventory change:
+
+| Inventory version | Count | Source | Authoritative reference |
+|---|---|---|---|
+| v0.1 draft (REVISE) | 20 | Planner's initial synthesis | Original Plan draft |
+| v0.1 second-revision (current) | 24 | 15 carried + 5 evidence-review + 4 first-pass adversarial review | This Plan (current commit) |
+
+**Item introduction points (per F-06):**
+
+| Item | Introduced by | Authoritative reference for item |
+|---|---|---|
+| UA-F1..UA-F9, UB-F1..UB-F6 | Runtime Validation v0.1 Final Report | [link](../reviews/RUNTIME_GOVERNANCE_VALIDATION_v0.1_FINAL_REPORT.md) |
+| OQ-1..OQ-5 | Independent Evidence Requirements review | [link](../../../Documents/New%20project%206/finance-suite/docs/reviews/R01_R02_R03_EVIDENCE_REQUIREMENTS.md) |
+| OQ-6..OQ-9 | First-pass Adversarial Review of this Plan (F-05) | [link](../../../Documents/New%20project%206/finance-suite/docs/reviews/RUNTIME_REMEDIATION_ADVERSARIAL_REVIEW_v0.1.md) |
+
+**Discipline:** no item is merged with another; no item is cleared on the basis of either review; if a future review closes an item, the closure record (evidence + decision rationale) MUST be appended to this register. The next inventory version is the one that records at least one closure.
+
 ---
 
 ## 5. Window Boundary
@@ -396,16 +530,20 @@ Total registered UNKNOWN:                   24
 
 ```
 Runtime Governance Remediation Planning v0.1
-Status:                       DRAFT (under revision per C adversarial review)
+Status:                       DRAFT (second revision per C re-review REVISE)
 Evidence gaps identified:     3 (R-01, R-02, R-03)
-  R-01:  incident preservation + 3-state separation + 5 counter-cases
+  R-01:  R-01a incident preservation + R-01a-i anchored acquisition manifest
+        + R-01b 3-state separation + bounded hypothesis universe + admission
+        rule + threshold T-RC-01..T-RC-05 for CONFIRMED
   R-02:  4-layer model chain (configured/resolved/gateway-accepted/executed)
+        + invoked→provider_attempt→receipt binding + retry/fallback cardinality
   R-03:  3-link artifact chain (source/compiled/runtime-loaded/served)
-UNKNOWN registered:           24 (15 carried + 5 evidence-review + 4 adversarial-review)
+        + process-incarnation identity + artifact closure + digest method
+        + inspection timestamp + dynamic-module inclusion
+UNKNOWN registered:           24 (versioned register §4.5; 15+5+4)
 Cross-track dependency:       R-01 enables R-03 fully, R-02 partially
-                             (narrowed per F-05; R-02 internal chain is
-                             self-sufficient, but user-visible attribution
-                             requires R-01 join)
+                             (narrowed per F-05; non-HTTP automation paths
+                             terminate at storage event, not served marker)
 Implementation:               NOT AUTHORIZED
 Production change:            NONE
 Frozen assets:                UNTOUCHED
@@ -415,4 +553,4 @@ Frozen assets:                UNTOUCHED
 
 *This plan defines what evidence is required to close three governance gaps. It does not close them, does not authorize work toward closing them, and does not claim any capability. Each track's forbidden-claims list remains in force until that track's acceptance condition is independently demonstrated.*
 
-*This Plan is under revision. All six findings (F-01..F-06) from C's adversarial review have been addressed; the Plan has not yet been re-submitted for C's re-review.*
+*This Plan is under second-revision. Five findings (F-01..F-05 BLOCKING/MAJOR + F-06 MINOR) from C's second re-review have been addressed; the Plan is ready for third-pass review.*
