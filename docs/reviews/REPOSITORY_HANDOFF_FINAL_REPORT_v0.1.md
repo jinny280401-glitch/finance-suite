@@ -155,4 +155,26 @@ Independent of the boundary audit, an in-tree credential exposure was found duri
 
 ---
 
+## 10. Post-close Observation (additive, not a rule)
+
+This section is appended at window close. It does not modify Rules A–E. It is experience, not governance.
+
+```
+Post-close observation:
+During reconciliation, one reviewer claim
+("no backend entry") was corrected through
+direct evidence verification.
+
+Lesson:
+All reconciled claims require re-derivation
+from primary evidence before finalization.
+
+Rule promotion:
+Deferred until recurrence.
+```
+
+If a future window surfaces a second instance of "reconciler re-derives a claim and finds the original wording wrong," this observation is the trigger to consider a Rule F: Claim Re-derivation Requirement. One instance is not enough.
+
+---
+
 **End of Report**
