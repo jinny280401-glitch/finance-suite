@@ -105,12 +105,14 @@ The following are **not** part of the RRA v0.1 input baseline, even if they exis
 ## Boundary statement
 
 ```
-Freeze point:     12649ca (committed tree)
-Working tree:     contains uncommitted modifications; those modifications are excluded
-Untracked dirs:   4; excluded
-Remote:           unchanged since cefc660
-Push:             not authorized by this declaration
-RRA status:       not yet opened
+Freeze point:              12649ca (committed tree)
+Working tree:              contains uncommitted modifications; those modifications are excluded
+Untracked dirs:            4; excluded
+Local remote-tracking ref: origin/main → cefc660
+                           (no fetch performed in this audit session;
+                            claim is about local ref only, not live remote)
+Push:                      not authorized by this declaration
+RRA status:                not yet opened
 ```
 
 ---
@@ -131,6 +133,86 @@ Before Release Readiness Assessment v0.1 can open, this declaration must be comm
 - `docs/reviews/C_BASELINE_INTEGRITY_REVIEW_BRIEF_v0.1.md`
 - `docs/governance/EVIDENCE_GOVERNANCE_v1.0.md`
 - `docs/governance/Vera_Capability_Claim_Governance_Framework_v1.md`
+
+---
+
+## Appendix A — Human Authorization Evidence
+
+The following authorization is recorded verbatim and unedited.
+
+> 我批准 Baseline Freeze Declaration v0.1，冻结点 12649ca 作为 Release Readiness Assessment v0.1 的输入基线。
+>
+> 授权范围仅限：
+>
+> Baseline:
+> 12649ca
+> Purpose:
+> Release Readiness Assessment v0.1 input baseline
+>
+> 不包含：
+>
+> * ❌ 授权 push
+> * ❌ 授权 merge main
+> * ❌ 授权 deployment
+> * ❌ 授权修改生产代码
+> * ❌ 授权修改 README
+> * ❌ 授权凭据处理
+> * ❌ 授权打开 RRA 之外的新实现窗口
+
+**Attribution:** Human principal `Zhuanz` via Claude Code conversation, 2026-08-04.  
+**Effect:** F-01 BLOCKING resolved.
+
+---
+
+## Appendix B — Workspace Inventory Snapshot (F-02)
+
+**observed_at:** `2026-08-04T08:44:56Z`
+
+### Modified tracked file
+
+| Path | State | Diff |
+|---|---|---|
+| `docs/governance/RUNTIME_REMEDIATION_PLAN_v0.1.md` | unstaged | +26 / −7 |
+
+### Untracked directories
+
+| Path | Files observed | mtime |
+|---|---|---|
+| `aws-idea-to-frontier/` | `APPLICATION_DRAFT_v3.md` | 2026-08-04T13:13:21 |
+| `docs/operations/` | `CC_SWITCH_CODEX_PROVIDER_SETUP_TUTORIAL.md`, `XIANYU_CLAUDE_CODEX_PROVISION_LISTING.md` | 2026-08-03T21:13:00 / 22:10:36 |
+| `opc-competition/` | `创业规划书_v2_模板对齐.md`, `报名表_填表参考.md` | 2026-08-03T23:27:06 / 23:30:19 |
+| `scripts/alice_poc/` | `run_alice_poc.RECOVERED.py`, `wind_focus/`, `__pycache__/`, `data/*.json` | 2026-06-20/21 |
+
+All of the above are excluded from the `12649ca` RRA input baseline.
+
+---
+
+## Appendix C — Remote Ref Statement (F-03)
+
+Correction to §Boundary statement:
+
+The claim "Remote unchanged since cefc660" is replaced by the narrower, locally evidenced claim:
+
+```
+Local remote-tracking ref: origin/main → cefc660fd7c97f372e300773b32b83d4a9f374a4
+Observation method:        git rev-parse origin/main
+No fetch performed in this audit session.
+```
+
+This is a claim about the local `origin/main` ref only, not about the live remote state.
+
+---
+
+## Appendix D — Findings Status Board
+
+| Finding | Severity | Status | Evidence |
+|---|---|---|---|
+| F-01 Human approval self-attested | BLOCKING | RESOLVED | Appendix A |
+| F-02 Workspace snapshot not time-bounded | MAJOR | RESOLVED | Appendix B |
+| F-03 Remote claim exceeds evidence | MAJOR | RESOLVED | Appendix C |
+| F-04 Freeze/declaration commit distinction | MINOR | ACCEPTED | §Freeze point, §Boundary statement |
+
+**RRA v0.1 status:** NOT OPEN
 
 ---
 
