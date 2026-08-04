@@ -34,13 +34,14 @@ All evidence is sourced from the committed tree at `12649ca`, the Baseline Freez
 ### 2.1 Main reconstruction
 
 **Evidence:**
-- `origin/main` resolves to `cefc660fd7c97f372e300773b32b83d4a9f374a4` with tag `v0.1-main-consolidation`.
+- Local remote-tracking ref `origin/main` resolves to `cefc660fd7c97f372e300773b32b83d4a9f374a4` with tag `v0.1-main-consolidation`.
+- No fetch was performed during this audit session; the claim is about the local ref state only.
 - Canonical main reconstruction was performed via selective checkout (recorded in project memory and `REPOSITORY_HANDOFF_FINAL_REPORT_v0.1.md`).
 - Freeze point `12649ca` is a descendant of `cefc660` on local branch `runtime-validation-v0.1`.
 
-**Assessment:** The canonical main is reproducible from remote. The local validation branch is ahead of `origin/main` by governance commits only; no production code has been modified in the drift from `987fe8b` to `12649ca`.
+**Assessment:** The local `origin/main` ref is stable. The local validation branch is ahead of `origin/main` by governance commits only; no production code has been modified in the drift from `987fe8b` to `12649ca`. A fresh clone and reproducible reconstruction from the live remote have not been independently verified.
 
-**Verdict:** PASS — main reconstruction is executable with documented method.
+**Verdict:** PASS for local ref integrity; NEEDS EVIDENCE for live remote reproducibility.
 
 ### 2.2 Release scope
 
@@ -64,9 +65,20 @@ All evidence is sourced from the committed tree at `12649ca`, the Baseline Freez
 
 **Verdict:** PASS — excluded assets are clearly identified.
 
----
+### 2.4 Backend deployment provenance and committed endpoint coverage
 
-## 3. README readiness
+**Evidence:**
+- `server_scripts/intel_api.py:230` does `import market_context`; `git ls-tree -r 12649ca -- scripts/market_context.py` returns empty.
+- `README.md:64, 170, 173-174` references `deploy-backend.sh`, but `deploy.sh` does not deploy any backend artifact and uses unpinned `main` URLs.
+- `deploy-backend.sh` is an interactive update workflow, not a deterministic service-start contract.
+
+Source: `REPOSITORY_HANDOFF_FINAL_REPORT_v0.1.md` §2.4, §2.5.
+
+**Assessment:** The `/api/intel/market-context` endpoint has no committed module behind it. The main deployment script does not establish how backend code reaches production. These are pre-existing BLOCKING findings and are not fixed by this assessment.
+
+**Verdict:** BLOCKING FOR RELEASE — backend deployment provenance and missing `market_context` module must be resolved before any release. For Release Preparation, acceptable if `Backend Deployment Chain v0.1` is scheduled as an exit gate.
+
+---
 
 **Evidence:**
 - `README.md:139-144` lists `DATABASE_URL`, `SECRET_KEY`, `OPENAI_API_KEY`, `TAVILY_API_KEY`.
@@ -76,7 +88,7 @@ All evidence is sourced from the committed tree at `12649ca`, the Baseline Freez
 
 Source: `REPOSITORY_HANDOFF_FINAL_REPORT_v0.1.md` §2.1–2.3, §3.
 
-**Assessment:** The Local Reproduction chapter is not executable as written. A new developer cannot follow it without inventing steps or encountering missing files. This is pre-existing drift and is not fixed by this assessment.
+**Assessment:** The Local Reproduction chapter is not executable as written. A new developer cannot follow it without inventing steps or encountering missing files. In particular, `deploy-backend.sh` is an interactive update workflow rather than a deterministic backend-start command; representing it as a way to "start the backend service directly" is misleading. These defects are pre-existing drift and are not fixed by this assessment.
 
 **Verdict:** BLOCKING FOR RELEASE — README reconciliation is required before any release. For Release Preparation, acceptable if README Reconciliation v0.1 is scheduled as an exit gate.
 
@@ -100,21 +112,25 @@ Source: `docs/security/CREDENTIAL_EXPOSURE_TUSHARE_v0.1.md`.
 
 | Dimension | Verdict for Release Preparation | Verdict for Release |
 |---|---|---|
-| Repository readiness | PASS | PASS |
+| Repository readiness | CONDITIONAL | BLOCKING |
 | Release scope | PASS | PASS |
 | Excluded assets | PASS | PASS |
 | README readiness | CONDITIONAL | BLOCKING |
 | Security readiness | CONDITIONAL | BLOCKING |
+| Backend deployment provenance | CONDITIONAL | BLOCKING |
 
 **Overall assessment:**
 
-Freeze point `12649ca` is a **stable, reproducible, and scope-bounded baseline**. It is suitable as the input to **Release Preparation** under the following conditions:
+Freeze point `12649ca` is a **stable, reproducible, and scope-bounded baseline**. It may be suitable as the input to **Release Preparation** under the following conditions:
 
 1. `README Reconciliation v0.1` must be scheduled by the owner and must close before release.
 2. `Credential History Purge v0.1` / Tushare token rotation must be scheduled by the owner and must close before release.
-3. No release artifact is produced until both conditions are met.
-4. No release artifact — including a tagged release candidate — may be produced until the above conditions close.
-5. The evaluated tree remains `12649ca`; later governance markers are audit evidence only.
+3. `Backend Deployment Chain v0.1` must be scheduled by the owner and must close before release; it must resolve the missing committed `market_context` module and establish a reproducible backend deployment contract.
+4. No release artifact is produced until all above conditions are met.
+5. No release artifact — including a tagged release candidate — may be produced until the above conditions close.
+6. The evaluated tree remains `12649ca`; later governance markers are audit evidence only.
+
+**Scheduling note:** Scheduling a remediation window is a planning action, not evidence that the remediation will occur or succeed. RRA documents risks and exit gates; it does not authorize a release claim.
 
 It is **not release-ready today**.
 
@@ -126,8 +142,8 @@ It is **not release-ready today**.
 |---|---|---|
 | README Reconciliation v0.1 | Human programmer / owner | Required |
 | Credential History Purge v0.1 | Owner | Required |
+| Backend Deployment Chain v0.1 | Implementation team | Required for release; currently BLOCKED until remediation |
 | Workspace Boundary v0.1 | Owner | Recommended |
-| Backend Deployment Chain v0.1 | Implementation team | BLOCKED until remediation |
 
 ---
 
