@@ -31,6 +31,44 @@ The four blockers from `RRA_v0.1_CLOSURE_PLAN.md` (commit `b5428cd`) §2:
 
 ---
 
+## 2.5 Risk classification (NEW — requires human judgment)
+
+**Status:** Awaiting human classification. This section was added after the initial DRAFT to prevent over-applying the full Owner/Verifier Closure Protocol to every blocker regardless of risk weight.
+
+The four blockers are not the same kind of risk. Full Owner + Independent Verifier + Evidence Schema + Final Verdict protocol may not be appropriate for every blocker.
+
+### Proposed classification (CC suggestion, non-binding)
+
+| Blocker | Risk Class | Reason | Suggested closure weight |
+|---|---|---|---|
+| B-01 Backend Deployment Chain | **Runtime Critical** | Directly affects whether the system is observably running and which revision is serving | Full Owner + Verifier + Evidence + Verdict |
+| B-02 market_context module | **Capability Boundary** | Affects whether a documented endpoint is real or absent; affects claim boundary | Full Owner + Verifier + Evidence + Verdict |
+| B-03 Developer Handoff | **Documentation / DX** | Affects how a new human can run locally; no production impact at RRA baseline | Owner + Documentation diff + Spot-check by any human (lighter) |
+| B-04 Remote reproducibility | **Repository Integrity** | Affects whether `origin/main` ref is honest; mostly mechanical verification | Owner + automated check (`git ls-remote`, fresh clone hash) + Verifier sign-off |
+
+### Protocol levels under consideration
+
+| Level | Owner | Verifier | Evidence Schema | Final Verdict |
+|---|---|---|---|---|
+| **Full Closure Protocol** | Required, named | Required, named, ≠ Owner | Full §5 schema | PASS / FAIL recorded |
+| **Lightweight Closure** | Required, named | Optional (spot-check by any non-CC human) | Diff + referenced docs | Recorded as Lightweight PASS |
+| **Automated Closure** | Required, named | Required (verifier role), but evidence is mechanical | Script output + commit SHA | Recorded as Automated PASS |
+
+**Human decision required:**
+
+For each blocker, indicate:
+
+```
+B-01: <Full / Lightweight / Automated> + Verifier required: <YES / NO>
+B-02: <Full / Lightweight / Automated> + Verifier required: <YES / NO>
+B-03: <Full / Lightweight / Automated> + Verifier required: <YES / NO>
+B-04: <Full / Lightweight / Automated> + Verifier required: <YES / NO>
+```
+
+The classification decision is itself a governance artifact and should be recorded here once made. CC cannot classify on the human's behalf — this is a judgement call about what the system actually needs.
+
+---
+
 ## 3. Assignment table (DRAFT — Owner and Verifier fields empty by design)
 
 | Blocker | Owner | Verifier | Owner ≠ Verifier |
