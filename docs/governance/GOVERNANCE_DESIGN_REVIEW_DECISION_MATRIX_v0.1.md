@@ -193,14 +193,14 @@ CC will NOT:
 
 ---
 
-## Decision log (to be filled by human principal)
+## Decision log (filled by human principal)
 
 | Question | Decision | Recorded at | Recorded by |
 |---|---|---|---|
-| Q1 — Independent Verification Boundary | (pending) | | |
-| Q2 — Governance Granularity | (pending) | | |
-| Q3 — Minimum Trust Closure | (pending) | | |
-| Q4 — Automation Boundary | (pending) | | |
+| Q1 — Independent Verification Boundary | **B. High-risk claims only.** Threshold: Independent verification is required when claim impact exceeds threshold (Claim Impact axis, not production/non-production axis). | 2026-08-05 | Human principal `Zhuanz` |
+| Q2 — Governance Granularity | **Claim Impact Model, four dimensions.** Per-blocker / per-change scoring on Runtime Impact / Capability Impact / Evidence Impact / User Impact. File type is not the axis. | 2026-08-05 | Human principal `Zhuanz` |
+| Q3 — Minimum Trust Closure | **Five elements, with Authority Boundary as cross-cutting control.** (1) Evidence exists (2) Claim bounded (3) Runtime observable (4) Independent verification when required (5) Authority boundary defined. Authority is the gate that promotes facts to commitments; without it an agent can self-announce completion. | 2026-08-05 | Human principal `Zhuanz` |
+| Q4 — Automation Boundary | **Mechanical verifies facts; human approves meaning.** Mechanical: hash, diff, schema check, test result, artifact existence, timestamp validation. Human: risk acceptance, capability claim, release authorization, production impact judgment. | 2026-08-05 | Human principal `Zhuanz` |
 
 ---
 
@@ -212,6 +212,23 @@ CC will NOT:
 - `docs/reviews/RRA_v0.1_CLOSURE_PLAN.md`
 - `docs/reviews/RRA_CLOSURE_PLAN_INDEPENDENT_VERIFICATION_v0.2.md`
 - `docs/reviews/C_INDEPENDENT_VERIFICATION_SETUP_v0.1.md`
+
+---
+
+## Reference Artifacts (option d: cross-reference, do not adopt)
+
+The following untracked artifacts in the worktree are acknowledged as parallel-session work products targeting `cefc660`. They are **referenced**, not adopted.
+
+- `docs/reviews/RUNTIME_GOVERNANCE_VALIDATION_v0.2_DECLARATION.md`
+- `docs/reviews/RUNTIME_GOVERNANCE_VALIDATION_v0.2_EVIDENCE_R1.md`
+- `docs/reviews/RUNTIME_GOVERNANCE_VALIDATION_v0.2_CLOSURE_DECISION.md`
+- `docs/reviews/R1_IDENTITY_DECISION.md`
+
+Classification: **Referenced external work products. No state inheritance. No automatic adoption.**
+
+Key rule: **Reference ≠ Adopted State.**
+
+The `RUNTIME_GOVERNANCE_VALIDATION_v0.2_CLOSURE_DECISION.md` decision request (A/B/C/D on closing v0.2 / opening v0.3 / keeping v0.2 OPEN) belongs to a separate window. It is not answered in this Decision Matrix and must not be answered as part of Governance Design Review v0.1.
 
 ---
 
