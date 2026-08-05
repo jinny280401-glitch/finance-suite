@@ -1,12 +1,13 @@
 # Organization-Level Agent Harness Research Task v0.1
 
-**Status:** OPEN — 4-agent parallel research + synthesizer
+**Status:** OPEN — REFERENCE RESEARCH
+**Status semantics:** REFERENCE ONLY. NOT ADOPTED. NOT ARCHITECTURE DECISION. NOT GOVERNANCE BASELINE.
 **Date:** 2026-08-05
 **Coordinator:** CC (governance coordinator, not author of research outputs)
 **Production:** UNCHANGED
 **Push:** FORBIDDEN
 **Implementation:** NOT AUTHORIZED
-**Window type:** Design research (no production change, no code change)
+**Window type:** External method research input (no production change, no code change, no declaration modification)
 
 ---
 
@@ -21,7 +22,7 @@ Morning's governance work exposed structural questions that no individual docume
 
 These are not bugs. They are symptoms of an unfinished problem: **how should an organization structure its agents when agent count grows beyond two?**
 
-This task card dispatches four parallel research agents to study industry patterns, then synthesizes a Finance-Suite-specific design document. The output informs, but does not modify, the current Governance Design Review v0.1 window.
+This task card dispatches four parallel research agents to study industry patterns, then synthesizes a design-input document. The output is research material, not architecture decision. It does not modify Governance Design Review v0.1; it informs future windows.
 
 ---
 
@@ -32,90 +33,76 @@ All agents share these constraints:
 - Research only — no production change, no code change, no declaration modification, no push
 - Forbidden: only write concepts / only list products / only talk about LLM capability
 - Required: each finding must answer (1) what morning governance problem it informs, (2) which mechanisms are worth introducing, (3) which are not appropriate for Finance Suite, (4) what is the minimum viable architecture
-- Output: Markdown report committed to `docs/research/` (not pushed)
+- Output: committed to `docs/research/` with **REFERENCE ONLY** status (NOT adopted, NOT architecture decision)
+- Final output does not authorize any implementation, adoption, or roadmap commitment
 
 ---
 
-## 3. Agent A — Enterprise AI Architect
+## 3. Per-finding output format
 
-**Output:** `docs/research/ORG_AGENT_HARNESS_ARCHITECTURE_REPORT.md`
+Every Agent output must follow this format for each finding:
 
-Research questions:
+```
+Research Finding:    <one-line statement>
+Source:              <Anthropic / OpenAI / GitHub / Academic / Industry>
+Observation:         <what was observed in the source>
+Pattern:             <what mechanism is distilled>
+Applicability:       <whether it has reference value for Finance Suite>
+Non-Claim:           <what this finding does NOT imply>
+```
 
-- What is the **Gateway vs Harness** distinction? Why does an organization need Harness, not just a Gateway?
-- How do leading agent systems handle **Agent Identity** (independent of human identity)?
-- How do they handle **Permission** (what an agent may do vs what a human may do)?
-- How is **Shared Context** constructed and maintained across agents and sessions?
-- How is **Organizational Memory** distinguished from personal memory and runtime state?
-- What is the **Multi-Agent Coordination Model** used in practice (orchestrator / peer / hierarchical / market-based)?
+The "Non-Claim" line is mandatory. It states explicitly that the finding is observation, not adoption.
+
+---
+
+## 4. Agent A — Industry Architecture
+
+**Output:** `docs/research/ORG_LEVEL_HARNESS_INDUSTRY_REPORT_v0.1.md`
+
+**Role:** Industry Architecture Researcher
+
+**Topic:** 组织级 Agent Harness 行业范式
+
+Focus:
+
+- Anthropic Org-level Harness concept (Claude Code Cloud Tag, Lance Martin definitions)
+- Slack / Workspace collaboration model for Agents
+- Agent Identity approaches at the enterprise level
+- Permission Model in production agent systems
+- Shared Context layer architectures
+- Multi-Agent Coordination Model (orchestrator / peer / hierarchical / market-based)
+
+Output target: "未来企业 Agent 基础设施长什么样"
 
 Sections required:
 
-1. Gateway vs Harness
-2. Agent Identity
-3. Agent Permission
-4. Shared Context
-5. Organizational Memory
-6. Multi-Agent Coordination Model
-7. Implications for Finance Suite
+1. Gateway vs Harness (current industry consensus)
+2. Agent Identity patterns (3–5 concrete examples)
+3. Permission models
+4. Shared Context architectures
+5. Multi-Agent Coordination Model
+6. Implications for Finance Suite (per-finding format)
+7. Non-adoption statement
 
 ---
 
-## 4. Agent B — AI Governance Researcher
+## 5. Agent B — Open Source Systems
 
-**Output:** `docs/research/MULTI_AGENT_GOVERNANCE_PATTERN_REPORT.md`
+**Output:** `docs/research/ORG_LEVEL_HARNESS_OPEN_SOURCE_REPORT_v0.1.md`
 
-Research questions:
+**Role:** Open Source Intelligence Researcher
 
-- How do organizations design **Role Separation** when agents are producers AND reviewers?
-- What is the **Approval Chain** pattern when an agent produces evidence and another agent must verify?
-- How is the **Evidence Chain** maintained so that "Evidence ≠ Claim Authorization" is enforced by design?
-- What are the known **Failure Modes** (e.g., agent self-certifying completion, owner = verifier collapse, claim escalation through language drift)?
-- What is the **Recommended Model** for separating Owner / Executor / Verifier / Authority across agents and humans?
+**Topic:** 开源 Agent 协作框架研究
 
-Sections required:
-
-1. Role Separation
-2. Approval Chain
-3. Evidence Chain
-4. Failure Modes (with concrete examples from production)
-5. Recommended Model
-
----
-
-## 5. Agent C — AI Infrastructure Architect
-
-**Output:** `docs/research/AGENT_MEMORY_CONTEXT_ARCHITECTURE_REPORT.md`
-
-Research questions:
-
-- How are **Personal Memory**, **Project Memory**, and **Organizational Memory** distinguished in practice?
-- How is **Session Continuity** handled when an agent's lifetime is shorter than the project's lifetime?
-- How is **Runtime State** kept out of long-term memory stores?
-- What is an **Evidence Identity**? How is it attached to provenance rather than to claims?
-- How is **Context Reconciliation** performed when two records cover the same root-cause domain with different evidence scopes (the Related Artifact pattern from morning's R1 work)?
-
-Sections required:
-
-1. Personal Memory
-2. Project Memory
-3. Organizational Memory
-4. Runtime State
-5. Evidence Identity
-6. Context Reconciliation
-7. Implications for Finance Suite's memory architecture
-
----
-
-## 6. Agent D — Open Source Intelligence Researcher
-
-**Output:** `docs/research/OPEN_SOURCE_AGENT_HARNESS_COMPARISON.md`
-
-Focus projects (minimum):
+Focus projects (minimum coverage):
 
 - `garrytan/gbrain` (per user-provided link, MIT)
-- Open-source agent frameworks with organizational claims (LangGraph, CrewAI, AutoGen, OpenClaw)
-- Any project that claims to address multi-agent organization rather than single-agent orchestration
+- `Lum1104/Understand-Anything` (already reviewed this session)
+- OpenClaw
+- LangGraph
+- CrewAI
+- AutoGen
+- Any project that addresses multi-agent organization rather than single-agent orchestration
 
 Comparison dimensions (one row per project):
 
@@ -127,52 +114,150 @@ Comparison dimensions (one row per project):
 | Workflow | How are multi-agent workflows composed? |
 | Governance | Does the project include audit / approval / verification primitives? |
 
+Output target: "多 Agent 协作环境如何实现"
+
 Sections required:
 
 1. Project inventory (one paragraph each)
 2. Comparison table
 3. Patterns that recur across multiple projects
 4. Patterns that appear in only one project (assess maturity)
-5. Recommendations for Finance Suite
+5. Implications for Finance Suite (per-finding format)
+6. Non-adoption statement
 
 ---
 
-## 7. Synthesizer — CC
+## 6. Agent C — Governance & Safety
 
-**Output:** `docs/research/FINANCE_SUITE_ORGANIZATION_AGENT_HARNESS_DESIGN_v0.1.md`
+**Output:** `docs/research/ORG_LEVEL_HARNESS_GOVERNANCE_REPORT_v0.1.md`
+
+**Role:** AI Governance Researcher
+
+**Topic:** Agent Governance 方法
+
+Focus:
+
+- Identity boundary enforcement
+- Approval workflow design
+- Audit trail primitives
+- Human-in-the-loop patterns
+- Policy enforcement
+- Owner / Executor / Verifier / Authority separation
+
+Output target: "如何避免 Agent 自说自话"
+
+Sections required:
+
+1. Role Separation (Producer ≠ Reviewer; Owner ≠ Verifier)
+2. Approval Chain patterns
+3. Evidence Chain patterns (Evidence ≠ Claim Authorization)
+4. Failure Modes (with concrete examples from production systems)
+5. Audit Trail primitives
+6. Recommended Model
+7. Implications for Finance Suite (per-finding format)
+8. Non-adoption statement
+
+---
+
+## 7. Agent D — Software Organization Practice
+
+**Output:** `docs/research/ORG_LEVEL_HARNESS_SOFTWARE_PRACTICE_REPORT_v0.1.md`
+
+**Role:** Software Organization Practice Researcher
+
+**Topic:** 大型软件团队如何管理 AI Agent
+
+Focus:
+
+- GitHub Copilot Workspace
+- Devin-class agent workflows
+- Code ownership in agent era
+- Review system with AI participants
+- Organizational memory in software teams
+- Onboarding new AI agents into an existing human team
+
+Output target: "Agent 进入真实组织后的运行机制"
+
+Sections required:
+
+1. Code Ownership in AI-assisted development
+2. Review System with AI participants
+3. Onboarding patterns for new AI agents
+4. Organizational Memory in software teams
+5. Failure Modes
+6. Implications for Finance Suite (per-finding format)
+7. Non-adoption statement
+
+---
+
+## 8. Synthesizer — CC
+
+**Output:** `docs/research/ORG_LEVEL_AGENT_HARNESS_SYNTHESIS_v0.1.md`
 
 After Agents A–D complete, the synthesizer produces one document that:
 
-- Does not copy any industry pattern wholesale
-- Answers the question: if Finance Suite grows to 10 agents / 100 users / institutional clients, what must be in place?
-- Cross-references each agent's report with the morning's specific governance findings
-- Identifies which industry mechanisms are worth introducing, which are not, and why
-- Specifies a minimum viable architecture (MVA) for Finance Suite's organizational layer
-- Marks recommendations as DESIGN ONLY (no implementation authorization implied)
+**Status:** DECISION: NOT DECIDED
+
+**Contains:**
+
+- Reusable patterns observed across the four agent reports
+- Candidate architecture principles
+- Future design inputs for governance windows
+
+**Does NOT contain:**
+
+- Implementation plan
+- Adoption decision
+- Roadmap commitment
+- Production change authorization
+
+The synthesis answers one question:
+
+> Are the morning's governance frictions **process design problems** that better procedures can solve, or are they **evidence that future Agent systems require an organizational-level Harness as native infrastructure**?
+
+This is a design-input question, not a decision question.
 
 ---
 
-## 8. State board
+## 9. Cross-cutting research rules
+
+```
+✅ Each finding uses the per-finding format (§3)
+✅ Sources are concrete: paper / post / repo / spec / doc
+✅ No claim of capability or maturity beyond what source supports
+✅ Each finding has Non-Claim line
+
+❌ No adoption recommendation
+❌ No implementation timeline
+❌ No "we should use X" framing
+❌ No modification to existing governance / review / declaration docs
+```
+
+---
+
+## 10. State board
 
 ```text
-Governance Design Review v0.1:    OPEN (research phase only)
+Governance Design Review v0.1:    OPEN (research does not modify)
 Org-level Agent Harness Research: OPEN (4 agents + synthesizer)
+  - Status semantics:              REFERENCE ONLY
 RRA v0.1 Blocker Closure:         PAUSED (unaffected)
 Owner Assignment:                 WAITING (unaffected)
 Implementation:                   NOT AUTHORIZED
 Push:                             FORBIDDEN
 ```
 
-Research does NOT advance the RRA / Owner Assignment / Closure chain. It produces design material for future Governance Review v0.2.
+Research does NOT advance the RRA / Owner Assignment / Closure chain.
 
 ---
 
-## 9. Cross-references
+## 11. Cross-references
 
 - `docs/governance/GOVERNANCE_DESIGN_REVIEW_v0.1.md` (current window)
 - `docs/governance/GOVERNANCE_DESIGN_REVIEW_DECISION_MATRIX_v0.1.md` (Q1–Q4 decisions)
 - `docs/research/R1_IDENTITY_DECISION.md` (morning's Related Artifact reconciliation)
 - `docs/reviews/C_INDEPENDENT_VERIFICATION_SETUP_v0.1.md` (morning's environment boundary finding)
+- `https://github.com/garrytan/gbrain` (Agent B focus project)
 
 ---
 
