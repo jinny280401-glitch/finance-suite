@@ -271,8 +271,13 @@ This is a design-input question, not a decision question.
 
 ```text
 Governance Design Review v0.1:    OPEN (research does not modify)
-Org-level Agent Harness Research: OPEN (4 agents + synthesizer)
-  - Status semantics:              REFERENCE ONLY
+Org-level Agent Harness Research: PHASE 1 CLOSED
+  - Evidence Status:              REMEDIATED
+  - Conclusion:                   NOT PROVEN
+  - Strategic Value:              RETAINED (Claim Evidence Registry + Decision Criteria Framework)
+  - Adoption:                     NOT READY (0/8 criteria satisfied)
+  - Next:                         Future evaluation window — when decision criteria are met
+  - Status semantics:             REFERENCE ONLY
 RRA v0.1 Blocker Closure:         PAUSED (unaffected)
 Owner Assignment:                 WAITING (unaffected)
 Implementation:                   NOT AUTHORIZED
@@ -290,6 +295,11 @@ Research does NOT advance the RRA / Owner Assignment / Closure chain.
 - `docs/research/R1_IDENTITY_DECISION.md` (morning's Related Artifact reconciliation)
 - `docs/reviews/C_INDEPENDENT_VERIFICATION_SETUP_v0.1.md` (morning's environment boundary finding)
 - `https://github.com/garrytan/gbrain` (Agent B focus project)
+- **Phase 1 closure artifacts (2026-08-05):**
+  - `docs/research/ORG_LEVEL_HARNESS_SOURCE_MATRIX_v0.1.md` — 106 claims consolidated, evidence grades, source mismatch register
+  - `docs/research/ORG_LEVEL_AGENT_HARNESS_PHASE1_EVIDENCE_REMEDIATION_v0.1.md` — synthesis downgrade, problem classification, decision criteria
+  - `docs/research/ORG_LEVEL_AGENT_HARNESS_PHASE1_CLOSURE_REVIEW.md` — final gate check, all conditions PASS
+  - `docs/research/C_PHASE1_METHOD_NOTE_v0.1.md` — C's Phase 1 method constraints
 
 ---
 
