@@ -28,11 +28,11 @@ It does not modify Governance Design Review v0.1, the R1 reconciliation, C Indep
 
 > **Are the morning's governance frictions PROCESS DESIGN PROBLEMS that better procedures can solve, OR are they EVIDENCE that future Agent systems require an organizational-level Harness as native infrastructure?**
 
-**Both — but with the substrate primary.** The four reports converge on a single reading of the morning's frictions:
+**Research suggests potential runtime governance gaps that require further validation before any architecture decision.** The four reports observe patterns that intersect with the morning's frictions:
 
-- The *symptoms* look procedural (a missing label, a missing approval gate, a missing sign-off) and can be partly addressed by better procedure. Procedure is necessary but insufficient.
-- The *root causes* are substrate-level: the runtime conflates identity with user-identity, memory with state, evidence with claim, and authority with context. Industry, open-source, governance, and software-org practice all observe the same substrate gap. Procedure alone cannot separate substrate that the runtime does not distinguish.
-- Industry treats the substrate separation as **native infrastructure**, not as a feature bolted onto the agent. The morning's frictions are evidence that the current substrate is treating harness concerns as incidental rather than as first-class. Whether Finance Suite's answer is "build a harness," "adopt one," or "narrow scope to avoid harness-shaped work" is a *future-window decision*, not a research-window output.
+- The *symptoms* look procedural (a missing label, a missing approval gate, a missing sign-off) and can be partly addressed by better procedure. Procedure may be sufficient for some frictions; the reports do not collectively establish that procedure alone is insufficient.
+- The *hypothesized* root causes point toward substrate-level questions: whether the runtime conflates identity with user-identity, memory with state, evidence with claim, or authority with context. These are observations from external references, not verified findings about the current Finance Suite runtime. The research reports describe patterns in other systems; they do not directly inspect the Finance Suite substrate.
+- Industry references describe substrate separation as **infrastructure in some production systems**, not as a universal necessity or a proven requirement for Finance Suite. The morning's frictions are *consistent with* patterns that other systems address at the substrate level, but this consistency is observation, not causation. Whether Finance Suite's answer is improved process discipline, a substrate-level change, narrowing scope, or some combination is a *future-window decision* with evidence not yet collected.
 
 This is a design-input statement, not an adoption statement. The synthesis does not authorise building, adopting, or avoiding a harness. It records the convergence.
 
@@ -266,13 +266,13 @@ For each morning friction, this section states whether each report's findings il
 | Q3 Authority Boundary | H | P |
 | Q4 Automation Boundary | H | P |
 
-**Reading.** Seven of eight morning frictions are substrate-primary. One (Reference ≠ Adopted State) is procedure-primary. The Industry's convergence on substrate separation as the *necessary* primitive is consistent with this reading. Procedure overlays add discipline but cannot substitute for substrate separation.
+**Reading.** The four research reports classified seven of eight morning frictions as primarily associated with substrate-level patterns observed in external systems, and one (Reference ≠ Adopted State) as primarily a procedural discipline. This classification is a research observation, not a verified finding about the Finance Suite runtime. The research suggests that substrate-level mechanisms *may* be relevant; it does not establish that substrate separation is necessary or that procedure alone is insufficient. Further validation against the actual Finance Suite runtime is required before any architecture conclusion.
 
 ---
 
 ## 4. Candidate architecture principles
 
-Seven candidate principles are distilled from the four reports. Each principle carries a **Non-Claim** line stating what the principle does NOT yet authorise.
+Seven candidate principles are distilled from the four reports. **One (P6 — Authority bound to credential) is VERIFIED by two documented production failures (Knight Capital 2012, Cloudflare 2023). The remaining six are HYPOTHESIS — consistent with observed patterns but untested against the Finance Suite runtime.** See `ORG_LEVEL_AGENT_HARNESS_PHASE1_EVIDENCE_REMEDIATION_v0.1.md` §1.3 for per-principle evidence audit. Each principle carries a **Non-Claim** line stating what the principle does NOT yet authorise.
 
 ### Principle 1 — Independence is environmental, not nominal
 

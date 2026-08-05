@@ -1,6 +1,6 @@
 # Organization-Level Agent Harness Research Task v0.1
 
-**Status:** OPEN — REFERENCE RESEARCH
+**Status:** OPEN — Evidence Remediation Required
 **Status semantics:** REFERENCE ONLY. NOT ADOPTED. NOT ARCHITECTURE DECISION. NOT GOVERNANCE BASELINE.
 **Date:** 2026-08-05
 **Coordinator:** CC (governance coordinator, not author of research outputs)
