@@ -267,22 +267,41 @@ model configured  ≠  model resolved  ≠  gateway accepted  ≠  model execute
 
 A receipt R without the Y → Z → R chain is **observability, not identity**.
 
-**Contractual execution attestation (per F-03 third review):** "Observed" is not the same as "attested." Every record in the chain MUST carry the following keys and integrity/provenance metadata:
+**Contractual execution attestation (per F-03 third review, per F-02 fourth review):** "Observed" is not the same as "attested." Every record in the chain MUST carry the following keys and integrity/provenance metadata. Per F-02 fourth review, the **mandatory-key rule applies uniformly** to every record, not "whichever are within scope":
 
 | Record | Required keys (every field MUST be present and non-null) | Integrity / provenance |
 |---|---|---|
-| Gateway acceptance | `scheduler_run_id`, `gateway_attempt_id`, `accepted_model_identity`, `timestamp`, `decision` (accept/reject/alias-rewrite/route-substitute) | Hash of record + signing key identity if available |
+| Gateway acceptance | `scheduler_run_id`, `gateway_attempt_id`, `accepted_model_identity`, `timestamp`, `decision` | Hash of record + signing key identity if available |
 | Invocation event | `scheduler_run_id`, `gateway_attempt_id`, `provider_attempt_id`, `invoked_at`, `requested_model` | Hash of record |
-| Provider attempt | `provider_attempt_id`, `attempt_started_at`, `attempt_outcome` (success/failure/timeout), `attempted_model` | Hash of record |
-| Provider receipt | `provider_attempt_id`, `receipt_received_at`, `serving_model_identity`, `response_status`, `usage_tokens` (if any) | Hash of record |
+| **Provider attempt** | `scheduler_run_id`, `gateway_attempt_id`, **`provider_attempt_id`**, `attempt_started_at`, `attempt_outcome` (success/failure/timeout), `attempted_model` | Hash of record |
+| **Provider receipt** | `scheduler_run_id`, `gateway_attempt_id`, **`provider_attempt_id`**, `receipt_received_at`, `serving_model_identity` (per Option 1 or 2 of provider-attested execution), `response_status`, `usage_tokens` (if any) | Hash of record |
 
-**Provider-attested execution (per F-03 third review):** The provider receipt MUST be **attested by the provider** in a form that contractually identifies the serving model. A response-body `model` field captured by the gateway is observation, not attestation. The plan REQUIRES one of:
+**Key-chain rule (per F-02 fourth review):** every record in the chain MUST carry `scheduler_run_id` AND `gateway_attempt_id` AND `provider_attempt_id` (whichever are within scope for that record) — but the scope rule is now refined:
+
+> A record that originates within a chain stage MUST carry the chain-parent identifiers for that stage AND ALL preceding stages. Provider attempts and receipts originate downstream of the gateway, so they MUST carry the gateway's `gateway_attempt_id` AND the scheduler's `scheduler_run_id`, even though those identifiers were not produced at the provider layer. The "whichever are within scope" qualifier is NOT a license to omit identifiers that were produced upstream.
+
+**Immutable explicit mapping record (per F-02 fourth review):** If for any reason a record cannot carry all chain-parent identifiers, the plan REQUIRES an immutable explicit mapping record as the only permissible join mechanism. This mapping record MUST be:
+
+- Stored in the same anchored store as the R-01a-i incident package
+- Tied to the chain by `provider_attempt_id` (and at least one of the upstream identifiers it claims to map)
+- Versioned and append-only (no retroactive editing)
+
+A "join via timestamp proximity" or "join via inference" remains forbidden. A mapping record replaces the inference; it does not authorize inference.
+
+**Provider-attested execution (per F-03 third review, per F-01 fourth review):** The provider receipt MUST be **attested by the provider** in a form that contractually identifies the serving model. A response-body `model` field captured by the gateway is observation, not attestation. The plan REQUIRES:
 
 1. A signed provider receipt (signature key custody specified, signing time bounded to the attempt window)
 2. A provider-published response identifier that contractually maps to the serving model (the provider's published schema is the contract)
-3. A local receipt that records the **attestation method** with explicit reason why the provider does not offer (1) or (2) and what compensating evidence is recorded
 
-Without one of the above, the `serving_model_identity` field is observation, NOT identity, and R-02 execution identity is NOT established. The unresolved provider/gateway receipt question (OQ-4) MUST be closed or a known UNKNOWN compensation recorded.
+**These are the only two acceptable forms for `Executed` identity.** A local "compensating record" — i.e., a gateway-side explanation of why options 1 and 2 are unavailable — is **NOT** an execution attestation. It is a documented UNKNOWN/limitation. Per F-01 fourth review, Option 3 (local compensating record) is REMOVED from the accepted forms.
+
+**Governance consequence (per F-01 fourth review):** when neither (1) nor (2) is available for an attempt, the result is:
+
+- `Executed` identity for that attempt: **NOT ESTABLISHED**
+- Verdict for that run: `Root Cause: UNKNOWN (executed model unattested)` OR `Model Capability Claim: UNKNOWN` — NOT a `Executed identity = <model>` assertion
+- The incident or run MAY be classified, but it MUST NOT be claimed as "executed by model X" in any user-visible output
+
+The unresolved provider/gateway receipt question (OQ-4) MUST be closed (by establishing either (1) or (2)) before any `Executed` identity claim is made. Until closed, all such claims are forbidden.
 
 **Mandatory correlation keys (per F-03 third review):** Every record in the chain MUST carry `scheduler_run_id` AND `gateway_attempt_id` AND `provider_attempt_id` (whichever are within scope for that record). Records missing any of these keys cannot be joined across the chain. The plan does NOT permit "join via inference" or "join via timestamp proximity" as a substitute for explicit keys.
 
