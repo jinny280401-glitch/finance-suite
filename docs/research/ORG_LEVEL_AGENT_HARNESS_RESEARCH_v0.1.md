@@ -24,6 +24,38 @@ These are not bugs. They are symptoms of an unfinished problem: **how should an 
 
 This task card dispatches four parallel research agents to study industry patterns, then synthesizes a design-input document. The output is research material, not architecture decision. It does not modify Governance Design Review v0.1; it informs future windows.
 
+### 1.1 C's Phase 1 method contribution
+
+C issued a Phase 1 method contribution (`docs/research/C_PHASE1_METHOD_NOTE_v0.1.md`, separate file). Key constraints added by C:
+
+- **Source-audited project shortlist** before any Finance Suite architecture proposal. GitHub repositories as starting point; primary specifications, official documentation, and relevant standards supplement when a repo alone cannot prove identity/authorization/audit behavior.
+- **Per-claim audit**: every substantive claim records source URL, exact artifact examined, what it proves, what remains unproven, Finance Suite applicability, and confidence level.
+- **Required comparison fields**: identity, memory, permission, workflow, governance, evidence/auditability, plus whether the capability is implemented or merely documented.
+- **Starting candidates** (not assumed solutions): LangGraph, CrewAI, AutoGen, MCP, OpenFGA, Mem0, OpenClaw, gbrain, Understand Anything.
+- **Required reports (renamed by C)**:
+  - `ORG_LEVEL_AGENT_HARNESS_RESEARCH.md`
+  - `MULTI_AGENT_GOVERNANCE_PATTERN.md`
+  - `AGENT_ORGANIZATIONAL_MEMORY_ARCHITECTURE.md`
+  - `OPEN_SOURCE_AGENT_HARNESS_COMPARISON.md`
+  - `FINANCE_SUITE_AGENT_ORGANIZATION_DESIGN.md` (constrained to questions + prerequisites in this phase)
+  - `SOURCE_MATRIX.md` (consolidates citations, capability verdicts, evidence gaps)
+- **Finance Suite baseline and decision boundaries**:
+  - Analyze current CC/C/Builder model as **single-organization baseline**; do not design multi-institution tenancy in this phase.
+  - Preserve distinction between **static evidence and runtime observation** through explicit provenance/relationship metadata, not by collapsing them into one record.
+  - **Role separation**: executor ≠ sole verifier or approver for the same governed action; human remains final authority for high-impact actions.
+  - **No selection** of workflow framework / knowledge graph / authorization engine / database until Phase 2.
+- **Acceptance checks**:
+  - Every report answers the "two sessions both correct" scenario and identifies missing identity/reconciliation data.
+  - Comparison contains at least one verified candidate for each of workflow orchestration, authorization, memory, audit/evidence; unsupported projects marked accordingly.
+  - No claim of operational capability based solely on README / HTTP response / schema / credential / local artifact.
+  - Phase 1 ends with ranked source shortlist + explicit unanswered decisions, ready for separate approved v0.1 implementation/design phase.
+- **Assumptions**:
+  - Research sources may extend beyond GitHub only to validate primary technical claims.
+  - First delivery is project-and-evidence shortlist, NOT the final `FINANCE_SUITE_ORGANIZATION_AGENT_HARNESS_DESIGN_v0.1.md`.
+  - Current local working tree preserved; this planning phase makes no repository changes.
+
+These constraints apply to all four Agent outputs and to the Synthesizer. C's contribution is preserved as a separate file `C_PHASE1_METHOD_NOTE_v0.1.md`.
+
 ---
 
 ## 2. Scope and constraints
