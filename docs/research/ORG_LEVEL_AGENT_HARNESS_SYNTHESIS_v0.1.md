@@ -395,7 +395,7 @@ The research surfaces questions that this synthesis does NOT answer. Each is rec
 - It does NOT modify Governance Design Review v0.1, R1 Identity Reconciliation, C Independent Verification Setup, or any morning governance artifact.
 - It does NOT prescribe whether Finance Suite builds a harness, adopts one, or narrows scope to avoid harness-shaped work.
 
-**This synthesis is REFERENCE ONLY.** It distils patterns observed across four REFERENCE ONLY research outputs. It produces a design-input reading of the morning's frictions (substrate-primary for seven of eight, procedure-primary for one). It does not produce a decision.
+**This synthesis is REFERENCE ONLY.** It distils patterns observed across four REFERENCE ONLY research outputs. It produces a design-input reading of the morning's frictions. **Evidence audit (2026-08-05):** 3 of 8 friction classifications survive source audit as VERIFIED; 5 are HYPOTHESIS. See `ORG_LEVEL_HARNESS_SOURCE_MATRIX_v0.1.md` for per-claim evidence grades and `ORG_LEVEL_AGENT_HARNESS_PHASE1_EVIDENCE_REMEDIATION_v0.1.md` for re-classification. It does not produce a decision.
 
 **Status:** DECISION: NOT DECIDED.
 
@@ -406,6 +406,9 @@ The decision — whether Finance Suite's answer to the morning's frictions is pr
 ## 7. Cross-references
 
 - Task card: `docs/research/ORG_LEVEL_AGENT_HARNESS_RESEARCH_v0.1.md`
+- **Evidence audit artifacts (added 2026-08-05):**
+  - `docs/research/ORG_LEVEL_HARNESS_SOURCE_MATRIX_v0.1.md` — per-claim evidence grades, source mismatch register
+  - `docs/research/ORG_LEVEL_AGENT_HARNESS_PHASE1_EVIDENCE_REMEDIATION_v0.1.md` — synthesis downgrade, verified/unknown/rejected patterns, decision criteria
 - Sister-agent outputs:
   - `docs/research/ORG_LEVEL_HARNESS_INDUSTRY_REPORT_v0.1.md` (Agent A)
   - `docs/research/ORG_LEVEL_HARNESS_OPEN_SOURCE_REPORT_v0.1.md` (Agent B)

@@ -142,24 +142,28 @@ PASS. Phase 1 boundary is respected across all outputs.
 
 | Dimension | Verdict | Notes |
 |---|---|---|
-| Workflow output integrity | PASS WITH ONE CONDITION | Missing `SOURCE_MATRIX.md`; cross-reference mismatch fixed |
-| Source Matrix completeness | BLOCKED-UNTIL-CREATED | Required by task card / C method note |
-| Claim boundary | PASS | No README-only capability claims; weak sources flagged |
-| Capability classification | PARTIAL PASS | Present in prose; needs structured verdicts in Source Matrix |
+| Workflow output integrity | PASS | Cross-reference mismatch fixed; all 6 files exist |
+| Source Matrix completeness | PASS | `ORG_LEVEL_HARNESS_SOURCE_MATRIX_v0.1.md` created; 106 claims consolidated with evidence grades |
+| Claim boundary | PASS | No README-only capability claims; weak sources flagged; 8 source mismatches registered |
+| Capability classification | PASS | Structured verdicts present in Source Matrix; 42% DIRECT, 24% SEARCH, 2 BROKEN references |
 | Phase boundary compliance | PASS | No adoption / architecture selection / roadmap |
+| Evidence remediation | PASS | `ORG_LEVEL_AGENT_HARNESS_PHASE1_EVIDENCE_REMEDIATION_v0.1.md` created; synthesis downgraded to hypothesis; verified/unknown/rejected classified; decision criteria defined |
+| Synthesis downgrade | PASS | §0, §3.9, §4, §6 corrected; convergence claims downgraded to hypothesis; cross-references added |
 
-**Overall verdict: PASS WITH CONDITIONS**
+**Overall verdict: PASS**
 
-The four agent reports and the synthesizer are coherent, well-bounded, and Phase-1-compliant. The research can be accepted as **REFERENCE ONLY** input to future governance windows once the two conditions below are addressed.
+The four agent reports and the synthesizer are coherent, well-bounded, and Phase-1-compliant. The research is accepted as **REFERENCE ONLY** input to future governance windows.
 
 ---
 
-## 8. Required conditions before full closure
+## 8. Conditions — ALL RESOLVED
 
-1. ✅ **Fixed cross-reference mismatch.** In `ORG_LEVEL_AGENT_HARNESS_SYNTHESIS_v0.1.md` §7, changed `ORG_LEVEL_AGENT_HARNESS_SOFTWARE_ORG_REPORT_v0.1.md` to `ORG_LEVEL_HARNESS_SOFTWARE_PRACTICE_REPORT_v0.1.md`.
-2. **Create `docs/research/SOURCE_MATRIX.md`.** Consolidate citations, capability verdicts, and evidence gaps across all four agent reports per C method note.
+1. ✅ **Fixed cross-reference mismatch.** `ORG_LEVEL_AGENT_HARNESS_SYNTHESIS_v0.1.md` §7: corrected Agent D filename reference.
+2. ✅ **Created Source Matrix.** `ORG_LEVEL_HARNESS_SOURCE_MATRIX_v0.1.md` consolidates 106 claims with evidence grades (DIRECT/INDIRECT/SEARCH/INFERRED/BROKEN), source mismatch register (8 entries), and evidence scope boundaries.
+3. ✅ **Evidence Remediation completed.** `ORG_LEVEL_AGENT_HARNESS_PHASE1_EVIDENCE_REMEDIATION_v0.1.md` downgrades Synthesis convergence claims, classifies problems (3 process-solvable / 4 runtime-control-required / 3 hybrid), defines 8 Harness adoption decision criteria (none satisfied), registers 7 verified patterns, 5 unknown patterns, 5 rejected claims.
+4. ✅ **Synthesis corrected.** §0, §3.9, §4, §6 updated with hypothesis language and cross-references to Source Matrix + Evidence Remediation.
 
-Condition 1 is resolved. Condition 2 remains open. Neither changes research conclusions, rankings, or technology choices. Both are mechanical closure gaps.
+All closure conditions satisfied. Phase 1 research is accepted as REFERENCE ONLY.
 
 ---
 
