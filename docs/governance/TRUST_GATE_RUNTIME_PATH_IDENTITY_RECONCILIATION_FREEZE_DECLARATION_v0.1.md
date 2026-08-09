@@ -1,6 +1,7 @@
 # Trust Gate Runtime Path Identity — Freeze Declaration v0.1
 
 **Date:** 2026-08-09  
+**Amended:** 2026-08-10 — blocker framing corrected (§5, §6, §7) and production-artifact reconciliation gap explicitly recorded. Window remains FROZEN.  
 **Authority:** G-ratified final state declaration  
 **Scope:** Trust Gate Runtime Path Identity Validation v0.1 window
 
@@ -72,6 +73,7 @@ systematically miss exactly the paths agent architectures rely on.
 | Gate correctness | NO | Out of scope |
 | Coverage of all MCP tools | NO | Phase 0.5, separate concern |
 | Canonical gate selection | NO | Deferred to Architecture Integration Design |
+| Production artifact ↔ inspected corpus binding | NO | Local `finance-suite` repo vs `/home/ubuntu/finance-suite-web/app.main:app` not reconciled |
 
 ---
 
@@ -112,31 +114,65 @@ accidentally record whether data should have been blocked if you never record wh
 
 ---
 
-## 5. Next Window — Blocked on Observability
+## 5. Next Window — Blocked on Production Artifact Reconciliation
 
 ```
 Next Window:          Architecture Integration Design
 Entry Requirement:    Bounded Read-only Path Trace  [SPECIFIED — NOT EXECUTABLE]
-Blocker:              SSH access blocked (fail2ban) — requires human action via Tencent Cloud Console
+Current Blocker:      Production artifact ↔ inspected corpus reconciliation pending
+Observability Constraint: SSH access instability / environment access path unresolved
 ```
 
 Architecture Integration Design is **not blocked on authorization**. It is blocked on
-**observability**: the production path cannot be traced while SSH is blocked.
+**knowing what object would be designed against**.
+
+The inspected corpus is the local `finance-suite` repo. The observed production runtime is
+`/home/ubuntu/finance-suite-web/app.main:app`. These two artifacts have **not yet been bound**:
+
+```
+local finance-suite repo  ←→  /home/ubuntu/finance-suite-web  ←→  app.main:app
+       (inspected corpus)         (production filesystem)         (serving process)
+```
+
+If design proceeds now, the risk is:
+
+```
+Design target = local repo
+Actual target = production artifact
+              ↓
+Design correct, but wired to the wrong system
+```
+
+This is exactly the error the window has been preventing.
 
 Honest dependency chain:
 
 ```
-fail2ban unban (human action)
-    → Environment Identity Confirmation (4 read-only commands)
-    → Bounded Read-only Path Trace
-    → Architecture Integration Design
-    → Implementation Authorization
-    → Deployment Identity
-    → Runtime Enforcement Observation
-    → Capability Claim
+P0  Restore stable observability (SSH/WebShell — human action)
+        ↓
+P1a Baseline Identity Confirmation
+        ↓
+P1b Production artifact reconciliation
+        (whoami / hostname / pwd / runtime process / service/unit / nginx mapping / artifact identity)
+        ↓
+P1c Bounded Read-only Path Trace
+        ↓
+P2  Architecture Integration Design
+        ↓
+    Implementation Authorization
+        ↓
+    Deployment Identity
+        ↓
+    Runtime Enforcement Observation
+        ↓
+    Capability Claim
 ```
 
-Nothing downstream of the unban is executable today (2026-08-09).
+Nothing downstream of P1b is executable today (2026-08-09).
+
+**SSH recovery is not Trust Gate advancement.** It restores the evidence-collection
+infrastructure. The Trust Gate window resumes only after the production artifact is reconciled
+with the inspected corpus.
 
 ---
 
@@ -147,6 +183,8 @@ Nothing downstream of the unban is executable today (2026-08-09).
 ❌ Implementation or commit of any gate code
 ❌ Tushare stale probe / G3 BLOCK probe / runtime test
 ❌ Production capability claim
+❌ Skipping Baseline Identity or Production artifact reconciliation
+❌ Treating SSH recovery as Trust Gate validation progress
 ❌ Path trace execution (observability blocked)
 ❌ SSH access attempts beyond already-blocked state
 ```
@@ -161,7 +199,12 @@ Nothing downstream of the unban is executable today (2026-08-09).
 | Entry Condition Spec | `finance-suite/docs/governance/DIRECTION2_ENTRY_CONDITION_PATH_TRACE_v0.1.md` | SPECIFIED — NOT EXECUTED | NONE |
 | Freeze Declaration | `finance-suite/docs/governance/TRUST_GATE_RUNTIME_PATH_IDENTITY_RECONCILIATION_FREEZE_DECLARATION_v0.1.md` | THIS DOCUMENT | NONE |
 
-**No code written. No commits made. No probes executed.**
+**Code state:**
+
+- Governance docs frozen in this window were committed as `75a2e2c`.
+- `trust_gate/` and `mcp_server.py` remain in the working tree (untracked / modified) and were
+  **deliberately not committed** to avoid existence-as-evidence inflation.
+- No implementation, no probes, no capability claim.
 
 ---
 

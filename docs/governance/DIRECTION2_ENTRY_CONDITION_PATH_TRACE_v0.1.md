@@ -5,6 +5,8 @@
 **Authority:** Entry-condition specification only. Does not authorize execution.
 **Predecessor:** `TRUST_GATE_RUNTIME_PATH_RECONCILIATION_REVIEW_v0.1` (Type C, evidence-relative)
 **Successor (blocked on this):** Architecture Integration Design window
+**Scope note:** This document specifies the full entry gate. The Bounded Read-only Path Trace is
+Step 3 of that gate, not the whole gate.
 
 ---
 
@@ -18,6 +20,64 @@ boundary is wrong by construction.
 
 This entry condition resolves exactly one question — **which path does a research request
 take** — and is forbidden from resolving any other.
+
+---
+
+## 0.5 Two prerequisites before the trace
+
+The Bounded Read-only Path Trace (§2–§5) is **Step 3** of the Architecture Integration Design
+entry gate. Two preceding steps must be satisfied first.
+
+### 0.5.1 Step 1 — Baseline Identity Confirmation
+
+Answer:
+
+```text
+What exact artifact was reconciled in the frozen review?
+```
+
+Required outputs:
+
+- Commit hash of the inspected corpus at reconciliation time
+- Dirty-working-tree disclosure (untracked / modified files)
+- Pin the freeze declaration to that baseline
+
+Known gap: the Reconciliation Review inspected `cd6bdb9` plus a dirty working tree
+(`trust_gate/` untracked, `mcp_server.py` modified), but the freeze declaration does not yet
+pin that baseline. This step fixes that disclosure defect before any new evidence is collected.
+
+### 0.5.2 Step 2 — Production artifact reconciliation
+
+Bind the inspected corpus to the production runtime.
+
+Observed production artifact: `/home/ubuntu/finance-suite-web/app.main:app`
+Inspected corpus: local `finance-suite` repo
+
+Required outputs (read-only):
+
+```text
+Q-A1  whoami / hostname / pwd on production host
+Q-A2  What process serves app.main:app? (PID, binary, working directory)
+Q-A3  What service/unit manages it? (systemd, supervisor, docker, etc.)
+Q-A4  What is the nginx ingress → upstream mapping?
+Q-A5  What git commit / artifact version is deployed at /home/ubuntu/finance-suite-web?
+Q-A6  Is the deployed artifact derived from the inspected corpus? If so, by what mapping?
+```
+
+Until Q-A5 and Q-A6 are answered, **the design target is unknown**. Designing a Gate integration
+against the local repo while production runs a different artifact is the failure mode this step
+prevents.
+
+### 0.5.3 Why these precede the path trace
+
+```text
+Baseline Identity            → "what object did we reason about?"
+Production artifact reconciliation → "what object actually runs?"
+Bounded Read-only Path Trace → "what path does a request take in that object?"
+Architecture Integration Design → "where can enforcement be placed without bypass?"
+```
+
+Skipping the first two turns the third into a fixture observation of the wrong system.
 
 ---
 
@@ -115,7 +175,9 @@ for.
 
 ## 5. Exit criteria
 
-This entry condition is satisfied when **all** hold:
+### 5.1 Step 3 exit criteria (Bounded Read-only Path Trace)
+
+The path trace is satisfied when **all** hold:
 
 - [ ] Serving process identity recorded (Q-P1)
 - [ ] Ingress → handler chain recorded (Q-P2)
@@ -129,31 +191,53 @@ Output: `PRODUCTION_PATH_TRACE_v0.1` — evidence class **Path Observation**, no
 
 Not required for satisfaction: gate invocation, gate correctness, coverage of all request classes.
 
+### 5.2 Full Architecture Integration Design entry gate
+
+Architecture Integration Design may begin only when **all three** preceding steps are satisfied:
+
+- [ ] Step 1 — Baseline Identity Confirmation (§0.5.1)
+- [ ] Step 2 — Production artifact reconciliation (§0.5.2)
+- [ ] Step 3 — Bounded Read-only Path Trace (§5.1)
+
 ---
 
 ## 6. Known blocker
 
-Per `TRUST_GATE_RUNTIME_VALIDATION_GOVERNANCE_REVIEW_v0.1` (2026-08-09), SSH access to the
-production host is **BLOCKED (fail2ban)**, requiring human action via the Tencent Cloud Console.
+**Current blocker:** Production artifact ↔ inspected corpus reconciliation pending.
+
+**Observability constraint:** SSH access instability / environment access path unresolved.
+
+SSH/WebShell recovery is an infrastructure action that restores evidence-collection capability.
+It is **not** Trust Gate advancement. The Trust Gate window resumes only after the production
+artifact is reconciled with the inspected corpus.
 
 Consequence: this entry condition is **SPECIFIED but NOT EXECUTABLE** at time of writing.
 Architecture Integration Design therefore remains blocked — not on authorization, but on
-observability.
+**not yet knowing the design target**.
 
 Honest statement of the chain:
 
 ```
-fail2ban unban (human)
-    → Environment Identity Confirmation (4 read-only commands)
-    → Bounded Read-only Path Trace  ← THIS DOCUMENT
-    → Architecture Integration Design
-    → Implementation Authorization
-    → Deployment Identity
-    → Runtime Enforcement Observation
-    → Capability Claim
+P0  Restore stable observability (SSH/WebShell — human action)
+        ↓
+P1a Baseline Identity Confirmation                ← Step 1
+        ↓
+P1b Production artifact reconciliation            ← Step 2
+        ↓
+P1c Bounded Read-only Path Trace                  ← Step 3, THIS DOCUMENT
+        ↓
+P2  Architecture Integration Design
+        ↓
+    Implementation Authorization
+        ↓
+    Deployment Identity
+        ↓
+    Runtime Enforcement Observation
+        ↓
+    Capability Claim
 ```
 
-Nothing downstream of the unban is executable today.
+Nothing downstream of P1b is executable today.
 
 ---
 
@@ -175,10 +259,11 @@ Nothing downstream of the unban is executable today.
 | Field | Value |
 |---|---|
 | Status | `SPECIFIED — NOT EXECUTED` |
-| Evidence class produced | Path Observation (when executed) |
+| Evidence class produced | Path Observation (when Step 3 executed) |
 | Capability effect | `NONE` |
 | Implementation | `NOT AUTHORIZED` |
-| Blocker | SSH access (fail2ban) — human action required |
+| Blocker | Production artifact ↔ inspected corpus reconciliation pending |
+| Observability constraint | SSH access instability / environment access path unresolved |
 | Defers to | `EVIDENCE_GOVERNANCE_v1.0`, `TRUST_GATE_RUNTIME_PATH_RECONCILIATION_REVIEW_v0.1` |
 
 **This document does not assert** that the production path is known, that any gate is
