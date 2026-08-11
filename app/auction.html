@@ -258,7 +258,7 @@
   <main class="main-container">
     <div class="page-head">
       <h1 class="page-head__title">集合竞价</h1>
-      <p class="page-head__desc">涨停排行 + 量化选股信号</p>
+      <p class="page-head__desc">实时集合竞价 · 强势池扫描</p>
     </div>
 
     <form class="analyze-form" id="analyzeForm">
@@ -357,41 +357,72 @@
     });
 
     function formatGoldenPit(data) {
-      const hits = data.hits || [];
-      const watchlist = data.watchlist || [];
-      const env = data.market_env || {};
+      // Leadership Demo Safe Fix: honest labels only.
+      // This endpoint returns EastMoney real-time auction strong pool data,
+      // NOT golden-pit four-gate quant screening results.
+      const items = data.data || [];
       const qc = data._qc || {};
 
-      let html = `<div style="font-family:monospace;font-size:13px;line-height:1.8">`;
-      html += `<div style="font-weight:bold;font-size:15px;margin-bottom:8px">黄金坑四重门扫描结果</div>`;
-      html += `<div style="color:#888;margin-bottom:12px">数据时间：${data.scan_date || '今日'} | 市场环境：${env.status || '未知'}`;
-      if (qc.completeness !== undefined) html += ` | 数据完整度：${Math.round(qc.completeness * 100)}%`;
-      html += `</div>`;
+      // Group by source_bucket
+      var buckets = {};
+      items.forEach(function(item) {
+        var bucket = item.source_bucket || 'other';
+        if (!buckets[bucket]) buckets[bucket] = [];
+        buckets[bucket].push(item);
+      });
 
-      html += `<div style="font-weight:bold;color:#e74c3c;margin-bottom:6px">命中（四重门全过）：${hits.length} 只</div>`;
-      if (hits.length === 0) {
-        html += `<div style="color:#888;margin-bottom:12px">今日无命中</div>`;
-      } else {
-        hits.forEach((s, i) => {
-          html += `<div style="margin-bottom:4px">${i+1}. <b>${s.code}</b> 收盘${s.close} 综合评分${s.composite || '-'} 距下轨${s.dist_to_lower_pct}%</div>`;
-        });
-        html += `<br>`;
-      }
+      var bucketLabels = {
+        'strong_pool': '强势池',
+        'previous_zt': '前期涨停',
+        'zt_pool': '涨停池',
+        'big_buy': '大单买入',
+        'hot_rank': '人气榜',
+        'hot_up': '热点上涨',
+        'top_gainers': '涨幅榜'
+      };
 
-      html += `<div style="font-weight:bold;color:#e67e22;margin-bottom:6px">观察池（G1-G3过，等待反弹）：${watchlist.length} 只</div>`;
-      if (watchlist.length === 0) {
-        html += `<div style="color:#888">暂无</div>`;
-      } else {
-        watchlist.slice(0, 10).forEach((s, i) => {
-          const dist = s.dist_to_lower_pct;
-          const distStr = dist < 0 ? `已破轨${Math.abs(dist)}%` : `距下轨${dist}%`;
-          html += `<div style="margin-bottom:4px">${i+1}. <b>${s.code}</b> 收盘${s.close} ${distStr}${s.at_lower_now ? ' ⚡已触轨' : ''}</div>`;
+      var generatedAt = qc.generated_at || '';
+      var displayTime = generatedAt ? generatedAt.slice(0, 19).replace('T', ' ') : '实时';
+
+      var html = '<div style="font-family:monospace;font-size:13px;line-height:1.8">';
+
+      // Title — honest capability label
+      html += '<div style="font-weight:bold;font-size:15px;margin-bottom:8px">集合竞价强势池</div>';
+
+      // Meta line
+      html += '<div style="color:#888;margin-bottom:12px">';
+      html += '数据时间：' + displayTime;
+      html += ' | 数据来源：东方财富实时集合竞价';
+      if (qc.completeness !== undefined) html += ' | 数据完整度：' + Math.round(qc.completeness * 100) + '%';
+      if (qc.source_type) html += ' | 类型：' + (qc.source_type === 'real' ? '真实数据' : qc.source_type);
+      html += '</div>';
+
+      // Render each bucket
+      var bucketOrder = ['strong_pool', 'previous_zt', 'zt_pool', 'big_buy', 'hot_rank', 'hot_up', 'top_gainers'];
+      var totalShown = 0;
+      bucketOrder.forEach(function(bucketKey) {
+        var bucketItems = buckets[bucketKey];
+        if (!bucketItems || bucketItems.length === 0) return;
+
+        var label = bucketLabels[bucketKey] || bucketKey;
+        html += '<div style="font-weight:bold;color:#e74c3c;margin-bottom:6px">' + label + '：' + bucketItems.length + ' 只</div>';
+
+        bucketItems.forEach(function(s, i) {
+          var changeStr = s.change != null ? (s.change > 0 ? '+' : '') + s.change + '%' : '';
+          var reasonStr = s.reason ? ' ' + s.reason : '';
+          html += '<div style="margin-bottom:3px">' + (i + 1) + '. <b>' + escapeHtml(String(s.code)) + '</b> ' + escapeHtml(String(s.name || '')) + ' ' + changeStr + escapeHtml(reasonStr) + '</div>';
         });
+        html += '<br>';
+        totalShown += bucketItems.length;
+      });
+
+      if (items.length === 0) {
+        html += '<div style="color:#888;margin-bottom:12px">当前无竞价强势池数据</div>';
       }
 
       html += renderQcPanel(qc);
-      html += `<div style="color:#aaa;margin-top:12px;font-size:11px">免责声明：量化信号仅供参考，不构成投资建议</div>`;
-      html += `</div>`;
+      html += '<div style="color:#aaa;margin-top:12px;font-size:11px">免责声明：实时集合竞价数据仅供参考，不构成投资建议。数据来源：东方财富</div>';
+      html += '</div>';
       return html;
     }
 
@@ -407,6 +438,8 @@
       if (!qc || Object.keys(qc).length === 0) return '';
       const completeness = typeof qc.completeness === 'number' ? `${Math.round(qc.completeness * 100)}%` : '未知';
       const sources = Array.isArray(qc.sources) && qc.sources.length ? qc.sources.join(' / ') : '未知';
+      const sourceType = qc.source_type || '';
+      const sourceTypeLabel = sourceType === 'real' ? '真实数据' : sourceType === 'fallback' ? '降级数据' : (sourceType || '未知');
       const fallback = qc.fallback_source || '无';
       const missing = Array.isArray(qc.missing_dimensions) && qc.missing_dimensions.length ? qc.missing_dimensions.join(' / ') : '无';
       const stale = Array.isArray(qc.stale_data) ? qc.stale_data : [];
@@ -418,9 +451,10 @@
       }).join('；');
 
       let html = `<div class="qc-panel">`;
-      html += `<div class="qc-panel__title">数据质检 / 信源</div>`;
+      html += `<div class="qc-panel__title">数据质量</div>`;
       html += `<div class="qc-panel__grid">`;
       html += `<div>status：${escapeHtml(qc.status || 'unknown')}</div>`;
+      html += `<div>source_type：${escapeHtml(sourceTypeLabel)}</div>`;
       html += `<div>completeness：${escapeHtml(completeness)}</div>`;
       html += `<div>sources：${escapeHtml(sources)}</div>`;
       html += `<div>fallback_source：${escapeHtml(fallback)}</div>`;

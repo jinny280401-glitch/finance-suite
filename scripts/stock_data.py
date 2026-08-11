@@ -9,11 +9,14 @@ Wind 需要本机运行 Wind API 终端且已登录，否则静默降级
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 
 import akshare as ak
+
+logger = logging.getLogger(__name__)
 
 # ---- 数据源选择 ----
 # 环境变量 FS_DATA_SOURCE 可强制指定：wind/akshare/auto（默认auto）
@@ -72,39 +75,69 @@ def _is_realtime_stale() -> bool:
 
 
 def _load_stock_cache() -> dict:
-    """加载股票名称→代码映射（使用K线接口，比spot_em快很多）"""
+    """加载股票名称→代码映射（多源降级：akshare spot → sina → 空缓存）"""
     global _stock_cache, _stock_cache_time
     now = datetime.now()
     if _stock_cache and _stock_cache_time and (now - _stock_cache_time).seconds < 7200:
         return _stock_cache
 
+    _stock_cache = {}
+
+    # 方案1: 腾讯全市场快照（直连，稳定，有 PE/市值/价格，缺 PB）
     try:
-        # 用个股列表接口（轻量），设置超时保护
-        import signal
-        def timeout_handler(signum, frame):
-            raise TimeoutError("AkShare 请求超时")
-
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(30)  # 30秒超时
-        try:
-            df = ak.stock_zh_a_spot_em()
-            signal.alarm(0)  # 取消超时
-        except TimeoutError:
-            signal.alarm(0)
-            raise
-
-        _stock_cache = {}
-        for _, row in df.iterrows():
-            code = str(row.get("代码", ""))
-            name = str(row.get("名称", ""))
-            if code and name:
-                _stock_cache[name] = {"code": code, "price": row.get("最新价"),
-                                       "pe": row.get("市盈率-动态"), "pb": row.get("市净率"),
-                                       "mv": row.get("总市值"), "change": row.get("涨跌幅")}
-                _stock_cache[code] = _stock_cache[name]
-        _stock_cache_time = now
+        df = _with_timeout(ak.stock_zh_a_spot_tx, timeout_seconds=20.0)
+        if df is not None and len(df) > 0:
+            for _, row in df.iterrows():
+                code = str(row.get("code", ""))
+                name = str(row.get("name", ""))
+                if code and name:
+                    _stock_cache[name] = {"code": code, "price": row.get("zxj"),
+                                          "pe": row.get("pe_ttm"), "pb": None,
+                                          "mv": row.get("zsz"), "change": row.get("zdf")}
+                    _stock_cache[code] = _stock_cache[name]
+            _stock_cache_time = now
+            return _stock_cache
     except Exception:
         pass
+
+    # 方案2: EastMoney 全市场快照（字段最全含 PB，但走代理可能被阻断）
+    try:
+        df = _with_timeout(ak.stock_zh_a_spot_em, timeout_seconds=30.0)
+        if df is not None and len(df) > 0:
+            for _, row in df.iterrows():
+                code = str(row.get("代码", ""))
+                name = str(row.get("名称", ""))
+                if code and name:
+                    entry = {"code": code, "price": row.get("最新价"),
+                             "pe": row.get("市盈率-动态"), "pb": row.get("市净率"),
+                             "mv": row.get("总市值"), "change": row.get("涨跌幅")}
+                    _stock_cache[name] = entry
+                    _stock_cache[code] = entry
+            _stock_cache_time = now
+            return _stock_cache
+    except Exception:
+        pass
+
+    # 方案3: Sina 实时行情（直连，轻量，但只有基本价格字段，无 PE/PB/市值）
+    try:
+        df = _with_timeout(ak.stock_zh_a_spot, timeout_seconds=20.0)
+        if df is not None and len(df) > 0:
+            for _, row in df.iterrows():
+                raw_code = str(row.get("代码", ""))
+                name = str(row.get("名称", ""))
+                if raw_code and name:
+                    bare_code = raw_code.replace("sh", "").replace("sz", "")
+                    entry = {"code": bare_code, "price": row.get("最新价"),
+                             "pe": None, "pb": None, "mv": None,
+                             "change": row.get("涨跌幅")}
+                    _stock_cache[name] = entry
+                    _stock_cache[bare_code] = entry
+            _stock_cache_time = now
+            return _stock_cache
+    except Exception:
+        pass
+
+    # 方案4: 空缓存（后续 _fetch_realtime_from_cache 逐股降级）
     return _stock_cache or {}
 
 
@@ -203,7 +236,7 @@ def _with_timeout(fn, args=(), kwargs=None, timeout_seconds: float = 8.0):
 
 
 def _fetch_financials(code: str) -> list[dict] | None:
-    """财报主要指标（Wind 优先，失败降级 AkShare）"""
+    """财报主要指标（Wind 优先 → AkShare 财报摘要 → 利润表+资产负债表 → 财务指标降级）"""
     # Wind 优先：完整三大报表
     if _check_wind_available():
         try:
@@ -213,22 +246,168 @@ def _fetch_financials(code: str) -> list[dict] | None:
                 return result
         except Exception:
             pass
-    # 降级：AkShare 主要指标（8秒超时保护）
+
+    # 降级方案1: AkShare 财报摘要（stock_financial_abstract，最可靠）
     try:
-        df = _with_timeout(ak.stock_financial_analysis_indicator, (), {"symbol": code, "start_year": "2024"}, timeout_seconds=8.0)
+        df_abstract = _with_timeout(
+            ak.stock_financial_abstract,
+            kwargs={"symbol": code},
+            timeout_seconds=12.0
+        )
+        if df_abstract is not None and len(df_abstract) > 0:
+            # 财报摘要是宽表格式：每行是一个指标，每列是一个报告期
+            # 转换为按报告期分组的 list[dict]，取最近4个有数据的报告期
+            period_cols = [c for c in df_abstract.columns if c not in ("选项", "指标")][:4]
+            rows = []
+            for period in period_cols:
+                row = {"报告期": str(period)}
+                for _, r in df_abstract.iterrows():
+                    indicator = str(r.get("指标", ""))
+                    value = r.get(period)
+                    if indicator and value is not None:
+                        row[indicator] = value
+                if len(row) > 1:  # 至少有一个指标
+                    rows.append(row)
+            if rows:
+                return rows
+    except Exception:
+        pass
+
+    # 降级方案2: 利润表 + 资产负债表（东方财富源，偶有 bug）
+    profit_rows = None
+    balance_rows = None
+
+    try:
+        df_profit = _with_timeout(
+            ak.stock_profit_sheet_by_report_em,
+            kwargs={"symbol": code},
+            timeout_seconds=12.0
+        )
+        if df_profit is not None and len(df_profit) > 0:
+            profit_rows = df_profit.tail(4).to_dict(orient="records")
+    except Exception:
+        pass
+
+    try:
+        df_balance = _with_timeout(
+            ak.stock_balance_sheet_by_report_em,
+            kwargs={"symbol": code},
+            timeout_seconds=12.0
+        )
+        if df_balance is not None and len(df_balance) > 0:
+            balance_rows = df_balance.tail(4).to_dict(orient="records")
+    except Exception:
+        pass
+
+    # 降级方案3: 主要财务指标（每股指标，更可靠但字段少）
+    try:
+        df_indicator = _with_timeout(
+            ak.stock_financial_analysis_indicator,
+            kwargs={"symbol": code, "start_year": "2022"},
+            timeout_seconds=10.0
+        )
+        if df_indicator is not None and len(df_indicator) > 0:
+            indicator_rows = df_indicator.tail(4).to_dict(orient="records")
+        else:
+            indicator_rows = None
+    except Exception:
+        indicator_rows = None
+
+    # 合并结果：优先利润表+资产负债表，指标兜底
+    if profit_rows or balance_rows:
+        merged = []
+        for i in range(max(len(profit_rows or []), len(balance_rows or []))):
+            row = {}
+            if profit_rows and i < len(profit_rows):
+                for k, v in profit_rows[i].items():
+                    row[k] = v
+            if balance_rows and i < len(balance_rows):
+                for k, v in balance_rows[i].items():
+                    if k not in row:
+                        row[k] = v
+            merged.append(row)
+        if merged:
+            return merged
+
+    return indicator_rows
+
+
+def _derive_pb(code: str, price: float) -> float | None:
+    """从每股净资产推算 PB。腾讯源不提供 PB 时的轻量补全。"""
+    try:
+        df = _with_timeout(
+            ak.stock_financial_analysis_indicator,
+            kwargs={"symbol": code, "start_year": "2025"},
+            timeout_seconds=5.0,
+        )
         if df is not None and len(df) > 0:
-            return df.head(4).to_dict(orient="records")
+            bvps = df.iloc[-1].get("每股净资产_调整前(元)")
+            if bvps and float(bvps) > 0:
+                return round(price / float(bvps), 2)
     except Exception:
         pass
     return None
 
 
 def _fetch_realtime_from_cache(code: str) -> dict | None:
-    """从缓存获取实时行情（如果缓存已加载）"""
+    """获取实时行情（缓存优先 → K线 降级）
+
+    缓存由 _load_stock_cache 预加载（腾讯→东方财富→Sina 三级降级）。
+    单股 API 均走东方财富域（被代理阻断），所以无 Tier 1 逐股查询——
+    缓存 miss 直接走 K 线兜底。
+    """
     cache = _stock_cache or {}
     info = cache.get(code)
+    # 缓存 key 可能是 sh/sz 前缀格式（Sina 源），尝试其他写法
+    if info is None:
+        for prefix in ("sh", "sz"):
+            info = cache.get(prefix + code)
+            if info is not None:
+                break
+
+    # Tier 0: 缓存命中（腾讯/东方财富/Sina 预加载）
+    if isinstance(info, dict) and info.get("price") is not None:
+        result = {
+            **info,
+            "source_chain": {"primary": "akshare_spot", "fallback": []},
+            "source_type": "primary",
+        }
+        # 如果缓存缺 PB（腾讯源不提供），从财务指标推算
+        if info.get("pb") is None and info.get("price") is not None:
+            pb = _derive_pb(code, float(info["price"]))
+            if pb is not None:
+                result["pb"] = pb
+                result["source_chain"]["fallback"].append("pb_derived")
+        return result
+
+    # Tier 1: K线收盘价兜底（只有价格/涨跌幅，无 PE/PB/市值）
+    try:
+        df = _with_timeout(ak.stock_zh_a_hist, kwargs={
+            "symbol": code, "period": "daily",
+            "start_date": (datetime.now() - timedelta(days=5)).strftime("%Y%m%d"),
+            "end_date": datetime.now().strftime("%Y%m%d"),
+            "adjust": ""
+        }, timeout_seconds=6.0)
+        if df is not None and len(df) > 0:
+            latest = df.iloc[-1]
+            return {
+                "code": code,
+                "price": latest.get("收盘"),
+                "change": latest.get("涨跌幅"),
+                "date": str(latest.get("日期", "")),
+                "source_chain": {"primary": "akshare_spot", "fallback": ["kline_history"]},
+                "source_type": "fallback",
+            }
+    except Exception:
+        pass
+
+    # 缓存基本信息兜底（无 price，不可做交易决策）
     if isinstance(info, dict):
-        return info
+        return {
+            **info,
+            "source_chain": {"primary": "akshare_spot", "fallback": ["stale_cache"]},
+            "source_type": "stale_cache",
+        }
     return None
 
 
@@ -247,29 +426,95 @@ def _fetch_price_history(code: str) -> list[dict] | None:
 
 
 def _fetch_fund_flow(code: str) -> list[dict] | None:
-    """个股资金流向（0.5秒）"""
+    """个股资金流向"""
+    market = _get_market(code)
     try:
-        market = _get_market(code)
-        df = ak.stock_individual_fund_flow(stock=code, market=market)
+        df = _with_timeout(
+            ak.stock_individual_fund_flow,
+            kwargs={"stock": code, "market": market},
+            timeout_seconds=8.0,
+        )
         if df is not None and len(df) > 0:
             return df.tail(10).to_dict(orient="records")
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(
+            "fund_flow unavailable for %s (market=%s): %s: %s",
+            code, market, type(e).__name__, e,
+        )
     return None
 
 
 def _fetch_valuation(code: str) -> dict | None:
-    """估值指标 + PE/PB 10年历史分位（Wind 独有能力）"""
+    """估值指标 + PE/PB 历史分位（Wind 优先 → AkShare 财报反推）
+
+    返回值包含 valuation_source 结构化类型字段，区分：
+      - REAL_PROVIDER: Wind 直接提供的估值数据
+      - DERIVED: 从 EPS/BVPS + 行情推算的估值
+      - UNKNOWN: 来源不明
+    """
+    # REAL_PROVIDER path: Wind
     if _check_wind_available():
         try:
             import wind_data
             result = wind_data.get_valuation_history(code)
             if result:
+                result["valuation_source"] = {
+                    "type": "real_provider",
+                    "provider": "wind",
+                    "provider_status": "available",
+                }
                 return result
         except Exception:
             pass
-    # AkShare 无法提供个股历史估值分位，返回 None 由 LLM 从缓存取当前 PE/PB
-    return None
+
+    # DERIVED path: 从 AkShare 财报 + 行情推算
+    rt = _fetch_realtime_from_cache(code) or {}
+    pe = rt.get("pe")
+    pb = rt.get("pb")
+    mv = rt.get("mv")
+
+    if pe is None or pb is None:
+        try:
+            df = _with_timeout(
+                ak.stock_financial_analysis_indicator,
+                kwargs={"symbol": code, "start_year": "2022"},
+                timeout_seconds=8.0
+            )
+            if df is not None and len(df) > 0:
+                latest = df.iloc[-1]
+                eps = latest.get("摊薄每股收益(元)")
+                bvps = latest.get("每股净资产_调整前(元)")
+                price = rt.get("price")
+                if price and eps and float(eps) > 0:
+                    pe = round(float(price) / float(eps), 2)
+                if price and bvps and float(bvps) > 0:
+                    pb = round(float(price) / float(bvps), 2)
+        except Exception:
+            pass
+
+    if pe is None and pb is None and mv is None:
+        return None
+
+    result = {
+        "code": code,
+        "note": "当前估值指标（非历史分位，Wind 不可用时从 AkShare 财报+行情推算）",
+        "valuation_source": {
+            "type": "derived",
+            "provider": "akshare_calculation",
+        },
+        "provider": "akshare_calculation",
+        "primary_provider_attempted": "wind",
+        "primary_provider_status": "unavailable",
+    }
+    if pe is not None:
+        result["pe"] = pe
+    if pb is not None:
+        result["pb"] = pb
+    if mv is not None:
+        result["market_cap"] = mv
+    if pe is None and pb is None:
+        result["note"] += "；PE/PB 无法计算（EPS 为负或净资产为负）"
+    return result
 
 
 def _fetch_news(code: str) -> list[dict] | None:
@@ -315,6 +560,7 @@ async def get_stock_full_data(code: str) -> dict:
     flow_task = loop.run_in_executor(_executor, _fetch_fund_flow, code)
     news_task = loop.run_in_executor(_executor, _fetch_news, code)
     div_task = loop.run_in_executor(_executor, _fetch_dividends, code)
+    val_task = loop.run_in_executor(_executor, _fetch_valuation, code)
 
     results = {}
     for key, task in [
@@ -323,6 +569,7 @@ async def get_stock_full_data(code: str) -> dict:
         ("fund_flow", flow_task),
         ("news", news_task),
         ("dividends", div_task),
+        ("valuation", val_task),
     ]:
         try:
             results[key] = await task
@@ -331,6 +578,39 @@ async def get_stock_full_data(code: str) -> dict:
 
     # 实时行情从缓存取（不额外请求）
     results["realtime"] = _fetch_realtime_from_cache(code)
+
+    # 构建 realtime_availability 元数据（_qc_stock 读取此字段判定 realtime 状态）
+    # 区分 direct（腾讯直接返回）与 derived（从其他数据推算），对 Trust Gate 和 QC 证据层分类至关重要
+    rt = results.get("realtime") or {}
+    rt_available = [k for k in ("price", "pe", "pb", "mv") if rt.get(k) is not None]
+    rt_missing = [k for k in ("price", "pe", "pb", "mv") if rt.get(k) is None]
+    # PE/市值来自腾讯 source=tencent method=direct，PB 来自 financial_indicator+price method=derived
+    # pb_derived 标记来自 source_chain.fallback
+    pb_derived = "pb_derived" in rt.get("source_chain", {}).get("fallback", [])
+    rt_provenance = {}
+    for field in ("price", "pe", "pb", "mv"):
+        if rt.get(field) is not None:
+            if field == "pb" and pb_derived:
+                rt_provenance[field] = {
+                    "source": "akshare_financial_indicator+realtime_price",
+                    "method": "derived",
+                }
+            else:
+                rt_provenance[field] = {
+                    "source": rt.get("source_chain", {}).get("primary", "unknown"),
+                    "method": "direct",
+                }
+    results["realtime_availability"] = {
+        "status": "available" if rt_available else "unavailable",
+        "source": rt.get("source_chain", {}).get("primary"),
+        "source_type": rt.get("source_type", "not_connected"),
+        "as_of": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "available": rt_available,
+        "missing": rt_missing,
+        "allowed_use": rt_available,
+        "blocked_fields": rt_missing,
+        "provenance": rt_provenance,
+    }
 
     return results
 
@@ -364,6 +644,20 @@ def format_stock_data(data: dict, stock_name: str = "", stock_code: str = "") ->
             for key, val in row.items():
                 if key != "日期" and val is not None and str(val).strip():
                     parts.append(f"  {key}：{val}")
+        parts.append("")
+
+    # 估值
+    val = data.get("valuation")
+    if val and isinstance(val, dict):
+        parts.append("【估值指标】")
+        if val.get("pe") is not None:
+            parts.append(f"市盈率(PE)：{val['pe']} 倍")
+        if val.get("pb") is not None:
+            parts.append(f"市净率(PB)：{val['pb']} 倍")
+        if val.get("market_cap") is not None:
+            parts.append(f"总市值：{val['market_cap']}")
+        if val.get("note"):
+            parts.append(f"说明：{val['note']}")
         parts.append("")
 
     # 资金流向

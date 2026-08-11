@@ -6,12 +6,20 @@ SDK 需从官网下载安装：quantapi.eastmoney.com → 下载中心 → EmQua
   EM_USERNAME   — 东方财富 Choice 账号
   EM_PASSWORD   — 东方财富 Choice 密码
 
+当前账户 (hfzq80016) 数据权限：
+  ✅ CSS 基础行情: OPEN, CLOSE, HIGH, LOW, VOLUME, AMOUNT, TURN, DIVIDENDYIELD
+  ✅ CSD 序列行情: 同上（日频 OHLCV）
+  ✅ EDB 宏观: CPI_YOY, CPI_MOM, SHIBOR_1M
+  ❌ 财务数据 (REVENUE, NETPROFIT, ROE, PE, PB 等) — ERR 10000013
+  ❌ 一致预期 (WEST_*, RATING_*) — ERR 10000013
+  ❌ 板块/行业分类 (sector, SWLEVEL*) — ERR 10000009/10000013
+  ❌ 大部分宏观指标 — ERR 10000009
+
 独立 CLI 脚本，无内部依赖
 用法:
   python3 emquant_data.py --action connect
   python3 emquant_data.py --action stock --code 300750.SZ
-  python3 emquant_data.py --action financials --code 600519.SH
-  python3 emquant_data.py --action consensus --code 300750.SZ
+  python3 emquant_data.py --action history --code 600519.SH
   python3 emquant_data.py --action macro
 """
 
@@ -29,6 +37,17 @@ _EM_PASSWORD = os.getenv("EM_PASSWORD", "")
 
 _em_connected = None
 
+# 当前账户实际可用的指标（2026-08-07 实测验证）
+_STOCK_INDICATORS = "OPEN,CLOSE,HIGH,LOW,VOLUME,AMOUNT,TURN,DIVIDENDYIELD"
+_MACRO_CODES = {
+    "CPI_YOY": "EMM00166702",
+    "CPI_MOM": "EMM00166704",
+    "SHIBOR_1M": "EMM00166489",
+}
+# 以下指标均不可用（ERR 10000013 service error）：PE_TTM, PB_LF, ROE_TTM, CHANGEPCT,
+#   TOTALCAP, NEGOTIABLECAP, REVENUE, NETPROFIT, WEST_*, RATING_*, SWLEVEL2NAME
+# 以下 EDB 均不可用（ERR 10000009 no data）：GDP, M2, PMI, LPR, 等
+
 
 def _ensure_connection() -> bool:
     global _em_connected
@@ -44,14 +63,15 @@ def _ensure_connection() -> bool:
         return False
 
     try:
-        import EmQuantAPI as em
-        ret = em.start(_EM_USERNAME, _EM_PASSWORD, "-I 0")
-        if ret.get("ErrorCode") == 0:
+        import EmQuantAPI
+        options = f"ForceLogin=1,UserName={_EM_USERNAME},Password={_EM_PASSWORD}"
+        ret = EmQuantAPI.c.start(options)
+        if ret.ErrorCode == 0:
             _em_connected = True
             logger.info("✅ EmQuantAPI 已连接")
             return True
         else:
-            logger.warning(f"⚠️ EmQuantAPI 登录失败: {ret.get('ErrorMsg')}")
+            logger.warning(f"⚠️ EmQuantAPI 登录失败: {ret.ErrorMsg}")
             _em_connected = False
             return False
     except ImportError:
@@ -88,137 +108,77 @@ def check_connection() -> dict:
 
 
 def get_stock_snapshot(code: str) -> dict:
-    """实时行情快照：价格、涨跌幅、成交量、市值、PE/PB/ROE"""
+    """实时行情快照：开盘/收盘/最高/最低/成交量/成交额/换手率/股息率"""
     if not _ensure_connection():
         return {}
 
     try:
-        import EmQuantAPI as em
+        from EmQuantAPI import c
         wcode = _em_code(code)
-        indicators = "CLOSE,CHANGEPCT,VOLUME,AMOUNT,TOTALCAP,NEGOTIABLECAP,PE_TTM,PB_LF,ROE_TTM,DIVIDENDYIELD"
-        result = em.css(wcode, indicators)
-        if result.get("ErrorCode") == 0:
-            return {"code": wcode, "data": result.get("Data", {})}
-        logger.warning(f"EmQuantAPI get_stock_snapshot 失败: {result.get('ErrorMsg')}")
+        result = c.css(wcode, _STOCK_INDICATORS)
+        if result.ErrorCode == 0:
+            return {"code": wcode, "data": result.Data}
+        logger.warning(f"EmQuantAPI get_stock_snapshot 失败({result.ErrorCode}): {result.ErrorMsg}")
     except Exception as e:
         logger.warning(f"EmQuantAPI get_stock_snapshot 异常: {e}")
     return {}
 
 
-def get_financials(code: str) -> list:
-    """财务数据：营收/净利润/毛利率/净利率/ROE/ROA（最近4期）"""
-    if not _ensure_connection():
-        return []
+def get_price_history(code: str, days: int = 250) -> dict:
+    """历史行情序列：开盘/收盘/最高/最低/成交量/成交额（日频）
 
-    try:
-        import EmQuantAPI as em
-        wcode = _em_code(code)
-        end_date = datetime.now().strftime("%Y-%m-%d")
-        start_date = (datetime.now() - timedelta(days=450)).strftime("%Y-%m-%d")
-        indicators = "REVENUE,NETPROFIT,GROSSPROFITMARGIN,NETPROFITMARGIN,ROE,ROA,DEBTTOASSETS,OPERATECASHFLOW"
-        result = em.csd(wcode, indicators, start_date, end_date, "period=Q")
-        if result.get("ErrorCode") == 0:
-            data = result.get("Data", {})
-            if isinstance(data, dict):
-                rows = []
-                dates = data.get("DATES", [])
-                for i, dt in enumerate(dates):
-                    row = {"date": str(dt)}
-                    for field in indicators.split(","):
-                        vals = data.get(field, [])
-                        row[field.lower()] = vals[i] if i < len(vals) else None
-                    rows.append(row)
-                return rows
-        logger.warning(f"EmQuantAPI get_financials 失败: {result.get('ErrorMsg')}")
-    except Exception as e:
-        logger.warning(f"EmQuantAPI get_financials 异常: {e}")
-    return []
-
-
-def get_consensus_estimates(code: str) -> dict:
-    """卖方一致预期：净利润预测/EPS/目标价/评级"""
+    PE/PB/ROE 等估值指标需要更高数据权限（当前账户 ERR 10000013）。
+    """
     if not _ensure_connection():
         return {}
 
     try:
-        import EmQuantAPI as em
+        from EmQuantAPI import c
         wcode = _em_code(code)
-        indicators = "WEST_NETPROFIT_FY1,WEST_NETPROFIT_FY2,WEST_EPS_FY1,WEST_EPS_FY2,WEST_AVGROE_FY1,WEST_INSTNUM,RATING_AVG,RATING_TARGETPRICE,RATING_NUMOFBUY,RATING_NUMOFHOLD"
-        result = em.css(wcode, indicators)
-        if result.get("ErrorCode") == 0:
-            return {"code": wcode, "data": result.get("Data", {})}
-        logger.warning(f"EmQuantAPI get_consensus_estimates 失败: {result.get('ErrorMsg')}")
+        end_date = datetime.now().strftime("%Y-%m-%d")
+        start_date = (datetime.now() - timedelta(days=days + 30)).strftime("%Y-%m-%d")
+        indicators = "open,close,high,low,volume,amount"
+        # RowIndex=1 返回矩阵格式：Data[code][indicator_idx][date_idx]，否则无 Dates
+        options = "RowIndex=1,period=1,adjustflag=1,curtype=1,pricetype=1,Ispandas=0"
+        result = c.csd(wcode, indicators, start_date, end_date, options)
+        if result.ErrorCode != 0:
+            logger.warning(f"EmQuantAPI get_price_history 失败({result.ErrorCode}): {result.ErrorMsg}")
+            return {}
+
+        if not hasattr(result, 'Data') or wcode not in result.Data:
+            return {}
+
+        indicator_list = list(result.Indicators) if hasattr(result, 'Indicators') else []
+        date_list = list(result.Dates) if hasattr(result, 'Dates') else []
+        matrix = result.Data[wcode]  # [n_indicators][n_dates]
+
+        out = {"code": wcode, "dates": date_list}
+        for idx, ind in enumerate(indicator_list):
+            out[ind.lower()] = matrix[idx] if idx < len(matrix) else []
+        return out
     except Exception as e:
-        logger.warning(f"EmQuantAPI get_consensus_estimates 异常: {e}")
+        logger.warning(f"EmQuantAPI get_price_history 异常: {e}")
     return {}
 
 
-def get_industry_peers(code: str, max_peers: int = 10) -> list:
-    """同行业可比公司对比"""
-    if not _ensure_connection():
-        return []
-
-    try:
-        import EmQuantAPI as em
-        wcode = _em_code(code)
-        # 获取申万行业分类
-        ind_result = em.css(wcode, "SWLEVEL2NAME")
-        if ind_result.get("ErrorCode") != 0:
-            return []
-        industry = ind_result.get("Data", {}).get("SWLEVEL2NAME", [None])[0]
-        if not industry:
-            return []
-
-        # 获取同行业成分股
-        sector_result = em.sector(f"申万行业分类.{industry}", datetime.now().strftime("%Y-%m-%d"))
-        if sector_result.get("ErrorCode") != 0:
-            return []
-        peer_codes = sector_result.get("Codes", [])[:max_peers]
-        if not peer_codes:
-            return []
-
-        # 批量获取指标
-        indicators = "SECNAME,TOTALCAP,PE_TTM,PB_LF,ROE_TTM,REVENUE_TTM,REVENUEYOY"
-        metrics = em.css(",".join(peer_codes), indicators)
-        if metrics.get("ErrorCode") != 0:
-            return []
-
-        data = metrics.get("Data", {})
-        result = []
-        for i, pcode in enumerate(peer_codes):
-            row = {"code": pcode}
-            for field in indicators.split(","):
-                vals = data.get(field, [])
-                row[field.lower()] = vals[i] if i < len(vals) else None
-            result.append(row)
-        return result
-    except Exception as e:
-        logger.warning(f"EmQuantAPI get_industry_peers 异常: {e}")
-    return []
-
-
 def get_macro_data() -> dict:
-    """宏观经济数据：GDP/CPI/PMI/M2/LPR"""
+    """宏观经济数据：CPI 同比/环比、SHIBOR 1M（当前账户可用范围）
+
+    GDP/M2/PMI/LPR 等其他宏观指标需要更高数据权限（ERR 10000009）。
+    """
     if not _ensure_connection():
         return {}
 
     try:
-        import EmQuantAPI as em
+        from EmQuantAPI import c
         end_date = datetime.now().strftime("%Y-%m-%d")
         start_date = (datetime.now() - timedelta(days=365 * 3)).strftime("%Y-%m-%d")
 
-        macro_codes = {
-            "GDP": "EMM00000548",
-            "CPI_YOY": "EMM00166702",
-            "PMI_MFG": "EMM00095065",
-            "M2_YOY": "EMM00097886",
-        }
-
         result = {}
-        for name, macro_code in macro_codes.items():
-            r = em.edb(macro_code, start_date, end_date)
-            if r.get("ErrorCode") == 0:
-                data = r.get("Data", {})
+        for name, macro_code in _MACRO_CODES.items():
+            r = c.edb(macro_code, f"StartDate={start_date},EndDate={end_date}")
+            if r.ErrorCode == 0:
+                data = r.Data
                 result[name] = {
                     "dates": data.get("DATES", []),
                     "values": data.get(macro_code, []),
@@ -229,49 +189,47 @@ def get_macro_data() -> dict:
     return {}
 
 
-def get_valuation_history(code: str) -> dict:
-    """历史估值分位（PE/PB 10年百分位）"""
+# ---- 不可用接口（需更高数据权限，已实测确认） ----
+
+_UNAVAILABLE_MSG = (
+    "当前 Choice 账户（hfzq80016）为基础行情级别，"
+    "仅支持 OHLCV + 换手率 + 股息率 + 少量宏观指标，不支持财务/估值/一致预期/行业分类数据。"
+    "如需此功能请联系东方财富升级数据权限。"
+)
+
+
+def get_financials(code: str) -> list:
+    """⚠️ 不可用：财务数据需要更高数据权限（CSD REVENUE/NETPROFIT → ERR 10000013）"""
+    if not _ensure_connection():
+        return []
+    logger.warning(_UNAVAILABLE_MSG)
+    return []
+
+
+def get_consensus_estimates(code: str) -> dict:
+    """⚠️ 不可用：一致预期需要更高数据权限（WEST_*/RATING_* → ERR 10000013）"""
     if not _ensure_connection():
         return {}
+    logger.warning(_UNAVAILABLE_MSG)
+    return {}
 
-    try:
-        import EmQuantAPI as em
-        wcode = _em_code(code)
-        end_date = datetime.now().strftime("%Y-%m-%d")
-        start_date = (datetime.now() - timedelta(days=3650)).strftime("%Y-%m-%d")
 
-        result = em.csd(wcode, "PE_TTM,PB_LF", start_date, end_date, "period=D")
-        if result.get("ErrorCode") != 0:
-            return {}
+def get_industry_peers(code: str, max_peers: int = 10) -> list:
+    """⚠️ 不可用：行业分类数据需要更高数据权限（sector/SWLEVEL* → ERR 10000009/10000013）"""
+    if not _ensure_connection():
+        return []
+    logger.warning(_UNAVAILABLE_MSG)
+    return []
 
-        data = result.get("Data", {})
-        pe_series = [x for x in data.get("PE_TTM", []) if x is not None and x > 0]
-        pb_series = [x for x in data.get("PB_LF", []) if x is not None and x > 0]
 
-        if not pe_series or not pb_series:
-            return {}
+def get_valuation_history(code: str) -> dict:
+    """⚠️ 不可用：PE/PB 需要更高数据权限（CSD PE_TTM/PB_LF → ERR 10000013）
 
-        def percentile(series, value):
-            count = sum(1 for x in series if x <= value)
-            return round(count / len(series) * 100, 2)
-
-        current_pe = pe_series[-1]
-        current_pb = pb_series[-1]
-        pe_sorted = sorted(pe_series)
-        pb_sorted = sorted(pb_series)
-
-        return {
-            "pe_current": current_pe,
-            "pe_10y_percentile": percentile(pe_sorted, current_pe),
-            "pe_10y_min": pe_sorted[0],
-            "pe_10y_max": pe_sorted[-1],
-            "pe_10y_median": pe_sorted[len(pe_sorted) // 2],
-            "pb_current": current_pb,
-            "pb_10y_percentile": percentile(pb_sorted, current_pb),
-            "pb_10y_median": pb_sorted[len(pb_sorted) // 2],
-        }
-    except Exception as e:
-        logger.warning(f"EmQuantAPI get_valuation_history 异常: {e}")
+    替代方案：使用 get_price_history() 获取日频 OHLCV 序列。
+    """
+    if not _ensure_connection():
+        return {}
+    logger.warning(_UNAVAILABLE_MSG)
     return {}
 
 
@@ -280,9 +238,11 @@ def get_valuation_history(code: str) -> dict:
 def main():
     parser = argparse.ArgumentParser(description="东方财富 Choice EmQuantAPI 数据获取")
     parser.add_argument("--action", required=True, choices=[
-        "connect", "stock", "financials", "consensus", "peers", "macro", "valuation"
+        "connect", "stock", "history", "macro",
+        "financials", "consensus", "peers", "valuation",
     ])
     parser.add_argument("--code", help="股票代码")
+    parser.add_argument("--days", type=int, default=250, help="历史数据天数（用于 history）")
     parser.add_argument("--max-peers", type=int, default=10, help="可比公司数量")
     args = parser.parse_args()
 
@@ -292,30 +252,50 @@ def main():
 
     if args.action == "macro":
         result = get_macro_data()
-    else:
+    elif args.action == "history":
         if not args.code:
             print(json.dumps({"error": "--code 是必填参数"}, ensure_ascii=False))
             sys.exit(1)
-        actions = {
-            "stock": lambda: get_stock_snapshot(args.code),
-            "financials": lambda: get_financials(args.code),
-            "consensus": lambda: get_consensus_estimates(args.code),
-            "peers": lambda: get_industry_peers(args.code, args.max_peers),
-            "valuation": lambda: get_valuation_history(args.code),
-        }
-        result = actions[args.action]()
+        result = get_price_history(args.code, args.days)
+    elif args.action == "stock":
+        if not args.code:
+            print(json.dumps({"error": "--code 是必填参数"}, ensure_ascii=False))
+            sys.exit(1)
+        result = get_stock_snapshot(args.code)
+    elif args.action == "financials":
+        if not args.code:
+            print(json.dumps({"error": "--code 是必填参数"}, ensure_ascii=False))
+            sys.exit(1)
+        result = get_financials(args.code)
+    elif args.action == "consensus":
+        if not args.code:
+            print(json.dumps({"error": "--code 是必填参数"}, ensure_ascii=False))
+            sys.exit(1)
+        result = get_consensus_estimates(args.code)
+    elif args.action == "peers":
+        if not args.code:
+            print(json.dumps({"error": "--code 是必填参数"}, ensure_ascii=False))
+            sys.exit(1)
+        result = get_industry_peers(args.code, args.max_peers)
+    elif args.action == "valuation":
+        if not args.code:
+            print(json.dumps({"error": "--code 是必填参数"}, ensure_ascii=False))
+            sys.exit(1)
+        result = get_valuation_history(args.code)
+    else:
+        result = None
 
     if not result:
         print(json.dumps({
             "success": False,
-            "message": "EmQuantAPI 连接失败或查询无结果。请确认 EM_USERNAME/EM_PASSWORD 已配置且 SDK 已安装。"
+            "message": "EmQuantAPI 查询无结果。可能原因：账户权限不足、SDK 未安装、或指标不可用。",
         }, ensure_ascii=False))
     else:
         print(json.dumps({
             "success": True,
             "source": "emquant",
             "code": getattr(args, "code", None),
-            "data": result
+            "data": result,
         }, ensure_ascii=False, indent=2, default=str))
 
 

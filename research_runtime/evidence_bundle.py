@@ -6,6 +6,7 @@ provider or Gateway responses.
 """
 from __future__ import annotations
 
+import uuid
 from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from enum import Enum
@@ -157,6 +158,47 @@ def _strip_blocked_fields(data: dict[str, Any], blocked_fields: list[str]) -> di
     return evidence
 
 
+def recursive_freeze(obj: Any) -> Any:
+    """Deep-freeze nested dict/list structures to prevent mutation.
+
+    Returns an immutable copy: dicts become recursive frozen mappings,
+    lists become tuples. Non-container values pass through unchanged.
+
+    This closes the previously observed nested dict/list mutation path
+    where consumers could modify evidence after Trust Gate verification.
+    """
+    if isinstance(obj, dict):
+        return _FrozenDict({k: recursive_freeze(v) for k, v in obj.items()})
+    if isinstance(obj, list):
+        return tuple(recursive_freeze(item) for item in obj)
+    return obj
+
+
+class _FrozenDict(dict):
+    """Immutable dict proxy. Raises TypeError on mutation attempts."""
+
+    def __setitem__(self, key, value):
+        raise TypeError("_FrozenDict does not support item assignment")
+
+    def __delitem__(self, key):
+        raise TypeError("_FrozenDict does not support item deletion")
+
+    def update(self, *args, **kwargs):
+        raise TypeError("_FrozenDict does not support update")
+
+    def pop(self, *args, **kwargs):
+        raise TypeError("_FrozenDict does not support pop")
+
+    def popitem(self):
+        raise TypeError("_FrozenDict does not support popitem")
+
+    def clear(self):
+        raise TypeError("_FrozenDict does not support clear")
+
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
+
+
 def build_evidence_bundle(gateway_response: dict[str, Any]) -> EvidenceBundle:
     """Convert a Gateway response into an LLM-facing evidence bundle."""
     data_type = str(gateway_response.get("data_type") or "unknown")
@@ -205,6 +247,7 @@ class BlockedEvidence:
     blocked_fields: list[str] = field(default_factory=lambda: ["all"])
     source: dict[str, Any] = field(default_factory=dict)
     trust_status: str = "failure"
+    decision_id: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -217,10 +260,65 @@ class TrustGateResult:
     blocked_items: list[BlockedEvidence] = field(default_factory=list)
     passthrough_items: list[dict[str, Any]] = field(default_factory=list)
     gate_events: list[dict[str, Any]] = field(default_factory=list)
+    decision_ids: list[str] = field(default_factory=list)
 
     @property
     def has_any_allowed(self) -> bool:
         return len(self.allowed_bundles) > 0
+
+
+def _enforce_trust_gate_or_block(
+    payload: dict[str, Any],
+    provider_name: str = "unknown",
+) -> tuple[EvidenceBundle | BlockedEvidence, str]:
+    """Enforce Trust Gate on a single gateway payload.
+
+    Generates a unique decision_id for every enforcement decision.
+    Missing-code and top-level exception paths build QC and enter
+    enforcement — they never bypass the gate.
+
+    Returns (bundle_or_blocked, decision_id).
+    """
+    decision_id = f"tg-{provider_name}-{uuid.uuid4().hex[:12]}"
+
+    # Missing-code path: build QC from available fields, then enforce
+    if not payload or not isinstance(payload, dict):
+        synthetic_qc = {
+            "status": "failure",
+            "reason": "missing_payload",
+            "missing_dimensions": ["all"],
+        }
+        payload = {"_qc": synthetic_qc, "data_type": "unknown"}
+
+    # Build the bundle through the standard gate
+    try:
+        bundle = build_evidence_bundle(payload)
+    except Exception as exc:
+        # Top-level exception path: build QC, enter enforcement
+        synthetic_qc = {
+            "status": "failure",
+            "reason": f"build_exception: {exc}",
+            "missing_dimensions": ["all"],
+        }
+        payload = {"_qc": synthetic_qc, "data_type": "unknown"}
+        bundle = build_evidence_bundle(payload)
+
+    if bundle.trust_status == "failure" or not bundle.allowed_use:
+        blocked = BlockedEvidence(
+            gate_status="blocked",
+            reason=(
+                bundle.reason or "qc_failure"
+                if bundle.trust_status == "failure"
+                else "no_allowed_use"
+            ),
+            blocked_fields=bundle.blocked_fields if bundle.blocked_fields else ["all"],
+            source=bundle.source,
+            trust_status=bundle.trust_status,
+            decision_id=decision_id,
+        )
+        return (blocked, decision_id)
+
+    return (bundle, decision_id)
 
 
 def _run_trust_gate(raw_evidence: list[dict[str, Any]]) -> TrustGateResult:
@@ -246,46 +344,35 @@ def _run_trust_gate(raw_evidence: list[dict[str, Any]]) -> TrustGateResult:
 
         # Gateway evidence: run through Trust Gate
         payload = item.get("payload")
-        if not payload or not isinstance(payload, dict):
-            result.gate_events.append({
-                "type": "trust_gate_error",
-                "message": f"Gateway evidence missing valid payload: {kind}",
-                "payload": {"kind": kind},
-            })
-            continue
+        provider_name = kind.replace("gateway_", "") if kind.startswith("gateway_") else "unknown"
 
-        bundle = build_evidence_bundle(payload)
+        bundle_or_blocked, decision_id = _enforce_trust_gate_or_block(payload, provider_name)
+        result.decision_ids.append(decision_id)
 
-        # Block if failure or empty allowed_use
-        if bundle.trust_status == "failure" or not bundle.allowed_use:
-            blocked = BlockedEvidence(
-                gate_status="blocked",
-                reason=bundle.reason or "qc_failure" if bundle.trust_status == "failure" else "no_allowed_use",
-                blocked_fields=bundle.blocked_fields if bundle.blocked_fields else ["all"],
-                source=bundle.source,
-                trust_status=bundle.trust_status,
-            )
-            result.blocked_items.append(blocked)
+        if isinstance(bundle_or_blocked, BlockedEvidence):
+            result.blocked_items.append(bundle_or_blocked)
             result.gate_events.append({
                 "type": "evidence_blocked",
-                "message": f"Evidence blocked: {bundle.source.get('symbol')} {bundle.source.get('data_type')}",
+                "message": f"Evidence blocked: {bundle_or_blocked.source.get('symbol')} {bundle_or_blocked.source.get('data_type')}",
                 "payload": {
-                    "reason": blocked.reason,
-                    "trust_status": blocked.trust_status,
-                    "symbol": bundle.source.get("symbol"),
-                    "data_type": bundle.source.get("data_type"),
+                    "reason": bundle_or_blocked.reason,
+                    "trust_status": bundle_or_blocked.trust_status,
+                    "symbol": bundle_or_blocked.source.get("symbol"),
+                    "data_type": bundle_or_blocked.source.get("data_type"),
+                    "decision_id": decision_id,
                 },
             })
         else:
-            result.allowed_bundles.append(bundle)
+            result.allowed_bundles.append(bundle_or_blocked)
             result.gate_events.append({
                 "type": "evidence_allowed",
-                "message": f"Evidence allowed: {bundle.source.get('symbol')} {bundle.source.get('data_type')}",
+                "message": f"Evidence allowed: {bundle_or_blocked.source.get('symbol')} {bundle_or_blocked.source.get('data_type')}",
                 "payload": {
-                    "trust_status": bundle.trust_status,
-                    "allowed_use": bundle.allowed_use,
-                    "symbol": bundle.source.get("symbol"),
-                    "data_type": bundle.source.get("data_type"),
+                    "trust_status": bundle_or_blocked.trust_status,
+                    "allowed_use": bundle_or_blocked.allowed_use,
+                    "symbol": bundle_or_blocked.source.get("symbol"),
+                    "data_type": bundle_or_blocked.source.get("data_type"),
+                    "decision_id": decision_id,
                 },
             })
 

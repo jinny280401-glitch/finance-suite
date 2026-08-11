@@ -415,58 +415,36 @@
     let hotTimer = null;
     let progressTimer = null;
 
-    // ---- MCP 调用（通过 Claude Code 工具代理） ----
-    // 实际部署时替换为你的后端接口，这里先用 mock 数据演示结构
+    // ---- 数据获取（调用后端 API） ----
     async function fetchHot() {
-      // TODO: 替换为 /api/intel/xueqiu-hot
-      return mockHot();
+      try {
+        const resp = await fetch('/api/intel/discussions?limit=10');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+      } catch (e) {
+        console.warn('discussions API failed:', e);
+        return { items: [], _qc: { status: 'failure', sources: [], error: e.message }, meta: {} };
+      }
     }
     async function fetchHotStock() {
-      // TODO: 替换为 /api/intel/xueqiu-hot-stock
-      return mockHotStock();
+      try {
+        const resp = await fetch('/api/intel/hot-stocks?limit=10');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+      } catch (e) {
+        console.warn('hot-stocks API failed:', e);
+        return { items: [], _qc: { status: 'failure', sources: [], error: e.message }, meta: {} };
+      }
     }
     async function fetchWatchlist() {
-      // TODO: 替换为 /api/intel/xueqiu-watchlist
-      return mockWatchlist();
-    }
-
-    // ---- mock 数据（结构与 xueqiu_fetch 返回一致） ----
-    function mockHot() {
-      return {
-        _qc: { status: "success", sources: ["xueqiu_autocli"] },
-        data: [
-          { title: "A股今日涨停板超200只，市场情绪明显回暖", heat: "1.2万", tag: "市场" },
-          { title: "宁德时代发布新一代固态电池，能量密度突破500Wh/kg", heat: "9.8k", tag: "新能源" },
-          { title: "美联储暗示年内降息节奏放缓，美元指数走强", heat: "8.1k", tag: "宏观" },
-          { title: "比亚迪4月销量创历史新高，海外市场占比超30%", heat: "7.4k", tag: "汽车" },
-          { title: "DeepSeek V4发布，百万上下文窗口引发讨论", heat: "6.9k", tag: "AI" },
-          { title: "地产板块集体拉升，政策预期升温", heat: "5.3k", tag: "地产" },
-          { title: "黄金突破3300美元，避险情绪持续升温", heat: "4.7k", tag: "大宗" },
-          { title: "半导体设备国产化率提升，中芯国际订单饱满", heat: "4.2k", tag: "半导体" },
-        ]
-      };
-    }
-    function mockHotStock() {
-      return {
-        _qc: { status: "success", sources: ["xueqiu_autocli"] },
-        data: [
-          { name: "宁德时代", code: "SZ300750", change: "+5.82%" },
-          { name: "比亚迪", code: "SZ002594", change: "+3.41%" },
-          { name: "贵州茅台", code: "SH600519", change: "-0.28%" },
-          { name: "中芯国际", code: "SH688981", change: "+2.17%" },
-          { name: "万科A", code: "SZ000002", change: "+1.93%" },
-        ]
-      };
-    }
-    function mockWatchlist() {
-      return {
-        _qc: { status: "success", sources: ["xueqiu_autocli"] },
-        data: [
-          { name: "人工智能ETF", code: "SZ159819", change: "+1.24%" },
-          { name: "万科A", code: "SZ000002", change: "+1.93%" },
-          { name: "盛视科技", code: "SZ002990", change: "-0.55%" },
-        ]
-      };
+      try {
+        const resp = await fetch('/api/intel/watch-alerts?change_threshold=0');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+      } catch (e) {
+        console.warn('watch-alerts API failed:', e);
+        return { items: [], _qc: { status: 'failure', sources: [], error: e.message }, meta: {} };
+      }
     }
 
     // ---- 渲染热门讨论 ----
@@ -486,12 +464,13 @@
         return;
       }
 
-      const items = result.data || [];
-      const source = result._qc?.sources?.[0] || 'xueqiu';
-      const isFallback = source !== 'xueqiu_autocli';
+      const items = result.items || result.data || [];
+      const sources = result._qc?.sources || [];
+      const source = sources[0] || 'api';
+      const isFallback = sources.length === 0 || result._qc?.status === 'partial';
 
-      dot.className = 'dot dot--live';
-      timeEl.textContent = `${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})} · ${isFallback ? '降级:新浪' : '雪球'}`;
+      dot.className = sources.length > 0 ? 'dot dot--live' : 'dot dot--warn';
+      timeEl.textContent = `${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})} · ${sources.join('+') || '未知'}`;
 
       list.innerHTML = items.map((item, i) => `
         <li class="feed-item" onclick="fillInput(${JSON.stringify(item.title)})">
@@ -499,10 +478,10 @@
           <div class="feed-body">
             <div class="feed-title">${escHtml(item.title)}</div>
             <div class="feed-meta">
-              ${item.tag ? `<span class="feed-tag">${escHtml(item.tag)}</span>` : ''}
-              ${item.heat ? `<span class="feed-heat">
+              ${(item.tags || []).map(t => `<span class="feed-tag">${escHtml(t)}</span>`).join('')}
+              ${(item.extra && item.extra.heat) ? `<span class="feed-heat">
                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"></path></svg>
-                ${escHtml(item.heat)}
+                ${escHtml(item.extra.heat)}
               </span>` : ''}
             </div>
           </div>
@@ -517,29 +496,35 @@
       const dot = document.getElementById(dotId);
       const timeEl = document.getElementById(timeId);
 
-      if (!result || result._qc?.status === 'failure') {
+      if (!result || (result._qc?.status === 'failure' && (!result.items || result.items.length === 0))) {
         dot.className = 'dot dot--error';
         timeEl.textContent = '获取失败';
         list.innerHTML = `<li class="error-state"><p>数据获取失败</p><button class="retry-btn" onclick="loadAll()">重试</button></li>`;
         return;
       }
 
-      const items = result.data || [];
-      dot.className = 'dot dot--live';
+      const items = result.items || result.data || [];
+      const sources = result._qc?.sources || [];
+      dot.className = items.length > 0 ? 'dot dot--live' : 'dot dot--warn';
       timeEl.textContent = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
 
-      list.innerHTML = items.map((s, i) => {
-        const up = s.change?.startsWith('+');
-        const down = s.change?.startsWith('-');
+      list.innerHTML = items.map((item, i) => {
+        // Adapt to make_item format: stocks[0] has code/name, extra has change/price
+        const stock = (item.stocks && item.stocks[0]) || {};
+        const code = stock.code || item.code || '';
+        const name = stock.name || item.name || item.title || '';
+        const change = (item.extra && item.extra.change) || item.change || '';
+        const up = String(change).startsWith('+');
+        const down = String(change).startsWith('-');
         const cls = up ? 'stock-change--up' : down ? 'stock-change--down' : 'stock-change--flat';
         return `
-          <li class="stock-item" onclick="fillInput(${JSON.stringify(s.name)})">
+          <li class="stock-item" onclick="fillInput(${JSON.stringify(name)})">
             <span class="stock-rank ${i < 3 ? 'stock-rank--top' : ''}">${i + 1}</span>
             <div>
-              <div class="stock-name">${escHtml(s.name)}</div>
-              <div class="stock-code">${escHtml(s.code || '')}</div>
+              <div class="stock-name">${escHtml(name)}</div>
+              <div class="stock-code">${escHtml(code)}</div>
             </div>
-            <span class="stock-change ${cls}">${escHtml(s.change || '--')}</span>
+            <span class="stock-change ${cls}">${escHtml(change || '--')}</span>
           </li>`;
       }).join('');
     }
