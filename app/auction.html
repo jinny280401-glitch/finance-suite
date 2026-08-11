@@ -257,8 +257,8 @@
 
   <main class="main-container">
     <div class="page-head">
-      <h1 class="page-head__title">集合竞价</h1>
-      <p class="page-head__desc">涨停排行 + 量化选股信号</p>
+      <h1 class="page-head__title">集合竞价强势候选池</h1>
+      <p class="page-head__desc">东方财富集合竞价实时数据 · 强势股 + 昨日涨停追踪</p>
     </div>
 
     <form class="analyze-form" id="analyzeForm">
@@ -357,40 +357,73 @@
     });
 
     function formatGoldenPit(data) {
-      const hits = data.hits || [];
-      const watchlist = data.watchlist || [];
-      const env = data.market_env || {};
+      // Handle unexpected response shape gracefully
+      if (!data || typeof data !== 'object') {
+        return `<div class="result-error">数据不可用：接口返回格式异常</div>`;
+      }
+
+      const items = Array.isArray(data.data) ? data.data : [];
+      const count = typeof data.count === 'number' ? data.count : items.length;
       const qc = data._qc || {};
 
+      // Check for truly empty data (not just no hits — the provider returned nothing)
+      if (count === 0 || (items.length === 0 && count === 0)) {
+        let html = `<div style="font-family:monospace;font-size:13px;line-height:1.8">`;
+        html += `<div style="font-weight:bold;font-size:15px;margin-bottom:8px">集合竞价强势候选池</div>`;
+        html += `<div style="color:#888;margin-bottom:12px">数据时间：${qc.generated_at || '今日'} | 数据来源：东方财富集合竞价</div>`;
+        html += `<div style="color:#e67e22;padding:12px;background:rgba(230,126,34,0.08);border-radius:8px;margin-bottom:12px">当前无可展示的强势候选数据（可能为非交易时段或数据源暂不可用）</div>`;
+        html += renderQcPanel(qc);
+        html += `<div style="color:#aaa;margin-top:12px;font-size:11px">免责声明：数据仅供参考，不构成投资建议</div>`;
+        html += `</div>`;
+        return html;
+      }
+
+      const source = (qc.sources && qc.sources.length) ? qc.sources[0] : '东方财富';
+      const isReal = qc.source_type === 'real';
+      const generatedAt = qc.generated_at || '';
+
       let html = `<div style="font-family:monospace;font-size:13px;line-height:1.8">`;
-      html += `<div style="font-weight:bold;font-size:15px;margin-bottom:8px">黄金坑四重门扫描结果</div>`;
-      html += `<div style="color:#888;margin-bottom:12px">数据时间：${data.scan_date || '今日'} | 市场环境：${env.status || '未知'}`;
-      if (qc.completeness !== undefined) html += ` | 数据完整度：${Math.round(qc.completeness * 100)}%`;
+
+      // Header — capability name, NOT Golden Pit
+      html += `<div style="font-weight:bold;font-size:15px;margin-bottom:8px">集合竞价强势候选池</div>`;
+      html += `<div style="color:#888;margin-bottom:4px">数据来源：东方财富集合竞价（${escapeHtml(source)}）`;
+      if (!isReal) html += ` <span style="color:#e67e22">[非实时]</span>`;
       html += `</div>`;
+      html += `<div style="color:#888;margin-bottom:12px">数据时间：${escapeHtml(generatedAt || '今日')} | 共 ${count} 只 | 展示前 ${items.length} 只</div>`;
 
-      html += `<div style="font-weight:bold;color:#e74c3c;margin-bottom:6px">命中（四重门全过）：${hits.length} 只</div>`;
-      if (hits.length === 0) {
-        html += `<div style="color:#888;margin-bottom:12px">今日无命中</div>`;
-      } else {
-        hits.forEach((s, i) => {
-          html += `<div style="margin-bottom:4px">${i+1}. <b>${s.code}</b> 收盘${s.close} 综合评分${s.composite || '-'} 距下轨${s.dist_to_lower_pct}%</div>`;
-        });
-        html += `<br>`;
-      }
+      // Bucket labels
+      const bucketLabel = {
+        strong_pool: '强势股（60日新高/多次涨停）',
+        previous_zt: '昨日涨停今日表现',
+        zt_pool: '今日涨停池',
+      };
 
-      html += `<div style="font-weight:bold;color:#e67e22;margin-bottom:6px">观察池（G1-G3过，等待反弹）：${watchlist.length} 只</div>`;
-      if (watchlist.length === 0) {
-        html += `<div style="color:#888">暂无</div>`;
-      } else {
-        watchlist.slice(0, 10).forEach((s, i) => {
-          const dist = s.dist_to_lower_pct;
-          const distStr = dist < 0 ? `已破轨${Math.abs(dist)}%` : `距下轨${dist}%`;
-          html += `<div style="margin-bottom:4px">${i+1}. <b>${s.code}</b> 收盘${s.close} ${distStr}${s.at_lower_now ? ' ⚡已触轨' : ''}</div>`;
+      // Group by source_bucket
+      const buckets = {};
+      items.forEach(s => {
+        const b = s.source_bucket || 'other';
+        if (!buckets[b]) buckets[b] = [];
+        buckets[b].push(s);
+      });
+
+      Object.keys(buckets).forEach(bucket => {
+        const bucketItems = buckets[bucket];
+        const label = bucketLabel[bucket] || bucket;
+        html += `<div style="font-weight:bold;color:#0071e3;margin-top:14px;margin-bottom:6px">${escapeHtml(label)}：${bucketItems.length} 只</div>`;
+
+        bucketItems.forEach((s, i) => {
+          const changeStr = s.change != null ? `${s.change > 0 ? '+' : ''}${s.change.toFixed(1)}%` : '-';
+          const changeColor = s.change > 0 ? '#e74c3c' : s.change < 0 ? '#27ae60' : '#888';
+          html += `<div style="margin-bottom:4px;padding:6px 8px;background:#fafafa;border-radius:6px">`;
+          html += `${i+1}. <b>${escapeHtml(s.code)}</b> ${escapeHtml(s.name || '')}`;
+          html += ` <span style="color:${changeColor};font-weight:500">${changeStr}</span>`;
+          if (s.reason) html += ` <span style="color:#888;font-size:12px">[${escapeHtml(s.reason)}]</span>`;
+          html += `</div>`;
         });
-      }
+      });
 
       html += renderQcPanel(qc);
-      html += `<div style="color:#aaa;margin-top:12px;font-size:11px">免责声明：量化信号仅供参考，不构成投资建议</div>`;
+      html += `<div style="color:#aaa;margin-top:12px;font-size:11px">免责声明：数据仅供参考，不构成投资建议。集合竞价强势候选池基于东方财富公开数据，非量化因子信号。</div>`;
       html += `</div>`;
       return html;
     }
