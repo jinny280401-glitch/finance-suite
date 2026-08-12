@@ -237,26 +237,54 @@ def _with_timeout(fn, args=(), kwargs=None, timeout_seconds: float = 8.0):
 
 def _fetch_financials(code: str) -> list[dict] | None:
     """财报主要指标（Wind 优先 → AkShare 财报摘要 → 利润表+资产负债表 → 财务指标降级）"""
-    # Wind 优先：完整三大报表
+    import time as _time
+    from scripts.provider_observability import get_request_id, log_provider_call, classify_exception
+
+    # — Tier 0: Wind —
     if _check_wind_available():
+        t0_start = _time.monotonic()
+        t0_outcome = None; t0_exc_cls = None; t0_exc_msg = None
         try:
             import wind_data
             result = wind_data.get_financials(code)
             if result:
+                t0_outcome = "SUCCESS_WITH_DATA"
+                log_provider_call(
+                    domain="financials", provider="wind",
+                    endpoint="get_financials", started_at=t0_start,
+                    outcome=t0_outcome, fallback_used=False,
+                )
                 return result
-        except Exception:
-            pass
+            else:
+                t0_outcome = "VALID_EMPTY"
+        except Exception as e:
+            t0_exc_cls = type(e).__name__
+            t0_exc_msg = str(e)[:200]
+            t0_outcome = classify_exception(e)
+        finally:
+            if t0_outcome != "SUCCESS_WITH_DATA":
+                log_provider_call(
+                    domain="financials", provider="wind",
+                    endpoint="get_financials", started_at=t0_start,
+                    outcome=t0_outcome, exception_class=t0_exc_cls,
+                    exception_message=t0_exc_msg, fallback_used=False,
+                )
 
-    # 降级方案1: AkShare 财报摘要（stock_financial_abstract，最可靠）
+    # — Tier 1: AkShare 财报摘要 —
+    t1_start = _time.monotonic()
+    t1_outcome = None; t1_exc_cls = None; t1_exc_msg = None; t1_rows = None; t1_cols = None
+    t1_timeout = 12.0
     try:
         df_abstract = _with_timeout(
             ak.stock_financial_abstract,
             kwargs={"symbol": code},
-            timeout_seconds=12.0
+            timeout_seconds=t1_timeout
         )
+        t1_elapsed = _time.monotonic() - t1_start
         if df_abstract is not None and len(df_abstract) > 0:
-            # 财报摘要是宽表格式：每行是一个指标，每列是一个报告期
-            # 转换为按报告期分组的 list[dict]，取最近4个有数据的报告期
+            t1_outcome = "SUCCESS_WITH_DATA"
+            t1_rows = len(df_abstract)
+            t1_cols = len(df_abstract.columns)
             period_cols = [c for c in df_abstract.columns if c not in ("选项", "指标")][:4]
             rows = []
             for period in period_cols:
@@ -266,54 +294,110 @@ def _fetch_financials(code: str) -> list[dict] | None:
                     value = r.get(period)
                     if indicator and value is not None:
                         row[indicator] = value
-                if len(row) > 1:  # 至少有一个指标
+                if len(row) > 1:
                     rows.append(row)
             if rows:
+                log_provider_call(
+                    domain="financials", provider="akshare",
+                    endpoint="stock_financial_abstract", started_at=t1_start,
+                    outcome=t1_outcome, row_count=t1_rows, field_count=t1_cols,
+                    fallback_used=True,
+                )
                 return rows
-    except Exception:
-        pass
+            else:
+                t1_outcome = "VALID_EMPTY"
+        elif df_abstract is not None and len(df_abstract) == 0:
+            t1_outcome = "VALID_EMPTY"
+        elif t1_elapsed >= t1_timeout * 0.95:
+            t1_outcome = "TIMEOUT"
+        else:
+            t1_outcome = "VALID_EMPTY"
+    except Exception as e:
+        t1_exc_cls = type(e).__name__
+        t1_exc_msg = str(e)[:200]
+        t1_outcome = classify_exception(e)
+    finally:
+        if t1_outcome != "SUCCESS_WITH_DATA":
+            log_provider_call(
+                domain="financials", provider="akshare",
+                endpoint="stock_financial_abstract", started_at=t1_start,
+                outcome=t1_outcome, exception_class=t1_exc_cls,
+                exception_message=t1_exc_msg, row_count=t1_rows,
+                field_count=t1_cols, fallback_used=True,
+            )
 
-    # 降级方案2: 利润表 + 资产负债表（东方财富源，偶有 bug）
+    # — Tier 2: 利润表 + 资产负债表 —
     profit_rows = None
     balance_rows = None
 
+    t2a_start = _time.monotonic()
+    t2a_outcome = None; t2a_exc_cls = None; t2a_exc_msg = None; t2a_rows = None; t2a_cols = None
+    t2a_timeout = 12.0
     try:
         df_profit = _with_timeout(
             ak.stock_profit_sheet_by_report_em,
             kwargs={"symbol": code},
-            timeout_seconds=12.0
+            timeout_seconds=t2a_timeout
         )
+        t2a_elapsed = _time.monotonic() - t2a_start
         if df_profit is not None and len(df_profit) > 0:
+            t2a_outcome = "SUCCESS_WITH_DATA"
+            t2a_rows = len(df_profit)
+            t2a_cols = len(df_profit.columns)
             profit_rows = df_profit.tail(4).to_dict(orient="records")
-    except Exception:
-        pass
+        elif df_profit is not None and len(df_profit) == 0:
+            t2a_outcome = "VALID_EMPTY"
+        elif t2a_elapsed >= t2a_timeout * 0.95:
+            t2a_outcome = "TIMEOUT"
+        else:
+            t2a_outcome = "VALID_EMPTY"
+    except Exception as e:
+        t2a_exc_cls = type(e).__name__
+        t2a_exc_msg = str(e)[:200]
+        t2a_outcome = classify_exception(e)
+    finally:
+        log_provider_call(
+            domain="financials", provider="akshare",
+            endpoint="stock_profit_sheet_by_report_em", started_at=t2a_start,
+            outcome=t2a_outcome, exception_class=t2a_exc_cls,
+            exception_message=t2a_exc_msg, row_count=t2a_rows,
+            field_count=t2a_cols, fallback_used=True,
+        )
 
+    t2b_start = _time.monotonic()
+    t2b_outcome = None; t2b_exc_cls = None; t2b_exc_msg = None; t2b_rows = None; t2b_cols = None
+    t2b_timeout = 12.0
     try:
         df_balance = _with_timeout(
             ak.stock_balance_sheet_by_report_em,
             kwargs={"symbol": code},
-            timeout_seconds=12.0
+            timeout_seconds=t2b_timeout
         )
+        t2b_elapsed = _time.monotonic() - t2b_start
         if df_balance is not None and len(df_balance) > 0:
+            t2b_outcome = "SUCCESS_WITH_DATA"
+            t2b_rows = len(df_balance)
+            t2b_cols = len(df_balance.columns)
             balance_rows = df_balance.tail(4).to_dict(orient="records")
-    except Exception:
-        pass
-
-    # 降级方案3: 主要财务指标（每股指标，更可靠但字段少）
-    try:
-        df_indicator = _with_timeout(
-            ak.stock_financial_analysis_indicator,
-            kwargs={"symbol": code, "start_year": "2022"},
-            timeout_seconds=10.0
-        )
-        if df_indicator is not None and len(df_indicator) > 0:
-            indicator_rows = df_indicator.tail(4).to_dict(orient="records")
+        elif df_balance is not None and len(df_balance) == 0:
+            t2b_outcome = "VALID_EMPTY"
+        elif t2b_elapsed >= t2b_timeout * 0.95:
+            t2b_outcome = "TIMEOUT"
         else:
-            indicator_rows = None
-    except Exception:
-        indicator_rows = None
+            t2b_outcome = "VALID_EMPTY"
+    except Exception as e:
+        t2b_exc_cls = type(e).__name__
+        t2b_exc_msg = str(e)[:200]
+        t2b_outcome = classify_exception(e)
+    finally:
+        log_provider_call(
+            domain="financials", provider="akshare",
+            endpoint="stock_balance_sheet_by_report_em", started_at=t2b_start,
+            outcome=t2b_outcome, exception_class=t2b_exc_cls,
+            exception_message=t2b_exc_msg, row_count=t2b_rows,
+            field_count=t2b_cols, fallback_used=True,
+        )
 
-    # 合并结果：优先利润表+资产负债表，指标兜底
     if profit_rows or balance_rows:
         merged = []
         for i in range(max(len(profit_rows or []), len(balance_rows or []))):
@@ -329,24 +413,89 @@ def _fetch_financials(code: str) -> list[dict] | None:
         if merged:
             return merged
 
+    # — Tier 3: 财务指标兜底 —
+    t3_start = _time.monotonic()
+    t3_outcome = None; t3_exc_cls = None; t3_exc_msg = None; t3_rows = None; t3_cols = None
+    t3_timeout = 10.0
+    try:
+        df_indicator = _with_timeout(
+            ak.stock_financial_analysis_indicator,
+            kwargs={"symbol": code, "start_year": "2022"},
+            timeout_seconds=t3_timeout
+        )
+        t3_elapsed = _time.monotonic() - t3_start
+        if df_indicator is not None and len(df_indicator) > 0:
+            t3_outcome = "SUCCESS_WITH_DATA"
+            indicator_rows = df_indicator.tail(4).to_dict(orient="records")
+            t3_rows = len(df_indicator)
+            t3_cols = len(df_indicator.columns)
+        elif df_indicator is not None and len(df_indicator) == 0:
+            t3_outcome = "VALID_EMPTY"
+            indicator_rows = None
+        elif t3_elapsed >= t3_timeout * 0.95:
+            t3_outcome = "TIMEOUT"
+            indicator_rows = None
+        else:
+            t3_outcome = "VALID_EMPTY"
+            indicator_rows = None
+    except Exception as e:
+        t3_exc_cls = type(e).__name__
+        t3_exc_msg = str(e)[:200]
+        t3_outcome = classify_exception(e)
+        indicator_rows = None
+    finally:
+        log_provider_call(
+            domain="financials", provider="akshare",
+            endpoint="stock_financial_analysis_indicator", started_at=t3_start,
+            outcome=t3_outcome, exception_class=t3_exc_cls,
+            exception_message=t3_exc_msg, row_count=t3_rows,
+            field_count=t3_cols, fallback_used=True,
+        )
+
     return indicator_rows
 
 
 def _derive_pb(code: str, price: float) -> float | None:
     """从每股净资产推算 PB。腾讯源不提供 PB 时的轻量补全。"""
+    import time as _time
+    from scripts.provider_observability import get_request_id, log_provider_call, classify_exception
+
+    started = _time.monotonic()
+    outcome = None; exc_class = None; exc_msg = None; row_count = None
+    timeout_s = 5.0
     try:
         df = _with_timeout(
             ak.stock_financial_analysis_indicator,
             kwargs={"symbol": code, "start_year": "2025"},
-            timeout_seconds=5.0,
+            timeout_seconds=timeout_s,
         )
+        elapsed = _time.monotonic() - started
         if df is not None and len(df) > 0:
+            outcome = "SUCCESS_WITH_DATA"
+            row_count = len(df)
             bvps = df.iloc[-1].get("每股净资产_调整前(元)")
             if bvps and float(bvps) > 0:
                 return round(price / float(bvps), 2)
-    except Exception:
-        pass
-    return None
+        elif df is not None and len(df) == 0:
+            outcome = "VALID_EMPTY"
+        elif elapsed >= timeout_s * 0.95:
+            outcome = "TIMEOUT"
+        else:
+            outcome = "VALID_EMPTY"
+        return None
+    except Exception as e:
+        exc_class = type(e).__name__
+        exc_msg = str(e)[:200]
+        outcome = classify_exception(e)
+        return None
+    finally:
+        log_provider_call(
+            domain="realtime", provider="akshare",
+            endpoint="stock_financial_analysis_indicator",
+            started_at=started, outcome=outcome,
+            exception_class=exc_class, exception_message=exc_msg,
+            row_count=row_count, fallback_used=True,
+        )
 
 
 def _fetch_realtime_from_cache(code: str) -> dict | None:
@@ -356,6 +505,9 @@ def _fetch_realtime_from_cache(code: str) -> dict | None:
     单股 API 均走东方财富域（被代理阻断），所以无 Tier 1 逐股查询——
     缓存 miss 直接走 K 线兜底。
     """
+    import time as _time
+    from scripts.provider_observability import get_request_id, log_provider_call, classify_exception
+
     cache = _stock_cache or {}
     info = cache.get(code)
     # 缓存 key 可能是 sh/sz 前缀格式（Sina 源），尝试其他写法
@@ -367,6 +519,12 @@ def _fetch_realtime_from_cache(code: str) -> dict | None:
 
     # Tier 0: 缓存命中（腾讯/东方财富/Sina 预加载）
     if isinstance(info, dict) and info.get("price") is not None:
+        cache_provider = info.get("source_chain", {}).get("primary", "cache_preload")
+        log_provider_call(
+            domain="realtime", provider=cache_provider,
+            endpoint="_load_stock_cache", started_at=_time.monotonic(),
+            outcome="SUCCESS_WITH_DATA", fallback_used=False,
+        )
         result = {
             **info,
             "source_chain": {"primary": "akshare_spot", "fallback": []},
@@ -381,15 +539,26 @@ def _fetch_realtime_from_cache(code: str) -> dict | None:
         return result
 
     # Tier 1: K线收盘价兜底（只有价格/涨跌幅，无 PE/PB/市值）
+    k_start = _time.monotonic()
+    k_outcome = None; k_exc_cls = None; k_exc_msg = None; k_rows = None
+    k_timeout = 6.0
     try:
         df = _with_timeout(ak.stock_zh_a_hist, kwargs={
             "symbol": code, "period": "daily",
             "start_date": (datetime.now() - timedelta(days=5)).strftime("%Y%m%d"),
             "end_date": datetime.now().strftime("%Y%m%d"),
             "adjust": ""
-        }, timeout_seconds=6.0)
+        }, timeout_seconds=k_timeout)
+        k_elapsed = _time.monotonic() - k_start
         if df is not None and len(df) > 0:
+            k_outcome = "SUCCESS_WITH_DATA"
+            k_rows = len(df)
             latest = df.iloc[-1]
+            log_provider_call(
+                domain="realtime", provider="akshare",
+                endpoint="stock_zh_a_hist", started_at=k_start,
+                outcome=k_outcome, row_count=k_rows, fallback_used=True,
+            )
             return {
                 "code": code,
                 "price": latest.get("收盘"),
@@ -398,11 +567,33 @@ def _fetch_realtime_from_cache(code: str) -> dict | None:
                 "source_chain": {"primary": "akshare_spot", "fallback": ["kline_history"]},
                 "source_type": "fallback",
             }
-    except Exception:
-        pass
+        elif df is not None and len(df) == 0:
+            k_outcome = "VALID_EMPTY"
+        elif k_elapsed >= k_timeout * 0.95:
+            k_outcome = "TIMEOUT"
+        else:
+            k_outcome = "VALID_EMPTY"
+    except Exception as e:
+        k_exc_cls = type(e).__name__
+        k_exc_msg = str(e)[:200]
+        k_outcome = classify_exception(e)
+    finally:
+        if k_outcome != "SUCCESS_WITH_DATA":
+            log_provider_call(
+                domain="realtime", provider="akshare",
+                endpoint="stock_zh_a_hist", started_at=k_start,
+                outcome=k_outcome, exception_class=k_exc_cls,
+                exception_message=k_exc_msg, row_count=k_rows,
+                fallback_used=True,
+            )
 
-    # 缓存基本信息兜底（无 price，不可做交易决策）
+    # Tier 2: 缓存基本信息兜底（无 price，不可做交易决策）
     if isinstance(info, dict):
+        log_provider_call(
+            domain="realtime", provider="stale_cache",
+            endpoint="_fetch_realtime_from_cache", started_at=_time.monotonic(),
+            outcome="VALID_EMPTY", fallback_used=True,
+        )
         return {
             **info,
             "source_chain": {"primary": "akshare_spot", "fallback": ["stale_cache"]},
@@ -413,35 +604,94 @@ def _fetch_realtime_from_cache(code: str) -> dict | None:
 
 def _fetch_price_history(code: str) -> list[dict] | None:
     """近60日K线（0.2秒）"""
+    import time as _time
+    from scripts.provider_observability import get_request_id, log_provider_call, classify_exception
+
+    started = _time.monotonic()
+    outcome = None; exc_class = None; exc_msg = None; row_count = None
+
     try:
         end = datetime.now().strftime("%Y%m%d")
         start = (datetime.now() - timedelta(days=90)).strftime("%Y%m%d")
         df = ak.stock_zh_a_hist(symbol=code, period="daily",
                                  start_date=start, end_date=end, adjust="qfq")
         if df is not None and len(df) > 0:
+            outcome = "SUCCESS_WITH_DATA"
+            row_count = len(df)
             return df.tail(30).to_dict(orient="records")
-    except Exception:
-        pass
-    return None
+        elif df is not None and len(df) == 0:
+            outcome = "VALID_EMPTY"
+            row_count = 0
+        else:
+            outcome = "VALID_EMPTY"
+        return None
+    except Exception as e:
+        exc_class = type(e).__name__
+        exc_msg = str(e)[:200]
+        outcome = classify_exception(e)
+        return None
+    finally:
+        log_provider_call(
+            domain="price_history",
+            provider="akshare",
+            endpoint="stock_zh_a_hist",
+            started_at=started,
+            outcome=outcome,
+            exception_class=exc_class,
+            exception_message=exc_msg,
+            row_count=row_count,
+        )
 
 
 def _fetch_fund_flow(code: str) -> list[dict] | None:
     """个股资金流向"""
+    import time as _time
+    from scripts.provider_observability import get_request_id, log_provider_call, classify_exception
+
     market = _get_market(code)
+    started = _time.monotonic()
+    outcome = None; exc_class = None; exc_msg = None; row_count = None
+    timeout_s = 8.0
+
     try:
         df = _with_timeout(
             ak.stock_individual_fund_flow,
             kwargs={"stock": code, "market": market},
-            timeout_seconds=8.0,
+            timeout_seconds=timeout_s,
         )
+        elapsed = _time.monotonic() - started
+        if df is None:
+            outcome = "TIMEOUT" if elapsed >= timeout_s * 0.95 else "VALID_EMPTY"
+        elif len(df) == 0:
+            outcome = "VALID_EMPTY"
+            row_count = 0
+        else:
+            outcome = "SUCCESS_WITH_DATA"
+            row_count = len(df)
+
         if df is not None and len(df) > 0:
             return df.tail(10).to_dict(orient="records")
+        return None
     except Exception as e:
+        exc_class = type(e).__name__
+        exc_msg = str(e)[:200]
+        outcome = classify_exception(e)
         logger.warning(
             "fund_flow unavailable for %s (market=%s): %s: %s",
             code, market, type(e).__name__, e,
         )
-    return None
+        return None
+    finally:
+        log_provider_call(
+            domain="capital_flow",
+            provider="akshare",
+            endpoint="stock_individual_fund_flow",
+            started_at=started,
+            outcome=outcome,
+            exception_class=exc_class,
+            exception_message=exc_msg,
+            row_count=row_count,
+        )
 
 
 def _fetch_valuation(code: str) -> dict | None:
@@ -452,8 +702,13 @@ def _fetch_valuation(code: str) -> dict | None:
       - DERIVED: 从 EPS/BVPS + 行情推算的估值
       - UNKNOWN: 来源不明
     """
-    # REAL_PROVIDER path: Wind
+    import time as _time
+    from scripts.provider_observability import get_request_id, log_provider_call, classify_exception
+
+    # — REAL_PROVIDER path: Wind —
     if _check_wind_available():
+        w_start = _time.monotonic()
+        w_outcome = None; w_exc_cls = None; w_exc_msg = None
         try:
             import wind_data
             result = wind_data.get_valuation_history(code)
@@ -463,24 +718,50 @@ def _fetch_valuation(code: str) -> dict | None:
                     "provider": "wind",
                     "provider_status": "available",
                 }
+                w_outcome = "SUCCESS_WITH_DATA"
+                log_provider_call(
+                    domain="valuation", provider="wind",
+                    endpoint="get_valuation_history", started_at=w_start,
+                    outcome=w_outcome, fallback_used=False,
+                )
                 return result
-        except Exception:
-            pass
+            else:
+                w_outcome = "VALID_EMPTY"
+        except Exception as e:
+            w_exc_cls = type(e).__name__
+            w_exc_msg = str(e)[:200]
+            w_outcome = classify_exception(e)
+        finally:
+            if w_outcome != "SUCCESS_WITH_DATA":
+                log_provider_call(
+                    domain="valuation", provider="wind",
+                    endpoint="get_valuation_history", started_at=w_start,
+                    outcome=w_outcome, exception_class=w_exc_cls,
+                    exception_message=w_exc_msg, fallback_used=False,
+                )
 
-    # DERIVED path: 从 AkShare 财报 + 行情推算
+    # — DERIVED path: 从 AkShare 财报 + 行情推算 —
     rt = _fetch_realtime_from_cache(code) or {}
     pe = rt.get("pe")
     pb = rt.get("pb")
     mv = rt.get("mv")
 
+    # Track the AkShare indicator call used for PE/PB derivation
+    ak_start = _time.monotonic()
+    ak_outcome = None; ak_exc_cls = None; ak_exc_msg = None; ak_rows = None; ak_cols = None
+    ak_timeout = 8.0
     if pe is None or pb is None:
         try:
             df = _with_timeout(
                 ak.stock_financial_analysis_indicator,
                 kwargs={"symbol": code, "start_year": "2022"},
-                timeout_seconds=8.0
+                timeout_seconds=ak_timeout
             )
+            ak_elapsed = _time.monotonic() - ak_start
             if df is not None and len(df) > 0:
+                ak_outcome = "SUCCESS_WITH_DATA"
+                ak_rows = len(df)
+                ak_cols = len(df.columns)
                 latest = df.iloc[-1]
                 eps = latest.get("摊薄每股收益(元)")
                 bvps = latest.get("每股净资产_调整前(元)")
@@ -489,8 +770,24 @@ def _fetch_valuation(code: str) -> dict | None:
                     pe = round(float(price) / float(eps), 2)
                 if price and bvps and float(bvps) > 0:
                     pb = round(float(price) / float(bvps), 2)
-        except Exception:
-            pass
+            elif df is not None and len(df) == 0:
+                ak_outcome = "VALID_EMPTY"
+            elif ak_elapsed >= ak_timeout * 0.95:
+                ak_outcome = "TIMEOUT"
+            else:
+                ak_outcome = "VALID_EMPTY"
+        except Exception as e:
+            ak_exc_cls = type(e).__name__
+            ak_exc_msg = str(e)[:200]
+            ak_outcome = classify_exception(e)
+        finally:
+            log_provider_call(
+                domain="valuation", provider="akshare",
+                endpoint="stock_financial_analysis_indicator",
+                started_at=ak_start, outcome=ak_outcome,
+                exception_class=ak_exc_cls, exception_message=ak_exc_msg,
+                row_count=ak_rows, field_count=ak_cols, fallback_used=True,
+            )
 
     if pe is None and pb is None and mv is None:
         return None
@@ -519,9 +816,17 @@ def _fetch_valuation(code: str) -> dict | None:
 
 def _fetch_news(code: str) -> list[dict] | None:
     """个股新闻（东方财富，0.7秒）"""
+    import time as _time
+    from scripts.provider_observability import get_request_id, log_provider_call, classify_exception
+
+    started = _time.monotonic()
+    outcome = None; exc_class = None; exc_msg = None; row_count = None
+
     try:
         df = ak.stock_news_em(symbol=code)
         if df is not None and len(df) > 0:
+            outcome = "SUCCESS_WITH_DATA"
+            row_count = len(df)
             return [
                 {
                     "title": str(row.get("新闻标题", "")),
@@ -532,20 +837,66 @@ def _fetch_news(code: str) -> list[dict] | None:
                 }
                 for _, row in df.head(8).iterrows()
             ]
-    except Exception:
-        pass
-    return None
+        elif df is not None and len(df) == 0:
+            outcome = "VALID_EMPTY"
+            row_count = 0
+        else:
+            outcome = "VALID_EMPTY"
+        return None
+    except Exception as e:
+        exc_class = type(e).__name__
+        exc_msg = str(e)[:200]
+        outcome = classify_exception(e)
+        return None
+    finally:
+        log_provider_call(
+            domain="news",
+            provider="akshare",
+            endpoint="stock_news_em",
+            started_at=started,
+            outcome=outcome,
+            exception_class=exc_class,
+            exception_message=exc_msg,
+            row_count=row_count,
+        )
 
 
 def _fetch_dividends(code: str) -> list[dict] | None:
     """历史分红"""
+    import time as _time
+    from scripts.provider_observability import get_request_id, log_provider_call, classify_exception
+
+    started = _time.monotonic()
+    outcome = None; exc_class = None; exc_msg = None; row_count = None
+
     try:
         df = ak.stock_history_dividend_detail(symbol=code, indicator="分红")
         if df is not None and len(df) > 0:
+            outcome = "SUCCESS_WITH_DATA"
+            row_count = len(df)
             return df.head(5).to_dict(orient="records")
-    except Exception:
-        pass
-    return None
+        elif df is not None and len(df) == 0:
+            outcome = "VALID_EMPTY"
+            row_count = 0
+        else:
+            outcome = "VALID_EMPTY"
+        return None
+    except Exception as e:
+        exc_class = type(e).__name__
+        exc_msg = str(e)[:200]
+        outcome = classify_exception(e)
+        return None
+    finally:
+        log_provider_call(
+            domain="dividends",
+            provider="akshare",
+            endpoint="stock_history_dividend_detail",
+            started_at=started,
+            outcome=outcome,
+            exception_class=exc_class,
+            exception_message=exc_msg,
+            row_count=row_count,
+        )
 
 
 # ---- 异步并发获取 ----
