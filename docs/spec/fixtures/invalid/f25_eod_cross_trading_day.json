@@ -1,0 +1,139 @@
+{
+  "records": [
+    {
+      "id": "3838bdf883a5841289fcb12dca0a2f5eec42dd28ff99ad6ed6d504bffdb6e30f",
+      "content_hash": "1579d2ab458707dd23187359b251d37b75d23bc2cf0cbd72c33bf34dd7587465",
+      "raw_hash": "1579d2ab458707dd23187359b251d37b75d23bc2cf0cbd72c33bf34dd7587465",
+      "producer_id": "S11.wind_query",
+      "evidence_class": "structured_financial",
+      "collected_at": "2026-08-14T15:00:01Z",
+      "raw_reference": {
+        "reference": "wind://daily/600519",
+        "object_hash": "ref-600519-v1"
+      },
+      "schema_version": "0.1",
+      "content_type": "structured_financial",
+      "source_type": "internal_provider",
+      "retrieval_mode": "direct_api",
+      "temporal_semantics": "eod",
+      "normalized_content": {
+        "code": "600519",
+        "pe": 28.3,
+        "pb": 7.5
+      },
+      "normalized_content_hash": "e568ee492df73ff55b733e5c3b8c9e42f9226ffdd09991991a8104af8d03c38e",
+      "normalization_version": "1.0",
+      "_raw_payload": "{\"code\": \"600519\", \"pe\": 28.3, \"pb\": 7.5}"
+    }
+  ],
+  "assessments": [
+    {
+      "assessment_id": "d0f2e8f73413880a0e221f01b1d1808907656f81cbe47831236069ad29cea466",
+      "record_id": "3838bdf883a5841289fcb12dca0a2f5eec42dd28ff99ad6ed6d504bffdb6e30f",
+      "assessed_at": "2026-08-14T15:00:01Z",
+      "assessor_id": "gate.assessor.v1",
+      "assessment_policy_version": "v0.1",
+      "assessment_result_hash": "9b12917b14b7991c8f1ddb345e64fbb03392a5ec7c0f3373ee4f55bb34b1baa1",
+      "provider_identity": "VERIFIED",
+      "field_integrity": "PASS",
+      "provenance": "real",
+      "freshness": "2026-08-14T15:00:00Z",
+      "classification": "classified:[valuation]"
+    }
+  ],
+  "decisions": [
+    {
+      "decision_id": "9f021b6a3d52911c0658be5bf12547ea62b106ca1f18a8c55955f96659541896",
+      "record_id": "3838bdf883a5841289fcb12dca0a2f5eec42dd28ff99ad6ed6d504bffdb6e30f",
+      "assessment_ref": "d0f2e8f73413880a0e221f01b1d1808907656f81cbe47831236069ad29cea466",
+      "consumer": "stock-analyst.md",
+      "purpose": "trading_signal",
+      "policy_family": "P1",
+      "policy_version": "v0.1",
+      "verdict": "ALLOW",
+      "allowed_use": [
+        "fundamental_overview",
+        "valuation_judgment"
+      ],
+      "blocked_use": [],
+      "max_claim_strength": "OBSERVED_FACT"
+    }
+  ],
+  "receipts": [
+    {
+      "receipt_id": "01c7c88c5438055e437d30c82e4c730e3365ad35648b86868491f05cde54ae90",
+      "receipt_schema_version": "1.0",
+      "decision_id": "9f021b6a3d52911c0658be5bf12547ea62b106ca1f18a8c55955f96659541896",
+      "assessment_id": "d0f2e8f73413880a0e221f01b1d1808907656f81cbe47831236069ad29cea466",
+      "assessment_result_hash": "9b12917b14b7991c8f1ddb345e64fbb03392a5ec7c0f3373ee4f55bb34b1baa1",
+      "producer_id": "S11.wind_query",
+      "evidence_record_id": "3838bdf883a5841289fcb12dca0a2f5eec42dd28ff99ad6ed6d504bffdb6e30f",
+      "consumer": "stock-analyst.md",
+      "purpose": "trading_signal",
+      "policy_family": "P1",
+      "policy_version": "v0.1",
+      "verdict": "ALLOW",
+      "allowed_use": [
+        "fundamental_overview",
+        "valuation_judgment"
+      ],
+      "blocked_use": [],
+      "max_claim_strength": "OBSERVED_FACT",
+      "assessment_dimensions": {
+        "provider_identity": "VERIFIED",
+        "field_integrity": "PASS",
+        "provenance": "real",
+        "freshness": "2026-08-14T15:00:00Z",
+        "classification": "classified:[valuation]"
+      },
+      "evidence_hash": "1579d2ab458707dd23187359b251d37b75d23bc2cf0cbd72c33bf34dd7587465",
+      "timestamp": "2026-08-17T09:00:00Z",
+      "audit_trail": {
+        "bypass_detected": false
+      }
+    }
+  ],
+  "manifests": [
+    {
+      "bundle_id": "a3a3d5f0b7c7a215ab223dc8fef4b64991fa04f1fd76bd56a9dedc104d272c69",
+      "bundle_schema_version": "1.0",
+      "consumer": "stock-analyst.md",
+      "purpose": "trading_signal",
+      "admitted_record_ids": [
+        "3838bdf883a5841289fcb12dca0a2f5eec42dd28ff99ad6ed6d504bffdb6e30f"
+      ],
+      "member_decision_ids": [
+        "9f021b6a3d52911c0658be5bf12547ea62b106ca1f18a8c55955f96659541896"
+      ],
+      "curated_content_hash": "3f88d567c2c6362442800078d98c83ec663f8c34df6346702929608880511f49",
+      "generated_at": "2026-08-17T09:00:01Z",
+      "bundle_hash": "a3a3d5f0b7c7a215ab223dc8fef4b64991fa04f1fd76bd56a9dedc104d272c69"
+    }
+  ],
+  "bundles": [
+    {
+      "bundle_id": "a3a3d5f0b7c7a215ab223dc8fef4b64991fa04f1fd76bd56a9dedc104d272c69",
+      "curated_content": [
+        {
+          "fragment_id": "frag-1",
+          "decision_id": "9f021b6a3d52911c0658be5bf12547ea62b106ca1f18a8c55955f96659541896",
+          "evidence_record_id": "3838bdf883a5841289fcb12dca0a2f5eec42dd28ff99ad6ed6d504bffdb6e30f",
+          "content": {
+            "code": "600519",
+            "pe": 28.3,
+            "pb": 7.5
+          }
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "name": "f25_eod_cross_trading_day",
+    "expected_violation": "V5",
+    "context": {
+      "consumer": "stock-analyst.md",
+      "purpose": "trading_signal",
+      "context_time": "2026-08-17T09:00:00Z"
+    }
+  }
+}

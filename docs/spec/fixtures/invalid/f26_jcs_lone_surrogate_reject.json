@@ -1,0 +1,31 @@
+{
+  "records": [
+    {
+      "id": "<placeholder>",
+      "content_hash": "<placeholder>",
+      "raw_hash": "<placeholder>",
+      "producer_id": "S11.wind_query",
+      "evidence_class": "structured_financial",
+      "collected_at": "2026-08-13T02:15:00Z",
+      "raw_reference": {
+        "reference": "wind://daily/600519",
+        "object_hash": "ref-600519-v1"
+      },
+      "schema_version": "0.1",
+      "content_type": "structured_financial",
+      "source_type": "internal_provider",
+      "retrieval_mode": "direct_api",
+      "temporal_semantics": "realtime",
+      "normalized_content": {
+        "x": "\ud800"
+      },
+      "normalized_content_hash": "<placeholder>",
+      "normalization_version": "1.0",
+      "_raw_payload": "{\"code\": \"600519\", \"pe\": 28.3, \"pb\": 7.5}"
+    }
+  ],
+  "_meta": {
+    "name": "f26",
+    "expect_reject": true
+  }
+}

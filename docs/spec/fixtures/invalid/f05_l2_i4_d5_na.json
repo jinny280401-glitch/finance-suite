@@ -1,0 +1,41 @@
+{
+  "records": [
+    {
+      "id": "174e500f7e92b1bdf62867a54cb98393056fd29971cd2b206317ab4b0f8072f1",
+      "content_hash": "3de5975276a865a4e0355b6898eba25bf5bf95a407ba1cc76279408a958aa5fe",
+      "raw_hash": "3de5975276a865a4e0355b6898eba25bf5bf95a407ba1cc76279408a958aa5fe",
+      "producer_id": "S2.search.stock",
+      "evidence_class": "external_search",
+      "collected_at": "2026-08-13T02:15:00Z",
+      "raw_reference": {
+        "reference": "web://search/600519-news",
+        "object_hash": "ref-s-1"
+      },
+      "schema_version": "0.1",
+      "content_type": "search_result",
+      "source_type": "external_search",
+      "retrieval_mode": "search_fetch",
+      "temporal_semantics": "realtime",
+      "_raw_payload": "{\"title\": \"600519 news\"}"
+    }
+  ],
+  "assessments": [
+    {
+      "assessment_id": "f0d3428e195382831e5620e3b37aba712574cf480e520396ca0a9169e8b47469",
+      "record_id": "174e500f7e92b1bdf62867a54cb98393056fd29971cd2b206317ab4b0f8072f1",
+      "assessed_at": "2026-08-13T02:15:01Z",
+      "assessor_id": "gate.assessor.v1",
+      "assessment_policy_version": "v0.1",
+      "assessment_result_hash": "363a96ffb610aae95d8ffdb036b4a6c4da9fa5606dcc9248b6246ceb10606e76",
+      "provider_identity": "VERIFIED",
+      "field_integrity": "NOT_APPLICABLE",
+      "provenance": "external",
+      "freshness": "2026-08-13T02:14:59Z",
+      "classification": "classified:[news_event]"
+    }
+  ],
+  "_meta": {
+    "name": "f05",
+    "expected_violation": "L2-I4"
+  }
+}

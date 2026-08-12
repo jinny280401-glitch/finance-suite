@@ -1,0 +1,134 @@
+{
+  "records": [
+    {
+      "id": "db66292423b7f67c22eea94bf7649d37e22faf32b02e21ca8efaeda75704a7e0",
+      "content_hash": "1579d2ab458707dd23187359b251d37b75d23bc2cf0cbd72c33bf34dd7587465",
+      "raw_hash": "1579d2ab458707dd23187359b251d37b75d23bc2cf0cbd72c33bf34dd7587465",
+      "producer_id": "S11.wind_query",
+      "evidence_class": "structured_financial",
+      "collected_at": "2026-08-13 02:15:00",
+      "raw_reference": {
+        "reference": "wind://daily/600519",
+        "object_hash": "ref-600519-v1"
+      },
+      "schema_version": "0.1",
+      "content_type": "structured_financial",
+      "source_type": "internal_provider",
+      "retrieval_mode": "direct_api",
+      "temporal_semantics": "realtime",
+      "normalized_content": {
+        "code": "600519",
+        "pe": 28.3,
+        "pb": 7.5
+      },
+      "normalized_content_hash": "e568ee492df73ff55b733e5c3b8c9e42f9226ffdd09991991a8104af8d03c38e",
+      "normalization_version": "1.0",
+      "_raw_payload": "{\"code\": \"600519\", \"pe\": 28.3, \"pb\": 7.5}"
+    }
+  ],
+  "assessments": [
+    {
+      "assessment_id": "abb6e3434c42ebaed54d135ed67a21a02c664a5bf7ae444863b506ccb286847e",
+      "record_id": "db66292423b7f67c22eea94bf7649d37e22faf32b02e21ca8efaeda75704a7e0",
+      "assessed_at": "2026-08-13T02:15:01Z",
+      "assessor_id": "gate.assessor.v1",
+      "assessment_policy_version": "v0.1",
+      "assessment_result_hash": "a184ad69fd026a908ba031c4d08885ac7790403db3c5a3d50f194814de1abd16",
+      "provider_identity": "VERIFIED",
+      "field_integrity": "PASS",
+      "provenance": "real",
+      "freshness": "2026-08-13T02:14:59Z",
+      "classification": "classified:[valuation]"
+    }
+  ],
+  "decisions": [
+    {
+      "decision_id": "00ee2f2ccec98ee126d2462df2d13404e6d560aab87a423a6a36f6cc3adfb877",
+      "record_id": "db66292423b7f67c22eea94bf7649d37e22faf32b02e21ca8efaeda75704a7e0",
+      "assessment_ref": "abb6e3434c42ebaed54d135ed67a21a02c664a5bf7ae444863b506ccb286847e",
+      "consumer": "stock-analyst.md",
+      "purpose": "trading_signal",
+      "policy_family": "P1",
+      "policy_version": "v0.1",
+      "verdict": "ALLOW",
+      "allowed_use": [
+        "fundamental_overview",
+        "valuation_judgment"
+      ],
+      "blocked_use": [],
+      "max_claim_strength": "OBSERVED_FACT"
+    }
+  ],
+  "receipts": [
+    {
+      "receipt_id": "66e44785439a511fba58aa51f06260cd696931dc2ac9f88f0e4595ee25dd48d4",
+      "receipt_schema_version": "1.0",
+      "decision_id": "00ee2f2ccec98ee126d2462df2d13404e6d560aab87a423a6a36f6cc3adfb877",
+      "assessment_id": "abb6e3434c42ebaed54d135ed67a21a02c664a5bf7ae444863b506ccb286847e",
+      "assessment_result_hash": "a184ad69fd026a908ba031c4d08885ac7790403db3c5a3d50f194814de1abd16",
+      "producer_id": "S11.wind_query",
+      "evidence_record_id": "db66292423b7f67c22eea94bf7649d37e22faf32b02e21ca8efaeda75704a7e0",
+      "consumer": "stock-analyst.md",
+      "purpose": "trading_signal",
+      "policy_family": "P1",
+      "policy_version": "v0.1",
+      "verdict": "ALLOW",
+      "allowed_use": [
+        "fundamental_overview",
+        "valuation_judgment"
+      ],
+      "blocked_use": [],
+      "max_claim_strength": "OBSERVED_FACT",
+      "assessment_dimensions": {
+        "provider_identity": "VERIFIED",
+        "field_integrity": "PASS",
+        "provenance": "real",
+        "freshness": "2026-08-13T02:14:59Z",
+        "classification": "classified:[valuation]"
+      },
+      "evidence_hash": "1579d2ab458707dd23187359b251d37b75d23bc2cf0cbd72c33bf34dd7587465",
+      "timestamp": "2026-08-13T02:15:02Z",
+      "audit_trail": {
+        "bypass_detected": false
+      }
+    }
+  ],
+  "manifests": [
+    {
+      "bundle_id": "7f308fa25e8fc70c4e44acc42a71d6765aeaf62ee6a0e9f6a55b868c16769d9b",
+      "bundle_schema_version": "1.0",
+      "consumer": "stock-analyst.md",
+      "purpose": "trading_signal",
+      "admitted_record_ids": [
+        "db66292423b7f67c22eea94bf7649d37e22faf32b02e21ca8efaeda75704a7e0"
+      ],
+      "member_decision_ids": [
+        "00ee2f2ccec98ee126d2462df2d13404e6d560aab87a423a6a36f6cc3adfb877"
+      ],
+      "curated_content_hash": "c374f1065715215c1876824c56c2aa5ea34fb272fbacaa9e2a4f59bfdb53f009",
+      "generated_at": "2026-08-13T02:15:03Z",
+      "bundle_hash": "7f308fa25e8fc70c4e44acc42a71d6765aeaf62ee6a0e9f6a55b868c16769d9b"
+    }
+  ],
+  "bundles": [
+    {
+      "bundle_id": "7f308fa25e8fc70c4e44acc42a71d6765aeaf62ee6a0e9f6a55b868c16769d9b",
+      "curated_content": [
+        {
+          "fragment_id": "frag-1",
+          "decision_id": "00ee2f2ccec98ee126d2462df2d13404e6d560aab87a423a6a36f6cc3adfb877",
+          "evidence_record_id": "db66292423b7f67c22eea94bf7649d37e22faf32b02e21ca8efaeda75704a7e0",
+          "content": {
+            "code": "600519",
+            "pe": 28.3,
+            "pb": 7.5
+          }
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "name": "f20",
+    "expected_violation": "L1-I7"
+  }
+}
