@@ -10,11 +10,13 @@ GET /api/intel/research          - Sidebar 脱水研报统一契约
 GET /api/intel/all               - Sidebar 四板块聚合
 GET /api/intel/market-context    - 今日市场画像 / Market Context Layer
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 import json
 import subprocess
 import sys
 import os
+
+from auth_guard import require_auth, require_admin
 
 router = APIRouter(prefix="/api/intel")
 
@@ -135,19 +137,19 @@ def _contract_failure(module: str, error: str) -> dict:
 
 
 @router.get("/xueqiu-hot")
-async def xueqiu_hot():
+async def xueqiu_hot(user: dict = Depends(require_auth)):
     """雪球热门讨论"""
     return _call_mcp_tool("xueqiu_fetch", query="热门讨论")
 
 
 @router.get("/xueqiu-hot-stock")
-async def xueqiu_hot_stock():
+async def xueqiu_hot_stock(user: dict = Depends(require_auth)):
     """雪球热股榜"""
     return _call_mcp_tool("xueqiu_fetch", query="热股榜")
 
 
 @router.get("/discussions")
-async def intel_discussions(limit: int = Query(10, ge=1, le=50)):
+async def intel_discussions(limit: int = Query(10, ge=1, le=50), user: dict = Depends(require_auth)):
     """市场情报 Sidebar：热门讨论。返回 {items, _qc, meta} 契约。"""
     try:
         import market_intel
@@ -157,7 +159,7 @@ async def intel_discussions(limit: int = Query(10, ge=1, le=50)):
 
 
 @router.get("/hot-stocks")
-async def intel_hot_stocks(limit: int = Query(10, ge=1, le=50)):
+async def intel_hot_stocks(limit: int = Query(10, ge=1, le=50), user: dict = Depends(require_auth)):
     """市场情报 Sidebar：热股榜。返回 {items, _qc, meta} 契约。"""
     try:
         import market_intel
@@ -167,7 +169,7 @@ async def intel_hot_stocks(limit: int = Query(10, ge=1, le=50)):
 
 
 @router.get("/watch-alerts")
-async def intel_watch_alerts(change_threshold: float = Query(3.0, ge=0, le=20)):
+async def intel_watch_alerts(change_threshold: float = Query(3.0, ge=0, le=20), user: dict = Depends(require_auth)):
     """市场情报 Sidebar：自选股异动。返回 {items, _qc, meta} 契约。"""
     try:
         import market_intel
@@ -181,6 +183,7 @@ async def intel_research(
     limit: int = Query(10, ge=1, le=50),
     mode: str = Query("batch", pattern="^(batch|deep)$"),
     max_llm: int = Query(0, ge=0, le=20),
+    user: dict = Depends(require_auth),
 ):
     """市场情报 Sidebar：脱水研报。默认不在 HTTP 请求里触发 LLM，优先读预计算缓存。"""
     try:
@@ -197,6 +200,7 @@ async def intel_all(
     limit: int = Query(10, ge=1, le=50),
     mode: str = Query("batch", pattern="^(batch|deep)$"),
     modules: str = Query("", description="逗号分隔：discussions,hot_stocks,watch_alerts,research"),
+    user: dict = Depends(require_auth),
 ):
     """市场情报 Sidebar：四板块聚合。返回 {panels, _qc, meta}。"""
     try:
@@ -224,7 +228,7 @@ async def intel_all(
 
 
 @router.get("/market-context")
-async def market_context_layer():
+async def market_context_layer(user: dict = Depends(require_auth)):
     """今日市场画像：只读市场结构摘要，不写库，不返回交易指令。"""
     try:
         import market_context
@@ -264,7 +268,7 @@ async def market_context_layer():
 
 
 @router.get("/golden-pit")
-async def golden_pit(realtime: bool = Query(False, description="是否追加实时行情（约3-4分钟）")):
+async def golden_pit(realtime: bool = Query(False, description="是否追加实时行情（约3-4分钟）"), user: dict = Depends(require_auth)):
     """
     黄金坑四重门扫描
     触发方式：在集合竞价输入框输入"黄金坑"、"四重门"或"ghk"

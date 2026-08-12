@@ -430,8 +430,16 @@
       if (typeof data === 'string') {
         return `<pre>${data}</pre>`;
       }
-      const qcPanel = renderQcPanel(data._qc || {});
-      return `${qcPanel}<pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre>`;
+      // Security: allowlist-only. Internal metadata fields (dispatch_trace,
+      // qa_result, data_availability, final_seal, usage_*, hallucination_risk,
+      // fact_coverage, freshness, report_as_of, section_data_usage) must never
+      // reach browser DOM. The QC panel (renderQcPanel) is already curated.
+      var userFacing = {
+        success: data.success,
+        result: data.result
+      };
+      var qcPanel = renderQcPanel(data._qc || {});
+      return `${qcPanel}<pre>${escapeHtml(JSON.stringify(userFacing, null, 2))}</pre>`;
     }
 
     function renderQcPanel(qc) {

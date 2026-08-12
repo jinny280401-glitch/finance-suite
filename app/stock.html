@@ -719,7 +719,8 @@
       if (md) {
         html += marked.parse(md);
       } else {
-        html += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        // Security: allowlist-only fallback. Never dump raw API response.
+        html += `<pre>${JSON.stringify({ success: data.success, result: data.result }, null, 2)}</pre>`;
       }
 
       if (sources.length > 0) {
