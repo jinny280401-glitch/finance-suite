@@ -208,8 +208,8 @@ def d6_ceiling(content_type, provenance, purpose, classification):
                 "fallback": "INFORMATIONAL"}.get(provenance)
     if content_type == "search_result":
         if classification == "unclassified":
-            # §1.6：trading 行冻结 = NC；research 行未冻结（TBD）→ 跳过不检查
-            return "NO_CLAIM" if purpose == "trading_signal" else None
+            # §1.6 行 206 + M25 (2026-08-13): trading=NC, research=INF
+            return "NO_CLAIM" if purpose == "trading_signal" else "INFORMATIONAL"
         return "ATTRIBUTED_CLAIM"
     if content_type == "news_article":
         return "ATTRIBUTED_CLAIM"

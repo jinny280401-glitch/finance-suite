@@ -39,6 +39,7 @@ I0 只回答：**Spine 上各对象"是什么"，以及它们之间必须满足�
 | CR4 | Bundle 完整性闭合 | `bundle_hash` = manifest 无自引用 canonical representation 的 hash（绑定 consumer/purpose/有序 member IDs/record IDs/curated-content hash/schema version）；L4-I15 升级为逐项 provenance 对应 | #4 NOT PROVEN → 采纳 |
 | CR5 | 机器验证语义 | 状态改为 `DRAFT / schema validation pending`；验证器声明**受限 JCS profile** 并拒绝未覆盖 edge cases；classification domain list canonical order 规则 | #5 PARTIAL → 采纳 |
 | CR6 | media_transcript ceiling 限定 | trading ceiling = INF **仅允许无 financial signal 的上下文存在**；任何 financial signal 仍由 P4 默认策略 BLOCK | 审查确认项 → 采纳 |
+| M25 | D6 research×search_result×unclassified 裁决 | Human Decision (2026-08-13): **INFORMATIONAL** — unclassified search_result 在 research purpose 下可作为 background information，必须保留 `unclassified/search_external` marker，不得单独支撑 claim，经 synthesis 时 glb ≤ INF | 用户裁决 → 唯一未定义格闭合 |
 
 ---
 
@@ -195,7 +196,7 @@ consumer purpose: trading ≤ research 的同源上限
 
 ### 1.6 D6 Claim Ceiling 函数
 
-`ceiling(content_type, provenance, purpose)` — L3 `max_claim_strength` 的上限。冻结行 + 推导行（OBS-4）+ TBD 行：
+`ceiling(content_type, provenance, purpose)` — L3 `max_claim_strength` 的上限。冻结行 + 推导行（OBS-4）：
 
 | content_type | 条件 | research | trading | 来源 |
 |--------------|------|----------|---------|------|
@@ -203,7 +204,7 @@ consumer purpose: trading ≤ research 的同源上限
 | structured_financial | provenance=derived | DI | DI | D6 |
 | structured_financial | provenance=fallback | INF | INF | D6 |
 | search_result | classified（domain available） | AC | AC | D6 |
-| search_result | unclassified | **TBD** | NC | D6 trading 行；research 行未冻结 |
+| search_result | unclassified | **INF（M25）** | NC | D6 trading 行冻结；research 行 M25 |
 | news_article | — | AC | AC | D6 |
 | macro_indicator | — | OF（as-of publish） | OF | D6 |
 | market_pulse | — | OF（market heat fact） | OF | D6 |
@@ -742,19 +743,21 @@ bundle_hash = SHA3-256( JCS({
 I0 Schema Contract:            FROZEN / OPEN PARAMETERS CLOSED（2026-08-13）
 ACR Register:                  ACR-1/ACR-2/ACR-3 CLOSED（已传播 Coverage = M20/M21/M24；CR3/CR4 一致性 = M22/M23）
 Parameters #1/#2/#3/#4:        FROZEN（6×5 矩阵 §1.8 / registry baseline §1.3.2 / decision_id 公式 §4.1 / bundle_id = bundle_hash §6.1）
-Fixtures / Validator:          MATERIALIZED — 29/29 全 PASS（2026-08-13；exit 0）
-                                valid 3（normative_full_chain / f17_audit_old_data_fresh / f17_eod_weekend_boundary）
-                                invalid 26（F1–F16/F18–F26；f25 拆 realtime + eod 跨交易日；f26 = JCS REJECT）
+Fixtures / Validator:          MATERIALIZED — 31/31 全 PASS（2026-08-13；exit 0）
+                                valid 4（normative_full_chain / f17_audit_old_data_fresh / f17_eod_weekend_boundary / f27_d6_research_unclassified_inf）
+                                invalid 27（F1–F16/F18–F26/F28；f25 拆 realtime + eod 跨交易日；f26 = JCS REJECT；f28 = D6 boundary trading）
                                 validator: validate_i0_schema_contract.py（stdlib only；受限 JCS profile CR5）
                                 fixture 实算: generate_i0_fixtures.py（与 validator 同一 jcs/sha3 实现）
-I0 Validation Evidence:        PASS — Regression 29/29（2026-08-13；L1-I9/L2-I7/X-I3 design-level skip 已登记，非假装测过）
-I0 SCHEMA CONTRACT PROVEN:     NOT YET — 唯一未闭合语义 = D6 research×search_result×unclassified TBD
-                               （2026-08-13 用户裁决：NOT YET 为健康状态，非失败；关闭路径 = D6 单格裁决 → 2 判别 fixture → 全量 regression → Task #10）
+I0 Validation Evidence:        PASS — Regression 31/31（2026-08-13；L1-I9/L2-I7/X-I3 design-level skip 已登记，非假装测过）
+I0 SCHEMA CONTRACT PROVEN:     **PROVEN** — M25 COMMITTED（research×search_result×unclassified = INF）
+                               + validator 实现 D6 research 分支 + 2 判别 fixtures（f27 positive / f28 boundary）
+                               + regression 31/31 PASS + semantic matrix 28/28 FROZEN（UNDEFINED_CELLS = 0）
+                               （2026-08-13 Task #10 裁决）
 Evidence Layer implemented:    NOT CLAIMABLE
 Production enforcement:        NOT CLAIMABLE
 Normative Examples:            SPEC 版已有（§11）+ fixture 实算（valid/normative_full_chain.json）
-Invalid Fixtures:              CATALOG F1–F26（§12）+ fixture 实算（invalid/*.json，_meta 声明 expected_violations）
-Machine Validation Tests:      PLAN 已定（受限 JCS profile, §13）；实现待
+Invalid Fixtures:              CATALOG F1–F28（§12 + F27/F28 M25）+ fixture 实算（invalid/*.json，_meta 声明 expected_violations）
+Machine Validation Tests:      IMPLEMENTED — validate_i0_schema_contract.py（stdlib only；受限 JCS profile CR5；53 invariants / 50 machine-checked）
 Production Wiring:             NOT AUTHORIZED
 Production Coverage:           0/15（I0 不改变该口径）
 ```

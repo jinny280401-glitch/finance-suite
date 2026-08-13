@@ -1,9 +1,13 @@
 # I0 — D6 Narrow Adjudication v0.1
 
 **卡：** Implementation Plan — I0（唯一 blocker 收口）
-**状态：** OPEN — 待用户裁决
+**状态：** CLOSED — M25 已裁决
 **日期：** 2026-08-13
 **范围锁死：** 只回答一格：D6 `search_result × unclassified × research` 的行为语义。不重开 I0、不动其它 taxonomy、不改 CR1–CR6、不重跑/新增无关 fixture。
+
+**DECISION:** M25 = INF — `search_result × unclassified × research = INFORMATIONAL`
+**HUMAN_DECISION:** 2026-08-13
+**语义：** 可作为 research background information；必须保留 `unclassified/search_external` marker；不得单独支撑 claim；claim-strength ceiling = INF；trading counterpart 保持 NC。
 
 ---
 
@@ -53,9 +57,9 @@ Coverage Contract 无 D6 格子副本 — 其 claim-strength 语义是 per-famil
 ## States
 
 ```
-D6 Narrow Adjudication:      OPEN — 待用户裁决（唯一 blocker；选项空间 {NC, INF}；推荐 A=INF）
+D6 Narrow Adjudication:      CLOSED — M25 = INF（Human Decision 2026-08-13；选项空间 {NC, INF} → 选 A=INF）
 I0 Schema Contract:          FROZEN / OPEN PARAMETERS CLOSED
-I0 Validation Evidence:      PASS — Regression 29/29（2026-08-13）
-I0 SCHEMA CONTRACT PROVEN:   NOT YET — 唯一未闭合语义 = 本卡
+I0 Validation Evidence:      PASS — Regression 31/31（2026-08-13）
+I0 SCHEMA CONTRACT PROVEN:   PROVEN — M25 COMMITTED（research×search_result×unclassified = INF）
 OBS-8:                       ACCEPTED / NON-BLOCKING TAXONOMY DEBT（不 amendment）
 ```

@@ -296,6 +296,18 @@ def main():
                                  "context_time": "2026-08-15T08:00:00Z"}}
     dump(os.path.join(VALID_DIR, "f17_eod_weekend_boundary.json"), data)
 
+    # f27：D6 research×search_result×unclassified = INF (M25 positive discriminator)
+    srecord = search_record()
+    sassessment = search_assessment("unclassified")
+    sdecision = search_decision("research", "P2", "ALLOW_WITH_MARKER", "INFORMATIONAL")
+    sdecision["consumer"] = "Vera.ResearchSession"
+    data = link_rd(srecord, sassessment, decision=sdecision)
+    data["_meta"] = {"name": "f27_d6_research_unclassified_inf",
+                     "description": "M25 positive: search_result + unclassified + research → ceiling=INF",
+                     "context": {"consumer": "Vera.ResearchSession", "purpose": "research",
+                                 "context_time": "2026-08-13T09:30:02Z"}}
+    dump(os.path.join(VALID_DIR, "f27_d6_research_unclassified_inf.json"), data)
+
     # ---------- invalid ----------
 
     # f01：L1-I5 — record 携带 fact-purity 禁用字段
@@ -391,6 +403,15 @@ def main():
     data = link_rd(record, assessment, decision=decision)
     data["_meta"] = {"name": "f11", "expected_violation": "L3-I4", "financial_signal": True}
     dump(os.path.join(INVALID_DIR, "f11_l3_i4_unclassified_trading.json"), data)
+
+    # f28：D6 search_result×unclassified×trading = NC 边界 (M25 判别) — strength=AC 升级违反
+    # 注意：research 行 M25 = INF，但 trading 行冻结 = NC；不得因 research=INF 传播到 trading。
+    record = search_record()
+    assessment = search_assessment("unclassified")
+    decision = search_decision("trading_signal", "P2", "ALLOW_WITH_MARKER", "ATTRIBUTED_CLAIM")
+    data = link_rd(record, assessment, decision=decision)
+    data["_meta"] = {"name": "f28", "expected_violation": "L3-I5"}
+    dump(os.path.join(INVALID_DIR, "f28_d6_boundary_trading_unclassified.json"), data)
 
     # f12：L4-I2 — receipt 携带 bundle 字段（bundle 未成型）
     comp = base_components()
