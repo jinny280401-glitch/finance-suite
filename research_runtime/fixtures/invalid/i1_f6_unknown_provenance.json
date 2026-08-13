@@ -1,0 +1,9 @@
+{
+  "_expect": "MaterializeReject: unknown provenance",
+  "content_type": "search_result",
+  "provenance": "mystery",
+  "classification": "unclassified",
+  "purpose": "research",
+  "temporal_semantics": "realtime",
+  "freshness": "2026-08-13T09:55:00Z"
+}
