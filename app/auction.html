@@ -243,7 +243,88 @@
       color: #b95f00;
       font-weight: 500;
     }
+
+    /* Markdown report (auction /api/analyze) — card-style render */
+    .report-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      line-height: 1.7;
+    }
+    .report-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      background: var(--surface-2);
+      overflow-x: auto;
+    }
+    .report-card__title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .report-card h1, .report-card h2, .report-card h3, .report-card h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 16px 0 8px;
+    }
+    .report-card p { margin: 8px 0; }
+    .report-card ul, .report-card ol { margin: 8px 0 8px 20px; }
+    .report-card li { margin: 4px 0; }
+    .report-card strong { font-weight: 600; color: var(--text); }
+    .report-card table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+    .report-card th, .report-card td {
+      border: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+    }
+    .report-card th {
+      background: var(--surface);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .report-card blockquote {
+      margin: 12px 0;
+      padding: 8px 14px;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--text-secondary);
+      border-radius: 0 8px 8px 0;
+      font-size: 13px;
+    }
+    .report-card hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 16px 0;
+    }
+    .report-card code {
+      background: var(--surface);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+    .report-disclaimer {
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.6;
+    }
   </style>
+  <script src="marked.min.js"></script>
 </head>
 <body>
   <header class="site-header">
@@ -257,10 +338,9 @@
 
   <main class="main-container">
     <div class="page-head">
-      <h1 class="page-head__title">集合竞价</h1>
-      <p class="page-head__desc">实时集合竞价 · 强势池扫描</p>
+      <h1 class="page-head__title">集合竞价强势候选池</h1>
+      <p class="page-head__desc">东方财富集合竞价实时数据 · 强势股 + 昨日涨停追踪</p>
     </div>
-
     <form class="analyze-form" id="analyzeForm">
       <label class="form-label" for="queryInput">输入日期或直接点击分析今日数据</label>
       <input
@@ -313,6 +393,7 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+
       const query = queryInput.value.trim();
       const goldenPit = isGoldenPitQuery(query);
 
@@ -326,7 +407,8 @@
         let data;
         if (goldenPit) {
           const useRealtime = query.includes('实时');
-          const url = `/api/intel/golden-pit${useRealtime ? '?realtime=true' : ''}`;
+          const traceToken = crypto.randomUUID();
+          const url = `/api/intel/golden-pit?trace_token=${encodeURIComponent(traceToken)}${useRealtime ? '&realtime=true' : ''}`;
           const resp = await fetch(url, { credentials: 'include' });
           data = await readJsonOrThrow(resp, '扫描失败');
           if (!resp.ok) throw new Error(data.detail || '扫描失败');
@@ -357,97 +439,176 @@
     });
 
     function formatGoldenPit(data) {
-      // Leadership Demo Safe Fix: honest labels only.
-      // This endpoint returns EastMoney real-time auction strong pool data,
-      // NOT golden-pit four-gate quant screening results.
-      const items = data.data || [];
-      const qc = data._qc || {};
-
-      // Group by source_bucket
-      var buckets = {};
-      items.forEach(function(item) {
-        var bucket = item.source_bucket || 'other';
-        if (!buckets[bucket]) buckets[bucket] = [];
-        buckets[bucket].push(item);
-      });
-
-      var bucketLabels = {
-        'strong_pool': '强势池',
-        'previous_zt': '前期涨停',
-        'zt_pool': '涨停池',
-        'big_buy': '大单买入',
-        'hot_rank': '人气榜',
-        'hot_up': '热点上涨',
-        'top_gainers': '涨幅榜'
-      };
-
-      var generatedAt = qc.generated_at || '';
-      var displayTime = generatedAt ? generatedAt.slice(0, 19).replace('T', ' ') : '实时';
-
-      var html = '<div style="font-family:monospace;font-size:13px;line-height:1.8">';
-
-      // Title — honest capability label
-      html += '<div style="font-weight:bold;font-size:15px;margin-bottom:8px">集合竞价强势池</div>';
-
-      // Meta line
-      html += '<div style="color:#888;margin-bottom:12px">';
-      html += '数据时间：' + displayTime;
-      html += ' | 数据来源：东方财富实时集合竞价';
-      if (qc.completeness !== undefined) html += ' | 数据完整度：' + Math.round(qc.completeness * 100) + '%';
-      if (qc.source_type) html += ' | 类型：' + (qc.source_type === 'real' ? '真实数据' : qc.source_type);
-      html += '</div>';
-
-      // Render each bucket
-      var bucketOrder = ['strong_pool', 'previous_zt', 'zt_pool', 'big_buy', 'hot_rank', 'hot_up', 'top_gainers'];
-      var totalShown = 0;
-      bucketOrder.forEach(function(bucketKey) {
-        var bucketItems = buckets[bucketKey];
-        if (!bucketItems || bucketItems.length === 0) return;
-
-        var label = bucketLabels[bucketKey] || bucketKey;
-        html += '<div style="font-weight:bold;color:#e74c3c;margin-bottom:6px">' + label + '：' + bucketItems.length + ' 只</div>';
-
-        bucketItems.forEach(function(s, i) {
-          var changeStr = s.change != null ? (s.change > 0 ? '+' : '') + s.change + '%' : '';
-          var reasonStr = s.reason ? ' ' + s.reason : '';
-          html += '<div style="margin-bottom:3px">' + (i + 1) + '. <b>' + escapeHtml(String(s.code)) + '</b> ' + escapeHtml(String(s.name || '')) + ' ' + changeStr + escapeHtml(reasonStr) + '</div>';
-        });
-        html += '<br>';
-        totalShown += bucketItems.length;
-      });
-
-      if (items.length === 0) {
-        html += '<div style="color:#888;margin-bottom:12px">当前无竞价强势池数据</div>';
+      // Handle unexpected response shape gracefully
+      if (!data || typeof data !== 'object') {
+        return `<div class="result-error">数据不可用：接口返回格式异常</div>`;
       }
 
+      const items = Array.isArray(data.data) ? data.data : [];
+      const count = typeof data.count === 'number' ? data.count : items.length;
+      const qc = data._qc || {};
+
+      // Empty state — consume backend candidate_conclusion, do NOT reinterpret None/[] here
+      if (count === 0 || (items.length === 0 && count === 0)) {
+        const conclusion = (data.algorithm && data.algorithm.candidate_filtering)
+          ? data.algorithm.candidate_filtering.candidate_conclusion : null;
+        let emptyMessage;
+        if (conclusion === 'healthy_inputs_zero_matches') {
+          emptyMessage = `<div style="color:#2e7d32;padding:12px;background:rgba(46,125,50,0.08);border-radius:8px;margin-bottom:12px">扫描完成：当前无符合条件的强势候选</div>`;
+        } else if (conclusion === 'indeterminate') {
+          emptyMessage = `<div style="color:#c0392b;padding:12px;background:rgba(192,57,43,0.08);border-radius:8px;margin-bottom:12px">数据源异常，无法判断是否存在候选，请稍后重试</div>`;
+        } else if (conclusion === 'pre_auction_observation') {
+          emptyMessage = `<div style="color:#e67e22;padding:12px;background:rgba(230,126,34,0.08);border-radius:8px;margin-bottom:12px">集合竞价进行中（09:15–09:25），结果尚未确定，当前仅可观察，09:25 后生成候选池</div>`;
+        } else {
+          emptyMessage = `<div style="color:#e67e22;padding:12px;background:rgba(230,126,34,0.08);border-radius:8px;margin-bottom:12px">数据状态未知（接口未返回扫描结论）</div>`;
+        }
+        let html = `<div style="font-family:monospace;font-size:13px;line-height:1.8">`;
+        html += `<div style="font-weight:bold;font-size:15px;margin-bottom:8px">集合竞价强势候选池</div>`;
+        html += `<div style="color:#888;margin-bottom:12px">数据时间：${qc.generated_at || '今日'} | 数据来源：东方财富集合竞价</div>`;
+        html += emptyMessage;
+        html += renderQcPanel(qc);
+        html += `<div style="color:#aaa;margin-top:12px;font-size:11px">免责声明：数据仅供参考，不构成投资建议</div>`;
+        html += `</div>`;
+        return html;
+      }
+
+      const source = (qc.sources && qc.sources.length) ? qc.sources[0] : '东方财富';
+      const isReal = qc.source_type === 'real';
+      const generatedAt = qc.generated_at || '';
+
+      let html = `<div style="font-family:monospace;font-size:13px;line-height:1.8">`;
+
+      // Header — capability name, NOT Golden Pit
+      html += `<div style="font-weight:bold;font-size:15px;margin-bottom:8px">集合竞价强势候选池</div>`;
+      html += `<div style="color:#888;margin-bottom:4px">数据来源：东方财富集合竞价（${escapeHtml(source)}）`;
+      if (!isReal) html += ` <span style="color:#e67e22">[非实时]</span>`;
+      html += `</div>`;
+      html += `<div style="color:#888;margin-bottom:12px">数据时间：${escapeHtml(generatedAt || '今日')} | 共 ${count} 只 | 展示前 ${items.length} 只</div>`;
+
+      // Bucket labels
+      const bucketLabel = {
+        strong_pool: '强势股（60日新高/多次涨停）',
+        previous_zt: '昨日涨停今日表现',
+        zt_pool: '今日涨停池',
+      };
+
+      // Group by source_bucket
+      const buckets = {};
+      items.forEach(s => {
+        const b = s.source_bucket || 'other';
+        if (!buckets[b]) buckets[b] = [];
+        buckets[b].push(s);
+      });
+
+      Object.keys(buckets).forEach(bucket => {
+        const bucketItems = buckets[bucket];
+        const label = bucketLabel[bucket] || bucket;
+        html += `<div style="font-weight:bold;color:#0071e3;margin-top:14px;margin-bottom:6px">${escapeHtml(label)}：${bucketItems.length} 只</div>`;
+
+        bucketItems.forEach((s, i) => {
+          const changeStr = s.change != null ? `${s.change > 0 ? '+' : ''}${s.change.toFixed(1)}%` : '-';
+          const changeColor = s.change > 0 ? '#e74c3c' : s.change < 0 ? '#27ae60' : '#888';
+          html += `<div style="margin-bottom:4px;padding:6px 8px;background:#fafafa;border-radius:6px">`;
+          html += `${i+1}. <b>${escapeHtml(s.code)}</b> ${escapeHtml(s.name || '')}`;
+          html += ` <span style="color:${changeColor};font-weight:500">${changeStr}</span>`;
+          if (s.reason) html += ` <span style="color:#888;font-size:12px">[${escapeHtml(s.reason)}]</span>`;
+          html += `</div>`;
+        });
+      });
+
       html += renderQcPanel(qc);
-      html += '<div style="color:#aaa;margin-top:12px;font-size:11px">免责声明：实时集合竞价数据仅供参考，不构成投资建议。数据来源：东方财富</div>';
-      html += '</div>';
+      html += `<div style="color:#aaa;margin-top:12px;font-size:11px">免责声明：数据仅供参考，不构成投资建议。集合竞价强势候选池基于东方财富公开数据，非量化因子信号。</div>`;
+      html += `</div>`;
       return html;
     }
 
     function formatResult(data) {
       if (typeof data === 'string') {
-        return `<pre>${data}</pre>`;
+        return `<pre>${escapeHtml(data)}</pre>`;
       }
       // Security: allowlist-only. Internal metadata fields (dispatch_trace,
       // qa_result, data_availability, final_seal, usage_*, hallucination_risk,
       // fact_coverage, freshness, report_as_of, section_data_usage) must never
-      // reach browser DOM. The QC panel (renderQcPanel) is already curated.
-      var userFacing = {
-        success: data.success,
-        result: data.result
-      };
-      var qcPanel = renderQcPanel(data._qc || {});
-      return `${qcPanel}<pre>${escapeHtml(JSON.stringify(userFacing, null, 2))}</pre>`;
+      // reach browser DOM. Only result (the report body) is rendered; the QC
+      // panel (renderQcPanel) is already curated.
+      const qc = data._qc || {};
+      const reportText = typeof data.result === 'string' ? data.result : '';
+
+      let html = '';
+      html += renderReportMeta(data, qc);
+      html += renderMarkdown(reportText);
+      html += renderQcPanel(qc);
+      html += `<div class="report-disclaimer">免责声明：以上分析由模型基于公开数据生成，仅供研究参考，不构成投资建议。</div>`;
+      return html;
+    }
+
+    // Honest quality metadata line, mirroring the golden-pit meta row.
+    function renderReportMeta(data, qc) {
+      const parts = [];
+
+      const asOf = (data.report_as_of && data.report_as_of.date) || '';
+      if (asOf) parts.push('数据日期：' + asOf);
+
+      const completeness = typeof qc.completeness === 'number' ? Math.round(qc.completeness * 100) + '%' : '未知';
+      parts.push('数据完整度：' + completeness);
+
+      const sources = Array.isArray(qc.sources) && qc.sources.length ? qc.sources.join(' / ') : '未知';
+      parts.push('信源：' + sources);
+
+      const freshness = qc.freshness || {};
+      if (freshness.source_date_unknown) {
+        parts.push('信源日期未知，内容可能来自模型训练知识');
+      } else if (freshness.is_stale) {
+        parts.push('数据可能过期');
+      }
+
+      const fc = qc.fact_coverage || {};
+      if (typeof fc.llm_inference_ratio === 'number') {
+        parts.push('模型推断占比：' + Math.round(fc.llm_inference_ratio * 100) + '%');
+      }
+
+      if (parts.length === 0) return '';
+      return `<div class="report-meta">${parts.map(p => escapeHtml(p)).join(' ｜ ')}</div>`;
+    }
+
+    // Split the markdown report by "### " section headings, one card per
+    // section, and render each card body through marked.
+    function renderMarkdown(text) {
+      if (!text) return '<div class="report-card">暂无分析内容</div>';
+
+      const sections = text.split(/^###[ \t]+/m);
+      if (sections.length === 1) {
+        return `<div class="report-card">${md(sections[0])}</div>`;
+      }
+
+      let html = '';
+      if (sections[0] && sections[0].trim()) {
+        html += `<div class="report-card">${md(sections[0])}</div>`;
+      }
+      for (let i = 1; i < sections.length; i++) {
+        const sec = sections[i];
+        const nl = sec.indexOf('\n');
+        const title = nl >= 0 ? sec.slice(0, nl) : sec;
+        const body = nl >= 0 ? sec.slice(nl + 1) : '';
+        html += `<div class="report-card">`
+          + `<div class="report-card__title">${escapeHtml(title.trim())}</div>`
+          + md(body)
+          + `</div>`;
+      }
+      return html;
+    }
+
+    function md(s) {
+      if (window.marked && typeof window.marked.parse === 'function') {
+        return window.marked.parse(s, { breaks: true, gfm: true });
+      }
+      return `<pre>${escapeHtml(s)}</pre>`;
     }
 
     function renderQcPanel(qc) {
       if (!qc || Object.keys(qc).length === 0) return '';
       const completeness = typeof qc.completeness === 'number' ? `${Math.round(qc.completeness * 100)}%` : '未知';
       const sources = Array.isArray(qc.sources) && qc.sources.length ? qc.sources.join(' / ') : '未知';
-      const sourceType = qc.source_type || '';
-      const sourceTypeLabel = sourceType === 'real' ? '真实数据' : sourceType === 'fallback' ? '降级数据' : (sourceType || '未知');
       const fallback = qc.fallback_source || '无';
       const missing = Array.isArray(qc.missing_dimensions) && qc.missing_dimensions.length ? qc.missing_dimensions.join(' / ') : '无';
       const stale = Array.isArray(qc.stale_data) ? qc.stale_data : [];
@@ -457,17 +618,22 @@
         const reason = item.reason || item.message || '数据可能延迟';
         return [date, reason].filter(Boolean).join('，');
       }).join('；');
+      const allowedUse = Array.isArray(qc.allowed_use) && qc.allowed_use.length ? qc.allowed_use.join(' / ') : '—';
+      const forbiddenUse = Array.isArray(qc.forbidden_use) && qc.forbidden_use.length ? qc.forbidden_use.join(' / ') : '—';
+      const blockedFields = Array.isArray(qc.blocked_fields) && qc.blocked_fields.length ? qc.blocked_fields.join(' / ') : '无';
 
       let html = `<div class="qc-panel">`;
-      html += `<div class="qc-panel__title">数据质量</div>`;
+      html += `<div class="qc-panel__title">数据质检 / 信源</div>`;
       html += `<div class="qc-panel__grid">`;
       html += `<div>status：${escapeHtml(qc.status || 'unknown')}</div>`;
-      html += `<div>source_type：${escapeHtml(sourceTypeLabel)}</div>`;
       html += `<div>completeness：${escapeHtml(completeness)}</div>`;
       html += `<div>sources：${escapeHtml(sources)}</div>`;
       html += `<div>fallback_source：${escapeHtml(fallback)}</div>`;
       html += `<div>missing：${escapeHtml(missing)}</div>`;
       html += `<div>stale_data：${stale.length ? escapeHtml(staleText || '存在') : '无'}</div>`;
+      html += `<div>allowed_use：${escapeHtml(allowedUse)}</div>`;
+      html += `<div>forbidden_use：${escapeHtml(forbiddenUse)}</div>`;
+      html += `<div>blocked_fields：${escapeHtml(blockedFields)}</div>`;
       html += `</div>`;
       if (stale.length) {
         html += `<div class="qc-panel__warning">旧数据/试用账号延迟：${escapeHtml(staleText || '当前结果包含延迟或过期数据')}</div>`;
