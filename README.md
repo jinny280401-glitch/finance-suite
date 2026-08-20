@@ -122,8 +122,7 @@ source .venv/bin/activate
 # 3. Install Python dependencies
 pip install -r requirements.txt
 
-# 4. Install frontend dependencies (if applicable)
-npm install
+# Note: Frontend is static HTML/JS — no npm install needed
 ```
 
 ### 3.3 Configuration Parameters
