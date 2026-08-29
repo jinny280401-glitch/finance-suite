@@ -272,3 +272,10 @@ Usage notes:
 - Acceptance doc: `docs/research_runtime_v0_2_acceptance.md`.
 - Not included: production router, frontend UI, new data_type, new provider, LLM calls.
 - Next phase: v0.3 — not started, scope TBD.
+
+## 2026-08-29: Canonical-main index recovery gate
+
+- A staged deletion is not evidence of authorized deletion. Before changing it, establish the HEAD/index/working-tree state and record that deletion intent is proven or not proven.
+- When intent is not proven, recover only the explicitly authorized paths with a path-scoped restore; do not use repository-wide reset or restore commands and do not absorb unrelated staged changes.
+- The five handoff documents were restored exactly to `HEAD` after this gate. A separate staged README change was independently inspected and restored to `HEAD`.
+- Final scope: canonical `main` index and working tree are clean. This proves only absence of the observed staged-mutation risk; it does not prove fresh-clone execution, development-worktree hygiene, production state, or runtime behavior.
