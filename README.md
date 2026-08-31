@@ -10,7 +10,7 @@
 
 - **Canonical source repository:** `finance-suite`; **canonical source branch:** `main`.
 - **Production runtime landing:** `/home/ubuntu/finance-suite-web`. It is a deployment/runtime directory, **not** a Git source of truth.
-- Server-side `finance-suite` checkouts, including historical OpenClaw skill locations, are secondary or legacy deployment inputs. Do not treat them as canonical source or copy code back from them without an explicit handoff decision.
+- Server-side `finance-suite` checkouts, including historical OpenClaw skill locations, are **non-canonical**. Their current deployment use is **NOT PROVEN**; do not copy code back from them without an explicit handoff decision.
 - Start new development from a fresh clone of the canonical repository's `main` branch, not from a server directory or another local worktree.
 - `deploy.sh` and `deploy-backend.sh` are deployment helpers; they do not establish canonical ownership. `deploy-backend.sh` may probe historical locations, and its current production use is **NOT PROVEN**.
 
