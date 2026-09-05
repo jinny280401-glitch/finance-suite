@@ -46,12 +46,13 @@ Pipeline 设计：
 
 from __future__ import annotations
 
+import functools
 import json
 import sys
 import os
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from dotenv import load_dotenv
 
@@ -63,6 +64,82 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "scr
 from mcp.server.fastmcp import FastMCP
 
 logger = logging.getLogger("finance-suite.mcp")
+
+# Trust Gate Phase 1a — wind_query enforcement (fail-closed)
+# If the trust_gate module cannot be imported, wind_query returns a hard BLOCK,
+# not raw provider data. There is no fail-open path.
+try:
+    from trust_gate.enforcer import enforce_wind_query, format_trust_gate_envelope
+    _TRUST_GATE_AVAILABLE = True
+except ImportError:
+    _TRUST_GATE_AVAILABLE = False
+    logger.critical("trust_gate module not available — wind_query will return BLOCK for all requests")
+
+
+def _enforce_trust_gate_or_block(
+    action: str,
+    code: str,
+    result: dict | None,
+    source_used: str,
+    raw_response: str,
+) -> str:
+    """Apply Trust Gate enforcement to a wind_query response.
+
+    If the Trust Gate module is unavailable, returns an explicit BLOCK
+    with a GATE_UNAVAILABLE reason code. Provider data never reaches
+    the caller without enforcement.
+
+    This is the SINGLE enforcement choke-point for wind_query.
+    There is no code path that returns raw_response unfiltered.
+    """
+    if not _TRUST_GATE_AVAILABLE:
+        import uuid
+        now_ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        now_us = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
+        decision_id = f"tg-wind_query-{now_us}-{uuid.uuid4().hex[:6]}-GATE_UNAVAILABLE"
+        block_envelope = {
+            "_qc": {
+                "status": "failure",
+                "completeness": 0,
+                "sources": [],
+                "source_chain": {"primary": None, "attempted": [], "failed": [], "winner": None},
+                "source_type": "none",
+                "fallback_source": None,
+                "missing_dimensions": [action] if action else [],
+                "stale_data": [],
+                "error": "Trust Gate module unavailable — enforcement cannot run",
+            },
+            "_trust_gate": {
+                "gate_version": "v0.1-phase1a",
+                "decision_id": decision_id,
+                "decided_at": now_ts,
+                "tool": "wind_query",
+                "action": action,
+                "code": code,
+                "source_used": "",
+                "retrieved_at": now_ts,
+                "overall_verdict": "BLOCK",
+                "blocked_boundaries": ["GATE"],
+                "boundaries": [{
+                    "boundary_id": "GATE",
+                    "boundary_label": "Trust Gate Enforcement",
+                    "verdict": "BLOCK",
+                    "reason_code": "GATE_UNAVAILABLE",
+                    "detail": "Trust Gate module failed to import — all wind_query requests blocked",
+                    "evidence": {
+                        "action": action,
+                        "code": code,
+                        "gate_module": "trust_gate.enforcer",
+                        "import_error": "module not found or failed to load",
+                    },
+                    "evaluated_at": now_ts,
+                }],
+            },
+        }
+        return json.dumps(block_envelope, ensure_ascii=False) + "\n\n数据不可用 (Trust Gate module unavailable)"
+
+    tg = enforce_wind_query(action=action, code=code, result=result, source_used=source_used)
+    return format_trust_gate_envelope(tg, raw_response)
 
 mcp = FastMCP(
     "finance-suite",
@@ -91,6 +168,7 @@ def _qc_stock(data: dict, source: str, realtime_stale: bool = False) -> dict:
         "price_history": "K线数据",
         "news": "个股新闻",
         "dividends": "分红记录",
+        "valuation": "估值指标",
     }
     missing = []
     stale = []
@@ -134,6 +212,27 @@ def _qc_stock(data: dict, source: str, realtime_stale: bool = False) -> dict:
                 except ValueError:
                     pass
 
+    # P3 — QC Claim Boundary: detect derived-source dimensions.
+    # A dimension whose source_type is "derived" (e.g. valuation calculated from EPS/Price)
+    # is recorded separately and MUST NOT enable a status upgrade to "success".
+    # This prevents: derived evidence → QC success → capability claim upgrade.
+    derived = []
+    val_data = data.get("valuation")
+    if isinstance(val_data, dict):
+        val_source = val_data.get("valuation_source") or {}
+        if val_source.get("type") == "derived":
+            if "估值指标" in missing:
+                missing.remove("估值指标")
+            derived.append("估值指标")
+    for key, label in list(dimensions.items()):
+        if key == "valuation":
+            continue
+        val = data.get(key)
+        if isinstance(val, dict):
+            vs = val.get("valuation_source") or {}
+            if vs.get("type") == "derived" and label not in missing and label not in derived:
+                derived.append(label)
+
     total = len(dimensions)
     present = total - len(missing)
     completeness = round(present / total, 2) if total else 0
@@ -164,12 +263,19 @@ def _qc_stock(data: dict, source: str, realtime_stale: bool = False) -> dict:
     else:
         status = "failure"
 
+    # P3 cap: derived dimensions NEVER allow status=success.
+    # derived evidence ≠ REAL_PROVIDER evidence; claiming "success"
+    # on derived-only data would be a capability claim upgrade.
+    if derived and status == "success":
+        status = "partial"
+
     return {
         "status": status,
         "completeness": completeness,
         "sources": [source],
         "fallback_source": "akshare" if source == "wind" else None,
         "missing_dimensions": missing,
+        "derived_dimensions": derived,
         "stale_data": stale,
         "data_availability": data_availability,
         "allowed_use": {
@@ -285,6 +391,11 @@ def _make_error_response(error_msg: str, fallback_source: str | None = None) -> 
         "error": error_msg,
     }
     return json.dumps({"_qc": qc}, ensure_ascii=False)
+
+
+# ============================================================
+# Trust Gate enforcement: see trust_gate/ module (Phase 1a — wind_query pilot)
+# Imported at top of file: enforce_wind_query, format_trust_gate_envelope
 
 
 def _format_jq_signals(data: dict) -> str:
@@ -900,6 +1011,13 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
                 "status": "success",
                 "completeness": 1.0,
                 "sources": sources,
+                "source_chain": {
+                    "primary": "multi",
+                    "attempted": ["wind", "tushare", "joinquant", "akshare"],
+                    "failed": [],
+                    "winner": "multi",
+                },
+                "source_type": "primary",
                 "fallback_source": None,
                 "missing_dimensions": [],
                 "stale_data": [],
@@ -913,10 +1031,29 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
                 "priority": "Wind → Tushare → JoinQuant → AkShare",
                 "joinquant_detail": jq_status,
             }
-            return _wrap_response(qc, json.dumps(result, ensure_ascii=False, indent=2))
+            raw_response = _wrap_response(qc, json.dumps(result, ensure_ascii=False, indent=2))
+            return _enforce_trust_gate_or_block(
+                action="connect", code="", result=result, source_used="multi",
+                raw_response=raw_response,
+            )
 
         if not code:
-            return _make_error_response(f"action={action} 需要提供 code 参数", fallback_source="tushare/akshare")
+            error_qc = {
+                "status": "failure",
+                "completeness": 0,
+                "sources": [],
+                "source_chain": {"primary": None, "attempted": [], "failed": [], "winner": None},
+                "source_type": "none",
+                "fallback_source": "tushare/akshare",
+                "missing_dimensions": [f"{action}"],
+                "stale_data": [],
+                "error": f"action={action} 需要提供 code 参数",
+            }
+            raw = _wrap_response(error_qc, "")
+            return _enforce_trust_gate_or_block(
+                action=action, code="", result=None, source_used="",
+                raw_response=raw,
+            )
 
         result = None
         source_used = None
@@ -991,7 +1128,10 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
             "akshare": _try_akshare,
         }
 
+        chain_attempted: list[str] = []
+        chain_failed: list[str] = []
         for source in chain:
+            chain_attempted.append(source)
             try:
                 candidate = runners[source]()
                 if candidate:
@@ -999,8 +1139,10 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
                     source_used = source
                     logger.info(f"wind_query success action={action} code={code} source={source}")
                     break
+                chain_failed.append(source)
                 logger.warning(f"wind_query empty action={action} code={code} source={source}")
             except Exception as e:
+                chain_failed.append(source)
                 logger.warning(f"wind_query failed action={action} code={code} source={source} err={e}")
 
         if not result:
@@ -1008,18 +1150,39 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
                 "status": "failure",
                 "completeness": 0,
                 "sources": [],
+                "source_chain": {
+                    "primary": chain[0],
+                    "attempted": chain_attempted,
+                    "failed": chain_attempted,  # all failed
+                    "winner": None,
+                },
+                "source_type": "none",
                 "fallback_source": "akshare",
                 "missing_dimensions": [f"{action}"],
                 "stale_data": [],
                 "error": f"{action} 多源查询失败（Wind/Tushare/JoinQuant/AkShare）",
             }
-            return _wrap_response(qc, "")
+            raw_response = _wrap_response(qc, "")
+            return _enforce_trust_gate_or_block(
+                action=action, code=code, result=None, source_used="",
+                raw_response=raw_response,
+            )
 
+        primary_source = chain[0]
+        source_type = "primary" if source_used == primary_source else "fallback"
+        source_chain_evidence = {
+            "primary": primary_source,
+            "attempted": chain_attempted,
+            "failed": chain_failed,
+            "winner": source_used,
+        }
         fallback_map = {"wind": "tushare", "tushare": "joinquant", "joinquant": "akshare", "akshare": None}
         qc = {
-            "status": "success",
-            "completeness": 1.0,
+            "status": "success" if source_type == "primary" else "partial",
+            "completeness": 1.0 if source_type == "primary" else 0.7,
             "sources": [source_used],
+            "source_chain": source_chain_evidence,
+            "source_type": source_type,
             "fallback_source": fallback_map.get(source_used),
             "missing_dimensions": [],
             "stale_data": _joinquant_stale_entries(result) if source_used == "joinquant" else [],
@@ -1027,11 +1190,30 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
         formatted = json.dumps({
             "source": source_used, "code": code, "action": action, "data": result,
         }, ensure_ascii=False, indent=2, default=str)
-        return _wrap_response(qc, formatted)
+        raw_response = _wrap_response(qc, formatted)
+        return _enforce_trust_gate_or_block(
+            action=action, code=code, result=result, source_used=source_used,
+            raw_response=raw_response,
+        )
 
     except Exception as e:
         logger.exception(f"wind_query fatal error action={action} code={code}: {e}")
-        return _make_error_response(f"wind_query 异常: {e}", fallback_source="tushare/akshare")
+        error_qc = {
+            "status": "failure",
+            "completeness": 0,
+            "sources": [],
+            "source_chain": {"primary": None, "attempted": [], "failed": [], "winner": None},
+            "source_type": "none",
+            "fallback_source": "tushare/akshare",
+            "missing_dimensions": [f"{action}"],
+            "stale_data": [],
+            "error": f"wind_query 异常: {e}",
+        }
+        raw = _wrap_response(error_qc, "")
+        return _enforce_trust_gate_or_block(
+            action=action, code=code or "", result=None, source_used="",
+            raw_response=raw,
+        )
 
 
 # ============================================================
@@ -1634,15 +1816,18 @@ def emquant_query(action: str, code: str = "", max_peers: int = 10) -> str:
 
     action 可选值：
     - connect: 检查连接状态
-    - stock: 个股快照（价格/市值/PE/PB/ROE/股息率）
-    - financials: 财务数据（营收/净利润/毛利率/ROE/ROA，近4期）
-    - consensus: 卖方一致预期（净利润预测/EPS/目标价/评级）
-    - peers: 同行业可比公司对比（max_peers 控制数量）
-    - macro: 宏观经济数据（GDP/CPI/PMI/M2）
-    - valuation: 历史估值分位（PE/PB 10年百分位）
+    - stock: 个股实时行情快照（OHLCV + 换手率 + 股息率）
+    - history: 历史行情序列（日频 OHLCV，默认 250 天）
+    - macro: 宏观经济数据（当前账户：CPI_YOY/CPI_MOM/SHIBOR_1M）
+    - financials: ⚠️ 财务数据（当前账户基础行情级别，不支持）
+    - consensus: ⚠️ 卖方一致预期（当前账户不支持）
+    - peers: ⚠️ 同行业对比（当前账户不支持 sector/行业分类）
+    - valuation: ⚠️ 历史估值分位（当前账户不支持 PE/PB 指标）
 
     需要 EmQuantAPI SDK（从 quantapi.eastmoney.com 下载安装）
     环境变量：EM_USERNAME + EM_PASSWORD
+
+    当前账户 hfzq80016 为基础行情级别，已实测验证可用范围见脚本文件头注释。
 
     返回结构化 _qc 质检 JSON。
     """
@@ -1654,6 +1839,8 @@ def emquant_query(action: str, code: str = "", max_peers: int = 10) -> str:
             result = em.check_connection()
         elif action == "stock":
             result = em.get_stock_snapshot(code)
+        elif action == "history":
+            result = em.get_price_history(code)
         elif action == "financials":
             result = em.get_financials(code)
         elif action == "consensus":
@@ -1665,7 +1852,7 @@ def emquant_query(action: str, code: str = "", max_peers: int = 10) -> str:
         elif action == "valuation":
             result = em.get_valuation_history(code)
         else:
-            return _make_error_response(f"未知 action: {action}，支持 connect/stock/financials/consensus/peers/macro/valuation")
+            return _make_error_response(f"未知 action: {action}，支持 connect/stock/history/macro/financials/consensus/peers/valuation")
 
         if not result:
             qc = {

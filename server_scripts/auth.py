@@ -1,10 +1,28 @@
 from flask import Blueprint, request, jsonify, session
 import sqlite3
 import hashlib
+import time
+from collections import defaultdict
 from pathlib import Path
 
 auth_bp = Blueprint('auth', __name__)
 DB_PATH = Path(__file__).parent.parent / "finance_suite.db"
+
+# In-memory rate limiter: 5 attempts per IP per 60s window
+_login_attempts: dict[str, list[float]] = defaultdict(list)
+_LOGIN_RATE_LIMIT = 5
+_LOGIN_RATE_WINDOW = 60
+
+
+def _check_login_rate(ip: str) -> bool:
+    """Return True if under limit, False if rate-limited."""
+    now = time.time()
+    window = [t for t in _login_attempts[ip] if now - t < _LOGIN_RATE_WINDOW]
+    _login_attempts[ip] = window
+    if len(window) >= _LOGIN_RATE_LIMIT:
+        return False
+    _login_attempts[ip].append(now)
+    return True
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
@@ -32,7 +50,11 @@ def verify_user(username: str, password: str):
 
 @auth_bp.route('/api/login', methods=['POST'])
 def login():
-    """登录接口"""
+    """登录接口（含速率限制：每 IP 每分钟最多 5 次尝试）"""
+    client_ip = request.remote_addr or '127.0.0.1'
+    if not _check_login_rate(client_ip):
+        return jsonify({'success': False, 'message': '登录尝试过于频繁，请稍后再试'}), 429
+
     data = request.get_json()
     username = data.get('username', '').strip().lower()
     password = data.get('password', '')

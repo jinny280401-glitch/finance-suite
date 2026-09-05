@@ -12,6 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 import watchlist as wl
+from auth_guard import login_required
 
 watchlist_bp = Blueprint("watchlist", __name__)
 
@@ -44,6 +45,7 @@ def _resolve_code_name(query: str):
 
 
 @watchlist_bp.route("/api/watchlist/add", methods=["POST"])
+@login_required
 def add():
     body = request.get_json(silent=True) or {}
     query = (body.get("query") or body.get("name") or "").strip()
@@ -92,6 +94,7 @@ def add():
 
 
 @watchlist_bp.route("/api/watchlist/remove", methods=["POST"])
+@login_required
 def remove():
     body = request.get_json(silent=True) or {}
     code = (body.get("code") or "").strip()
@@ -110,6 +113,7 @@ def remove():
 
 
 @watchlist_bp.route("/api/watchlist/list", methods=["GET"])
+@login_required
 def list_stocks():
     data = wl._load()
     stocks = []

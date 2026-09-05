@@ -1,0 +1,20 @@
+{
+  "evidence_id": "bdeb86afa0b24af389b2fea03e0965e62e404c2a9f1a422ecba1c1011410604c",
+  "schema_version": "i1.v0.1",
+  "content_type": "search_result",
+  "provenance": "external",
+  "classification": "unclassified",
+  "purpose": "trading_signal",
+  "provider_identity": "NOT_APPLICABLE",
+  "field_integrity": "NOT_APPLICABLE",
+  "qc_status": "success",
+  "temporal_semantics": "realtime",
+  "freshness": "2026-08-13T09:55:00Z",
+  "max_age_seconds": 900,
+  "stale": false,
+  "allowed_use": [
+    "market_context"
+  ],
+  "blocked_use": [],
+  "claim_strength_ceiling": "NO_CLAIM"
+}

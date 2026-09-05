@@ -9,24 +9,52 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# Tushare Pro Token
-_TUSHARE_TOKEN = os.getenv("TUSHARE_TOKEN", "ac6471c66535d4aa49516341175ae6d7a7ba763682fad2b4559a05b3")
+# Tushare Pro Token — 每次 _ensure_tushare 时从 .env 重新读取，不设硬编码 fallback
 _tushare_available = None
 _pro = None
+_cached_token = None
+
+
+def _read_token():
+    """从 .env 文件直接读取 TUSHARE_TOKEN，绕过 os.getenv 模块缓存"""
+    import os as _os
+    # 优先从环境变量读取（已被 load_dotenv 加载）
+    token = _os.getenv("TUSHARE_TOKEN", "")
+    if token:
+        return token
+    # 降级：直接解析 .env 文件
+    env_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", ".env")
+    try:
+        with open(env_path) as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("TUSHARE_TOKEN="):
+                    return line.split("=", 1)[1]
+    except Exception:
+        pass
+    return ""
 
 
 def _ensure_tushare():
     """懒加载初始化 Tushare Pro"""
-    global _tushare_available, _pro
+    global _tushare_available, _pro, _cached_token
 
-    if _tushare_available is True:
+    token = _read_token()
+    if not token:
+        _tushare_available = False
+        logger.warning("⚠️ Tushare Token 未配置（.env 中无 TUSHARE_TOKEN）")
+        return False
+
+    # Token 未变且已连接 → 复用
+    if _tushare_available is True and token == _cached_token:
         return True
 
     try:
         import tushare as ts
-        ts.set_token(_TUSHARE_TOKEN)
+        ts.set_token(token)
         _pro = ts.pro_api()
         _tushare_available = True
+        _cached_token = token
         logger.info("✅ Tushare Pro 已初始化")
         return True
     except Exception as e:

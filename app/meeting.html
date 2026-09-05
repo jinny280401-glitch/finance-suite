@@ -311,7 +311,9 @@
       if (typeof data === 'string') {
         return `<pre>${data}</pre>`;
       }
-      return `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      // Security: allowlist-only. Never dump raw API response to DOM.
+      var userFacing = { success: data.success, result: data.result };
+      return `<pre>${JSON.stringify(userFacing, null, 2)}</pre>`;
     }
 
     // Pre-fill from URL params

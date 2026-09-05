@@ -1,0 +1,20 @@
+{
+  "evidence_id": "e5f7934116adc305b879242a53706db9fe5bc6dae0f5b1caaaf11c120275ed8f",
+  "schema_version": "i1.v0.1",
+  "content_type": "search_result",
+  "provenance": "external",
+  "classification": "unclassified",
+  "purpose": "research",
+  "provider_identity": "NOT_APPLICABLE",
+  "field_integrity": "NOT_APPLICABLE",
+  "qc_status": "success",
+  "temporal_semantics": "realtime",
+  "freshness": "2026-08-13T09:55:00Z",
+  "max_age_seconds": 2592000,
+  "stale": false,
+  "allowed_use": [
+    "market_context"
+  ],
+  "blocked_use": [],
+  "claim_strength_ceiling": "INFORMATIONAL"
+}

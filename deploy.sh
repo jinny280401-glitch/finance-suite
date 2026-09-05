@@ -22,7 +22,7 @@ for page in deep-research stock macro auction meeting video xueqiu-hot; do
 done
 
 # Sidebar P0 资产 (04d5f7d, 63211ff) — Registry 驱动右栏 + market_temperature card
-for asset in sidebar-registry.js market-temperature-mini.js market-temperature-mini.css market-temperature-mini.html market-temperature-fixture.js; do
+for asset in sidebar-registry.js market-temperature-mini.js market-temperature-mini.css market-temperature-mini.html market-temperature-fixture.js marked.min.js; do
   curl -sL "https://raw.githubusercontent.com/jinny280401-glitch/finance-suite/main/app/${asset}" \
     -o /home/ubuntu/finance-suite-web/static/app/${asset}
   echo "  ✓ ${asset}"
