@@ -19,8 +19,8 @@ import inspect
 import unittest
 from unittest import mock
 
-from app.auction_data import _build_dimension_receipt, _extract_row_metadata
-from app.routers import intel
+from backend.engine.skills.auction_skill import _build_dimension_receipt, _extract_row_metadata
+from backend.app.routers import intel
 
 
 class T1NoProviderTimestamp(unittest.TestCase):
@@ -165,7 +165,7 @@ class T4NoSemanticPromotion(unittest.TestCase):
         for mod in (intel,):
             src = inspect.getsource(mod)
         # receipt 构建器里 origin 与 boundary 必须来自不同变量
-        from app import auction_data
+        from backend.engine.skills import auction_skill as auction_data
         receipt_src = inspect.getsource(auction_data._build_dimension_receipt)
         self.assertNotIn('"data_as_of"', receipt_src)
         self.assertNotIn('"provider_origin_time": completed_at', receipt_src)

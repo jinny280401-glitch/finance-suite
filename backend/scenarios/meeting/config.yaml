@@ -1,0 +1,15 @@
+name: 会议纪要
+description: 把会议录音、访谈记录、谈话文字转成结构化报告
+icon: M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414
+  5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z
+color: from-purple-500 to-pink-500
+search_type: null
+providers: []
+cache:
+  enabled: true
+  ttl: 600
+qc:
+  min_completeness: 0.0
+  min_sources: 0
+  require_structured: false
+  hallucination_check: false

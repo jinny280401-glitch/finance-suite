@@ -62,7 +62,7 @@ except ModuleNotFoundError:
     _hx.AsyncClient = object
     sys.modules["httpx"] = _hx
 
-from app import auction_data as AD  # noqa: E402
+from backend.engine.skills import auction_skill as AD  # noqa: E402
 
 DIMS = ["zt_pool", "strong_pool", "previous_zt", "big_buy",
         "hot_rank", "hot_up", "top_gainers"]

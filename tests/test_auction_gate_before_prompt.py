@@ -77,7 +77,7 @@ except ModuleNotFoundError:
     _hx.AsyncClient = object
     sys.modules["httpx"] = _hx
 
-from app import auction_data as AD  # noqa: E402
+from backend.engine.skills import auction_skill as AD  # noqa: E402
 
 # ── The canary: a value that must never reach the prompt ────────────────
 CANARY = "CANARY_BLOCKED_VALUE_7f3a91"
@@ -197,7 +197,7 @@ def capture_pre_prompt_context(search_results_text, query="集合竞价"):
             captured["payload"] = json
             return _FakeResp()
 
-    import app.llm as LLM
+    import backend.engine.llm.client as LLM
     orig = LLM.httpx.AsyncClient
     LLM.httpx.AsyncClient = _FakeClient
     try:

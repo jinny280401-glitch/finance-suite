@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Finance Suite 当前数据流图</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0f172a; color: #e2e8f0; padding: 32px; }
+  h1 { text-align: center; font-size: 28px; margin-bottom: 8px; color: #f8fafc; }
+  .subtitle { text-align: center; font-size: 14px; color: #94a3b8; margin-bottom: 32px; }
+  .canvas { max-width: 1200px; margin: 0 auto; position: relative; }
+
+  /* ── 层 ── */
+  .layer { margin-bottom: 24px; position: relative; }
+  .layer-label { position: absolute; left: -8px; top: 50%; transform: translateY(-50%) rotate(-90deg);
+    font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #475569; white-space: nowrap; }
+
+  /* ── 行容器 ── */
+  .row { display: flex; gap: 16px; justify-content: center; align-items: stretch; flex-wrap: wrap; }
+  .row.tight { gap: 8px; }
+
+  /* ── 节点 ── */
+  .node { border-radius: 12px; padding: 14px 18px; min-width: 160px; max-width: 260px; text-align: center;
+    position: relative; transition: transform .15s; }
+  .node:hover { transform: translateY(-2px); }
+  .node .title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .node .file { font-size: 11px; opacity: .7; font-family: 'SF Mono', 'Fira Code', monospace; }
+  .node .desc { font-size: 11px; margin-top: 6px; line-height: 1.5; opacity: .85; }
+
+  /* 颜色系统 */
+  .entry    { background: linear-gradient(135deg, #1e3a5f, #1e40af); border: 1.5px solid #3b82f6; }
+  .pipeline { background: linear-gradient(135deg, #312e81, #4338ca); border: 1.5px solid #6366f1; }
+  .service  { background: linear-gradient(135deg, #1e3a5f, #0e7490); border: 1.5px solid #06b6d4; }
+  .skill    { background: linear-gradient(135deg, #134e4a, #0f766e); border: 1.5px solid #14b8a6; }
+  .provider { background: linear-gradient(135deg, #3b1f2b, #9d174d); border: 1.5px solid #ec4899; }
+  .extern   { background: linear-gradient(135deg, #1c1917, #44403c); border: 1.5px solid #78716c; }
+  .llm      { background: linear-gradient(135deg, #4a1d96, #7c3aed); border: 1.5px solid #a78bfa; }
+  .qc       { background: linear-gradient(135deg, #713f12, #a16207); border: 1.5px solid #f59e0b; }
+  .output   { background: linear-gradient(135deg, #14532d, #15803d); border: 1.5px solid #22c55e; }
+  .search   { background: linear-gradient(135deg, #1e3a5f, #1d4ed8); border: 1.5px solid #60a5fa; }
+
+  /* ── 箭头 ── */
+  .arrow-row { display: flex; justify-content: center; padding: 6px 0; }
+  .arrow-row svg { display: block; }
+  .arrow-label { font-size: 10px; fill: #94a3b8; text-anchor: middle; }
+
+  /* ── 分组框 ── */
+  .group { border: 1px dashed #475569; border-radius: 16px; padding: 20px 16px 16px; position: relative; margin-bottom: 8px; }
+  .group-title { position: absolute; top: -10px; left: 20px; background: #0f172a; padding: 0 8px;
+    font-size: 12px; font-weight: 600; color: #94a3b8; letter-spacing: 1px; }
+
+  /* ── 并发标记 ── */
+  .concurrent { display: flex; gap: 16px; justify-content: center; align-items: stretch; }
+  .concurrent::before { content: '⚡ 并发'; position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    background: #f59e0b; color: #0f172a; font-size: 10px; font-weight: 700; padding: 1px 10px; border-radius: 8px; }
+
+  /* ── 分支 ── */
+  .branch { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .branch-item { border: 1px solid #334155; border-radius: 8px; padding: 8px 14px; font-size: 12px; text-align: center; min-width: 100px; }
+  .branch-item .bi-title { font-weight: 600; color: #e2e8f0; }
+  .branch-item .bi-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+  /* ── 连线 SVG 覆盖层 ── */
+  .connector { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+
+  /* ── 图例 ── */
+  .legend { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 32px; padding-top: 20px; border-top: 1px solid #1e293b; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #94a3b8; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* ── 宽节点 ── */
+  .wide { max-width: 400px; min-width: 300px; }
+  .full { max-width: 100%; min-width: 100%; }
+
+  /* ── 分隔线 ── */
+  .divider { border-top: 1px dashed #334155; margin: 16px 0; position: relative; }
+  .divider-label { position: absolute; top: -9px; left: 50%; transform: translateX(-50%); background: #0f172a; padding: 0 12px;
+    font-size: 11px; color: #64748b; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<h1>Finance Suite 当前数据流</h1>
+<p class="subtitle">Phase 1-3 重构后 · 三层架构 Provider → Skill → Scenario · 2026-09-05</p>
+
+<div class="canvas">
+
+  <!-- ═══════════ 入口层 ═══════════ -->
+  <div class="layer">
+    <div class="row">
+      <div class="node entry">
+        <div class="title">🌐 Web 入口</div>
+        <div class="file">app/routers/api.py</div>
+        <div class="desc">POST /api/analyze<br>skill_type + query</div>
+      </div>
+      <div class="node entry">
+        <div class="title">🤖 MCP 入口</div>
+        <div class="file">mcp_tools/server.py</div>
+        <div class="desc">18 个 MCP 工具<br>stock_analysis / macro_snapshot / ...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 箭头 -->
+  <div class="arrow-row">
+    <svg width="400" height="36"><polygon points="140,0 160,0 150,14" fill="#6366f1"/>
+      <polygon points="240,0 260,0 250,14" fill="#6366f1"/>
+      <line x1="150" y1="14" x2="150" y2="24" stroke="#6366f1" stroke-width="2"/>
+      <line x1="250" y1="14" x2="250" y2="24" stroke="#6366f1" stroke-width="2"/>
+      <text x="200" y="34" class="arrow-label">两条路径（MCP 暂未走 Pipeline）</text>
+    </svg>
+  </div>
+
+  <!-- ═══════════ Pipeline 层 ═══════════ -->
+  <div class="layer">
+    <div class="row">
+      <div class="node pipeline wide">
+        <div class="title">⚙️ Pipeline 编排器</div>
+        <div class="file">engine/pipeline.py</div>
+        <div class="desc">
+          ① 读取 ScenarioConfig (config.yaml + prompt.md)<br>
+          ② 缓存检查 (TTLCache)<br>
+          ③ 委托 analyze_service<br>
+          ④ 注入 _qc.scenario_config 元数据<br>
+          ⑤ 写入缓存
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:6px;">
+      <span style="font-size:11px; color:#818cf8;">
+        📂 scenarios/stock/config.yaml → skill: stock_skill · dimensions: [financials, realtime, price_history, ...] · qc.dimensions: {required, stale_days}
+      </span>
+    </div>
+  </div>
+
+  <!-- 箭头 -->
+  <div class="arrow-row">
+    <svg width="200" height="28"><polygon points="90,0 110,0 100,12" fill="#06b6d4"/>
+      <line x1="100" y1="12" x2="100" y2="28" stroke="#06b6d4" stroke-width="2"/>
+    </svg>
+  </div>
+
+  <!-- ═══════════ Service 层 ═══════════ -->
+  <div class="layer">
+    <div class="group">
+      <div class="group-title">app/services/analyze_service.py — run_analysis()</div>
+      <div style="display:flex; flex-direction:column; gap:16px; align-items:center;">
+
+        <!-- Step 1: 路由分发 -->
+        <div class="node service" style="width:100%; max-width:700px;">
+          <div class="title">📍 场景路由分发</div>
+          <div class="desc" style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:8px;">
+            <span class="branch-item"><span class="bi-title">stock</span><span class="bi-sub">_fetch_stock_data</span></span>
+            <span class="branch-item"><span class="bi-title">macro</span><span class="bi-sub">_fetch_macro_data</span></span>
+            <span class="branch-item"><span class="bi-title">auction</span><span class="bi-sub">_fetch_auction_data</span></span>
+            <span class="branch-item"><span class="bi-title">industry</span><span class="bi-sub">_fetch_industry_data</span></span>
+            <span class="branch-item"><span class="bi-title">video</span><span class="bi-sub">_fetch_video_data</span></span>
+            <span class="branch-item"><span class="bi-title">generic</span><span class="bi-sub">_fetch_generic_data</span></span>
+          </div>
+        </div>
+
+        <!-- Step 2: 并发取数 -->
+        <div style="position:relative; width:100%; max-width:700px;">
+          <div class="node search" style="width:100%;">
+            <div class="title">🔍 并发数据获取 (asyncio.gather)</div>
+            <div class="desc" style="margin-top:8px;">
+              <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px; border:1px solid #1d4ed8; border-radius:8px; padding:10px;">
+                  <div style="font-weight:700; color:#60a5fa;">📊 结构化数据</div>
+                  <div style="font-size:11px; margin-top:4px;">
+                    stock → app/stock_data.py (薄委托层)<br>
+                    &nbsp;&nbsp;→ engine/skills/stock_skill.py<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;→ engine/providers/akshare_client.py<br>
+                    macro → app/macro_data.py<br>
+                    auction → app/auction_data.py
+                  </div>
+                </div>
+                <div style="flex:1; min-width:200px; border:1px solid #1d4ed8; border-radius:8px; padding:10px;">
+                  <div style="font-weight:700; color:#60a5fa;">🔎 搜索引擎</div>
+                  <div style="font-size:11px; margin-top:4px;">
+                    app/search.py<br>
+                    Tavily (primary) → Brave (fallback)<br>
+                    multi_search_stock() 多维度搜索<br>
+                    format_search_results_grouped()
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2.5: 维度 QC -->
+        <div class="node qc" style="width:100%; max-width:700px;">
+          <div class="title">📋 维度级 QC 检查 (Phase 2 新增)</div>
+          <div class="desc" style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:6px;">
+            <span style="background:#78350f; padding:2px 8px; border-radius:4px;">dimension_status: 7 维度可用性</span>
+            <span style="background:#78350f; padding:2px 8px; border-radius:4px;">stale_data: 按阈值检测过期</span>
+            <span style="background:#78350f; padding:2px 8px; border-radius:4px;">completeness: 维度可用率</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 箭头 -->
+  <div class="arrow-row">
+    <svg width="200" height="28"><polygon points="90,0 110,0 100,12" fill="#a78bfa"/>
+      <line x1="100" y1="12" x2="100" y2="28" stroke="#a78bfa" stroke-width="2"/>
+    </svg>
+  </div>
+
+  <!-- ═══════════ LLM 层 ═══════════ -->
+  <div class="layer">
+    <div class="row">
+      <div class="node llm wide">
+        <div class="title">🧠 LLM 分析引擎</div>
+        <div class="file">app/llm.py → generate_analysis()</div>
+        <div class="desc">
+          Prompt 来源（优先级）：<br>
+          ① scenario_config.prompt (config.yaml 驱动)<br>
+          ② skills.py 内嵌 prompt<br><br>
+          输入：system_prompt + user_content + search_results_text<br>
+          输出：LLM 分析报告文本
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 箭头 -->
+  <div class="arrow-row">
+    <svg width="200" height="28"><polygon points="90,0 110,0 100,12" fill="#f59e0b"/>
+      <line x1="100" y1="12" x2="100" y2="28" stroke="#f59e0b" stroke-width="2"/>
+    </svg>
+  </div>
+
+  <!-- ═══════════ 后处理 / QC 层 ═══════════ -->
+  <div class="layer">
+    <div class="group">
+      <div class="group-title">后处理管线 (report_qc.py + quality_gate/)</div>
+      <div class="row" style="gap:12px;">
+        <div class="node qc" style="flex:1; min-width:180px;">
+          <div class="title">① Quality Gate</div>
+          <div class="file">quality_gate/core.py</div>
+          <div class="desc">completeness + stale_data<br>passed / reject_reasons</div>
+        </div>
+        <div class="node qc" style="flex:1; min-width:180px;">
+          <div class="title">② Extended QC</div>
+          <div class="file">report_qc.py → build_report_qc</div>
+          <div class="desc">freshness · fact_coverage<br>hallucination_risk<br>dimension_status · stale_data</div>
+        </div>
+        <div class="node qc" style="flex:1; min-width:180px;">
+          <div class="title">③ 报告数字校验</div>
+          <div class="file">report_qc.py → check_report_numbers</div>
+          <div class="desc">K线收盘价 vs LLM报告价格<br>>10% 偏差 → mismatch</div>
+        </div>
+        <div class="node qc" style="flex:1; min-width:180px;">
+          <div class="title">④ 报告清理</div>
+          <div class="file">sanitize_report_body</div>
+          <div class="desc">替换 LLM 自写日期<br>为系统生成数据截止行</div>
+        </div>
+      </div>
+      <div style="height:12px;"></div>
+      <div class="row" style="gap:12px;">
+        <div class="node qc" style="flex:1; min-width:180px;">
+          <div class="title">⑤ Trust 合约</div>
+          <div class="file">with_trust_contract()</div>
+          <div class="desc">data_availability 5维度<br>fundamental / realtime / news<br>research / market_context</div>
+        </div>
+        <div class="node qc" style="flex:1; min-width:180px;">
+          <div class="title">⑥ 发布控制</div>
+          <div class="file">apply_publication_containment()</div>
+          <div class="desc">检测估值/行情/资金流结论<br>数据不足时阻止发布</div>
+        </div>
+        <div class="node qc" style="flex:1; min-width:180px;">
+          <div class="title">⑦ Dispatch Trace</div>
+          <div class="file">_attach_final_dispatch_trace</div>
+          <div class="desc">resolved_name / symbol<br>resolver_source · runtime_mode</div>
+        </div>
+        <div class="node qc" style="flex:1; min-width:180px;">
+          <div class="title">⑧ 缓存写入</div>
+          <div class="file">engine/cache.py</div>
+          <div class="desc">TTLCache 50条/10min<br>macro/auction 不缓存</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 箭头 -->
+  <div class="arrow-row">
+    <svg width="200" height="28"><polygon points="90,0 110,0 100,12" fill="#22c55e"/>
+      <line x1="100" y1="12" x2="100" y2="28" stroke="#22c55e" stroke-width="2"/>
+    </svg>
+  </div>
+
+  <!-- ═══════════ 输出层 ═══════════ -->
+  <div class="layer">
+    <div class="row">
+      <div class="node output wide">
+        <div class="title">📄 最终响应</div>
+        <div class="desc" style="text-align:left; font-family:monospace; font-size:11px; line-height:1.8;">
+          {<br>
+          &nbsp;&nbsp;success: true,<br>
+          &nbsp;&nbsp;result: "...LLM报告...",<br>
+          &nbsp;&nbsp;sources: [{title, url, date}],<br>
+          &nbsp;&nbsp;kline: [{time, open, high, low, close}],<br>
+          &nbsp;&nbsp;_qc: {status, completeness, dimension_status,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;stale_data, missing_dimensions,<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;number_validation, scenario_config, ...},<br>
+          &nbsp;&nbsp;data_availability: {5维度 trust 状态},<br>
+          &nbsp;&nbsp;publication: {control, status, blocked_dimensions},<br>
+          &nbsp;&nbsp;dispatch_trace: {resolved_name, resolver_source, ...}<br>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ 数据源详情 ═══════════ -->
+  <div class="divider" style="margin-top:32px;">
+    <span class="divider-label">数据源详情（stock 场景为例）</span>
+  </div>
+
+  <div class="layer" style="margin-top:20px;">
+    <div class="row" style="gap:8px;">
+      <!-- Provider 层 -->
+      <div class="node provider" style="flex:1; min-width:200px;">
+        <div class="title">Provider 层</div>
+        <div class="file">engine/providers/akshare_client.py</div>
+        <div class="desc" style="text-align:left; font-size:10px; line-height:1.6;">
+          stock_zh_a_spot_em() → 全市场快照<br>
+          stock_zh_a_hist() → K线历史<br>
+          stock_financial_abstract() → 财报摘要<br>
+          stock_individual_fund_flow() → 资金流<br>
+          stock_news_em() → 个股新闻<br>
+          stock_history_dividend_detail() → 分红
+        </div>
+      </div>
+      <!-- Skill 层 -->
+      <div class="node skill" style="flex:1; min-width:200px;">
+        <div class="title">Skill 层</div>
+        <div class="file">engine/skills/stock_skill.py</div>
+        <div class="desc" style="text-align:left; font-size:10px; line-height:1.6;">
+          resolve_stock_detail() → QUICK_MAP + 缓存匹配<br>
+          get_stock_full_data() → 并发7维度<br>
+          format_stock_data() → 结构化文本<br>
+          _fetch_valuation() → 估值（多源降级）<br>
+          _load_stock_cache() → 腾讯→东方财富→新浪
+        </div>
+      </div>
+      <!-- 薄委托层 -->
+      <div class="node service" style="flex:1; min-width:200px;">
+        <div class="title">薄委托层</div>
+        <div class="file">app/stock_data.py (249行)</div>
+        <div class="desc" style="text-align:left; font-size:10px; line-height:1.6;">
+          resolve/format/get_full_data → 委托 stock_skill<br>
+          _fetch_* 保留本地（receipt observability）<br>
+          fetch_receipts.jsonl → 调用回执持久化<br>
+          invocation_id · latency · outcome · error_class
+        </div>
+      </div>
+      <!-- 外部数据源 -->
+      <div class="node extern" style="flex:1; min-width:200px;">
+        <div class="title">外部数据源</div>
+        <div class="desc" style="text-align:left; font-size:10px; line-height:1.6;">
+          📈 AkShare (主) → 东方财富/腾讯 API<br>
+          🔍 Tavily (搜索主) → 金融专注模式<br>
+          🔍 Brave (搜索备) → 通用搜索 fallback<br>
+          🌊 Wind (规划) → 未启用<br>
+          📊 Tushare (规划) → 未启用
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ 图例 ═══════════ -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div>入口</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6366f1;"></div>Pipeline</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#06b6d4;"></div>Service</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#14b8a6;"></div>Skill</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ec4899;"></div>Provider</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#78716c;"></div>外部数据源</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#a78bfa;"></div>LLM</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div>QC / 后处理</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#22c55e;"></div>输出</div>
+  </div>
+
+</div>
+</body>
+</html>

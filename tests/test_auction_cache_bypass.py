@@ -35,8 +35,8 @@ for _name in ("akshare",):
     if _name not in sys.modules:
         sys.modules[_name] = types.ModuleType(_name)
 
-from app.routers import api as API  # noqa: E402
-from app import auction_data as AD  # noqa: E402
+from backend.app.routers import api as API  # noqa: E402
+from backend.engine.skills import auction_skill as AD  # noqa: E402
 
 
 class _DB:

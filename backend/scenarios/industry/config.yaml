@@ -1,0 +1,22 @@
+name: 行业报告
+description: 输入行业关键词，生成全景式行业研究报告
+icon: M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1
+  4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4
+color: from-cyan-500 to-blue-500
+search_type: industry
+providers:
+- type: akshare_industry
+  config: {}
+- type: search
+  config:
+    strategy: industry
+    primary: tavily
+    fallback: brave
+cache:
+  enabled: true
+  ttl: 600
+qc:
+  min_completeness: 0.8
+  min_sources: 2
+  require_structured: false
+  hallucination_check: true
