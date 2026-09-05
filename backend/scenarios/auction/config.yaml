@@ -3,20 +3,3 @@ description: 集合竞价排行榜与量化选股信号，发现当日热门标�
 icon: M13 7h8m0 0v8m0-8l-8 8-4-4-6 6
 color: from-red-500 to-orange-500
 search_type: auction
-providers:
-- type: akshare_auction
-  config:
-    include:
-    - zt_pool
-    - strong
-    - previous
-    - changes
-    - hot_rank
-    - hot_up
-cache:
-  enabled: false
-qc:
-  min_completeness: 0.6
-  min_sources: 0
-  require_structured: true
-  hallucination_check: false

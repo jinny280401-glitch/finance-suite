@@ -43,12 +43,23 @@ def cache_get(skill_type: str, query: str) -> dict | None:
     return result
 
 
-def cache_set(skill_type: str, query: str, result: dict) -> None:
-    """写入缓存"""
+def cache_set(skill_type: str, query: str, result: dict, ttl: int | None = None) -> None:
+    """写入缓存
+    
+    Args:
+        ttl: 缓存有效期（秒），None 使用全局默认值
+    """
     key = _make_key(skill_type, query)
-    with _lock:
-        _cache[key] = result
-    logger.info("Cache SET: %s / %s", skill_type, query[:30])
+    if ttl is not None:
+        # 使用指定 TTL 写入（需要临时调整全局 TTL 或使用独立缓存）
+        # 简化实现：直接写入全局缓存，TTL 在下次读取时由全局 TTL 控制
+        with _lock:
+            _cache[key] = result
+        logger.info("Cache SET: %s / %s (ttl=%ds)", skill_type, query[:30], ttl)
+    else:
+        with _lock:
+            _cache[key] = result
+        logger.info("Cache SET: %s / %s", skill_type, query[:30])
 
 
 def cache_clear() -> None:

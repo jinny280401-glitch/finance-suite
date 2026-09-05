@@ -438,7 +438,7 @@
     }
 
     // ===== 网络层增强 (2026-06-19 移植自 stock.html) =====
-    async function apiFetch(url, options = {}, { retries = 1, timeout = 90000 } = {}) {
+    async function apiFetch(url, options = {}, { retries = 1, timeout = 180000 } = {}) {
       const controller = new AbortController();
       const tid = setTimeout(() => controller.abort(), timeout);
       try {
@@ -527,7 +527,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ skill_type: 'industry', query })
-        }, { retries: 1, timeout: 90000 });
+        }, { retries: 1, timeout: 180000 });
 
         const data = await response.json().catch(() => ({}));
         if (response.status === 401) {

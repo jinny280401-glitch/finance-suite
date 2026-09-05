@@ -1,22 +1,9 @@
 name: 视频拆解
 description: 输入视频链接或文字稿，拆解内容要点和方法论
-icon: M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1
-  1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z
+icon: M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z
 color: from-purple-500 to-purple-700
 search_type: extract
-providers:
-- type: video_subtitle
-  config: {}
-- type: search
-  config:
-    strategy: news
-    primary: brave
-    fallback: tavily
+
+# 缓存有效期（秒）
 cache:
-  enabled: true
   ttl: 600
-qc:
-  min_completeness: 0.5
-  min_sources: 1
-  require_structured: false
-  hallucination_check: true

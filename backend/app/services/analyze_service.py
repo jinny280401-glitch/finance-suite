@@ -92,8 +92,15 @@ def _attach_final_dispatch_trace(response: dict, trace: dict | None) -> dict:
     return response
 
 
-async def _fetch_stock_data(query: str, search_query: str):
-    """Fetch stock data: AkShare structured + Tavily search."""
+async def _fetch_stock_data(query: str, search_query: str, scenario_config=None):
+    """Fetch stock data: AkShare structured + Tavily search.
+    
+    Args:
+        scenario_config: 可选 ScenarioConfig，用于驱动维度选择和 QC 阈值
+    """
+    import time as _time
+    _fetch_start = _time.monotonic()
+    
     from backend.engine.skills.stock_skill import resolve_stock, get_stock_full_data, format_stock_data, resolve_stock_detail
     from backend.engine.providers.search_provider import multi_search_stock, format_search_results_grouped
 
@@ -102,6 +109,7 @@ async def _fetch_stock_data(query: str, search_query: str):
     matched_text = None
 
     # Step 1: Resolve stock name/code
+    logger.info("[FLOW] 股票解析开始: query=%s", search_query)
     try:
         stock_detail = await loop.run_in_executor(None, resolve_stock_detail, search_query)
     except Exception:
@@ -111,16 +119,19 @@ async def _fetch_stock_data(query: str, search_query: str):
         stock_name = stock_detail["name"]
         resolver_source = stock_detail.get("resolver_source")
         matched_text = stock_detail.get("matched_text")
+        logger.info("[FLOW] 股票解析成功: %s(%s) resolver_source=%s", stock_name, stock_code, resolver_source)
     else:
         stock_info = await loop.run_in_executor(None, resolve_stock, search_query)
         if stock_info:
             stock_code, stock_name = stock_info
             resolver_source = "legacy_resolve_stock"
             matched_text = stock_name
+            logger.info("[FLOW] 股票解析成功(legacy): %s(%s)", stock_name, stock_code)
         else:
             stock_code, stock_name = search_query, search_query
             resolver_source = "unresolved_passthrough"
             matched_text = None
+            logger.warning("[FLOW] 股票解析失败，透传查询: %s", search_query)
 
     final_dispatch_trace = _build_final_dispatch_trace(
         "stock",
@@ -132,11 +143,27 @@ async def _fetch_stock_data(query: str, search_query: str):
     )
 
     # Step 2: Concurrent fetch AkShare + Tavily
-    akshare_task = get_stock_full_data(stock_code)
+    # 从 scenario_config 获取维度配置
+    _config_dims = None
+    if scenario_config and scenario_config.dimensions:
+        # 从 config.yaml 的 dimensions 过滤出 akshare 维度（排除 realtime，它始终从缓存取）
+        _akshare_dims = [d for d in scenario_config.dimensions if d != "realtime"]
+        _has_realtime = "realtime" in scenario_config.dimensions
+        _config_dims = _akshare_dims if _akshare_dims else None
+        logger.info("[FLOW] 配置驱动维度: %s (来自 config.yaml)", scenario_config.dimensions)
+    
+    logger.info("[FLOW] 并发获取数据: AkShare(结构化数据) + Tavily(搜索)")
+    akshare_task = get_stock_full_data(stock_code, dimensions=_config_dims)
     tavily_task = multi_search_stock(f"{stock_name} {stock_code}")
     akshare_data, tavily_results = await asyncio.gather(
         akshare_task, tavily_task, return_exceptions=True
     )
+    
+    _fetch_elapsed = _time.monotonic() - _fetch_start
+    _akshare_ok = isinstance(akshare_data, dict)
+    _tavily_ok = isinstance(tavily_results, list)
+    logger.info("[FLOW] 数据获取完成: elapsed=%.2fs akshare=%s tavily=%s",
+                _fetch_elapsed, _akshare_ok, _tavily_ok)
 
     sources = []
     structured_text = ""
@@ -189,15 +216,24 @@ async def _fetch_stock_data(query: str, search_query: str):
     if isinstance(akshare_data, dict):
         from datetime import date as _date
         _today = _date.today()
-        # 各维度时效阈值（天）
-        _stale_thresholds = {
+        # 各维度时效阈值（天）：优先从 scenario_config.qc.dimensions 读取，否则用默认值
+        _default_stale = {
             "price_history": 3,
             "fund_flow": 3,
             "realtime": 1,
             "financials": 90,
             "news": 7,
         }
-        for dim in ("financials", "price_history", "fund_flow", "news", "dividends", "realtime", "valuation"):
+        if scenario_config and scenario_config.qc.dimensions:
+            for dim, cfg in scenario_config.qc.dimensions.items():
+                if "stale_days" in cfg:
+                    _default_stale[dim] = cfg["stale_days"]
+        _stale_thresholds = _default_stale
+        # 检查的维度列表：优先从 scenario_config.dimensions 读取
+        _check_dims = scenario_config.dimensions if (scenario_config and scenario_config.dimensions) else (
+            "financials", "price_history", "fund_flow", "news", "dividends", "realtime", "valuation"
+        )
+        for dim in _check_dims:
             raw = akshare_data.get(dim)
             if dim == "realtime":
                 # realtime_availability 由 stock_skill 提供
@@ -454,9 +490,28 @@ async def run_analysis(
     Args:
         scenario_config: 可选 ScenarioConfig，Pipeline 传入时使用配置驱动的 prompt/QC。
     """
+    import time as _time
+    _flow_start = _time.monotonic()
+    
+    logger.info("[FLOW] ===== 分析请求开始 =====")
+    logger.info("[FLOW] skill_type=%s query=%s extra_content=%d chars",
+                skill_type, query[:100], len(extra_content))
+    
     skill = ScenarioRegistry().get_metadata(skill_type)
     if not skill:
+        logger.warning("[FLOW] 未知技能: %s", skill_type)
         return {"error": "未知的分析技能"}
+    
+    logger.info("[FLOW] 技能配置: search_type=%s", skill.get("search_type"))
+    
+    # 如果未传入 scenario_config，从注册中心加载
+    if scenario_config is None:
+        scenario_config = ScenarioRegistry().get(skill_type)
+    
+    if scenario_config:
+        logger.info("[FLOW] Scenario 配置: dimensions=%s cache_ttl=%ds qc_dims=%s",
+                    scenario_config.dimensions, scenario_config.cache.ttl,
+                    list(scenario_config.qc.dimensions.keys()) if scenario_config.qc.dimensions else "default")
 
     search_type = skill.get("search_type")
     search_query = query
@@ -470,7 +525,7 @@ async def run_analysis(
     # ---- Data fetching by skill type ----
     if search_type:
         if skill_type == "stock":
-            data = await _fetch_stock_data(query, search_query)
+            data = await _fetch_stock_data(query, search_query, scenario_config=scenario_config)
             search_results_text = data["search_results_text"]
             sources = data["sources"]
             kline_data = data["kline_data"]
@@ -513,6 +568,17 @@ async def run_analysis(
     else:
         search_results_text = ""
 
+    # ---- 数据采集完成日志 ----
+    _data_elapsed = _time.monotonic() - _flow_start
+    logger.info("[FLOW] 数据采集完成: elapsed=%.2fs sources=%d has_structured=%s text_len=%d",
+                _data_elapsed, len(sources), has_structured, len(search_results_text))
+    if dimension_status:
+        _available = [k for k, v in dimension_status.items() if v == "available"]
+        _missing = [k for k, v in dimension_status.items() if v == "missing"]
+        logger.info("[FLOW] 维度状态: available=%s missing=%s", _available, _missing)
+    if stale_data:
+        logger.warning("[FLOW] 过期数据: %s", stale_data)
+
     # ---- Build user content ----
     user_content = f"用户查询：{query}"
     if extra_content and search_type != "extract":
@@ -521,6 +587,7 @@ async def run_analysis(
     # ---- Call LLM ----
     auction_skip_llm = locals().get("auction_skip_llm", False)
     if skill_type == "auction" and auction_skip_llm:
+        logger.info("[FLOW] 集合竞价跳过 LLM (数据授权限制)")
         result = (
             "【集合竞价：结构化速览（未调用分析模型）】\n"
             "当前数据授权级别不允许生成竞价分析结论，以下为结构化数据速览：\n\n"
@@ -533,7 +600,13 @@ async def run_analysis(
         else:
             _scenario = ScenarioRegistry().get(skill_type)
             system_prompt = _scenario.prompt if _scenario else ""
+        
+        _llm_start = _time.monotonic()
+        logger.info("[FLOW] 调用 LLM: system_prompt=%d chars user_content=%d chars search_results=%d chars",
+                    len(system_prompt), len(user_content), len(search_results_text))
         result = await generate_analysis(system_prompt, user_content, search_results_text)
+        _llm_elapsed = _time.monotonic() - _llm_start
+        logger.info("[FLOW] LLM 完成: elapsed=%.2fs result=%d chars", _llm_elapsed, len(result))
 
     # ---- Macro consistency check ----
     if skill_type == "macro" and isinstance(macro_event_facts, dict):
@@ -671,7 +744,14 @@ async def run_analysis(
 
     # Cache (not macro/auction)
     if skill_type not in ("macro", "auction"):
-        cache_set(skill_type, query, response_data)
+        _cache_ttl = scenario_config.cache.ttl if scenario_config else None
+        cache_set(skill_type, query, response_data, ttl=_cache_ttl)
+        logger.info("[FLOW] 结果已缓存: skill_type=%s query=%s ttl=%s",
+                    skill_type, query[:50], _cache_ttl or "default")
+
+    _total_elapsed = _time.monotonic() - _flow_start
+    logger.info("[FLOW] ===== 分析完成 ===== total_elapsed=%.2fs result=%d chars sources=%d",
+                _total_elapsed, len(response_data.get("result", "")), len(sources))
 
     return apply_publication_containment(response_data)
 

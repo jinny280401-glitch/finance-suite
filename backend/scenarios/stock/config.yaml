@@ -3,7 +3,8 @@ description: 输入股票代码或名称，获取深度分析报告
 icon: M3 3v18h18M9 17V9m4 8V5m4 8v-4
 color: from-blue-500 to-cyan-500
 search_type: stock
-skill: stock_skill
+
+# 数据维度：驱动 get_stock_full_data() 获取哪些维度
 dimensions:
   - financials
   - realtime
@@ -12,32 +13,16 @@ dimensions:
   - news
   - dividends
   - valuation
-providers:
-- type: akshare_stock
-  config:
-    include:
-    - kline
-    - financials
-    - fund_flow
-    - news
-    - dividends
-- type: search
-  config:
-    strategy: stock_multi_dimension
-    primary: tavily
-    fallback: brave
+
+# 缓存有效期（秒）
 cache:
-  enabled: true
   ttl: 600
+
+# QC 时效阈值（天）：超过则标记为 stale
 qc:
-  min_completeness: 0.8
-  min_sources: 2
-  require_structured: true
-  hallucination_check: true
   dimensions:
-    financials: { required: true, stale_days: 90 }
-    price_history: { required: true, stale_days: 3 }
-    fund_flow: { required: false, stale_days: 3 }
-    news: { required: false, stale_days: 7 }
-    dividends: { required: false }
-    realtime: { required: true, stale_days: 1 }
+    financials: { stale_days: 90 }
+    price_history: { stale_days: 3 }
+    fund_flow: { stale_days: 3 }
+    news: { stale_days: 7 }
+    realtime: { stale_days: 1 }

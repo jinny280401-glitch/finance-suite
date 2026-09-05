@@ -982,34 +982,80 @@ def _fetch_dividends(code: str) -> list[dict] | None:
 
 # ---- 异步并发获取 ----
 
-async def get_stock_full_data(code: str) -> dict:
-    """并发获取全维度数据"""
+# 维度名 → 获取函数的映射表
+_DIMENSION_FETCHERS = {
+    "financials": "_fetch_financials",
+    "price_history": "_fetch_price_history",
+    "fund_flow": "_fetch_fund_flow",
+    "news": "_fetch_news",
+    "dividends": "_fetch_dividends",
+    "valuation": "_fetch_valuation",
+}
+
+# 全量维度（未指定 dimensions 时的默认值）
+_ALL_DIMENSIONS = ["financials", "price_history", "fund_flow", "news", "dividends", "valuation"]
+
+
+async def get_stock_full_data(code: str, dimensions: list[str] | None = None) -> dict:
+    """并发获取指定维度的数据。
+    
+    Args:
+        code: 股票代码
+        dimensions: 要获取的维度列表，None 表示获取全部 7 个维度
+    """
+    import time as _time
+    _full_start = _time.monotonic()
+    
+    # 如果未指定维度，获取全部（向后兼容）
+    fetch_dims = dimensions if dimensions is not None else _ALL_DIMENSIONS
+    # realtime 始终从缓存获取，不在 fetch_dims 中
+    _has_realtime = "realtime" in dimensions if dimensions else True
+    
+    logger.info("[FLOW] ===== 股票数据获取开始 ===== code=%s dimensions=%s", code, fetch_dims + (["realtime"] if _has_realtime else []))
+    logger.info("[FLOW] 并发获取 %d 维度: %s", len(fetch_dims), ", ".join(fetch_dims))
+    
     loop = asyncio.get_event_loop()
 
-    # 并发执行所有数据获取
-    fin_task = loop.run_in_executor(_executor, _fetch_financials, code)
-    price_task = loop.run_in_executor(_executor, _fetch_price_history, code)
-    flow_task = loop.run_in_executor(_executor, _fetch_fund_flow, code)
-    news_task = loop.run_in_executor(_executor, _fetch_news, code)
-    div_task = loop.run_in_executor(_executor, _fetch_dividends, code)
-    val_task = loop.run_in_executor(_executor, _fetch_valuation, code)
+    # 只获取请求的维度
+    tasks = {}
+    for dim in fetch_dims:
+        fn_name = _DIMENSION_FETCHERS.get(dim)
+        if fn_name:
+            fn = globals()[fn_name]
+            tasks[dim] = loop.run_in_executor(_executor, fn, code)
 
     results = {}
-    for key, task in [
-        ("financials", fin_task),
-        ("price_history", price_task),
-        ("fund_flow", flow_task),
-        ("news", news_task),
-        ("dividends", div_task),
-        ("valuation", val_task),
-    ]:
+    for dim, task in tasks.items():
         try:
-            results[key] = await task
+            results[dim] = await task
         except Exception:
-            results[key] = None
+            results[dim] = None
+
+    # 未请求的维度设为 None
+    for dim in _ALL_DIMENSIONS:
+        if dim not in results:
+            results[dim] = None
 
     # 实时行情从缓存取（不额外请求）
-    results["realtime"] = _fetch_realtime_from_cache(code)
+    if _has_realtime:
+        results["realtime"] = _fetch_realtime_from_cache(code)
+    else:
+        results["realtime"] = None
+    
+    # 数据流日志：汇总各维度状态
+    _full_elapsed = _time.monotonic() - _full_start
+    _dim_status = []
+    for dim in fetch_dims + (["realtime"] if _has_realtime else []):
+        data = results.get(dim)
+        if data is None:
+            _dim_status.append(f"{dim}=missing")
+        elif isinstance(data, list) and len(data) == 0:
+            _dim_status.append(f"{dim}=empty")
+        elif isinstance(data, dict) and not data:
+            _dim_status.append(f"{dim}=empty")
+        else:
+            _dim_status.append(f"{dim}=ok")
+    logger.info("[FLOW] 股票数据获取完成: elapsed=%.2fs %s", _full_elapsed, " ".join(_dim_status))
 
     # 构建 realtime_availability 元数据（_qc_stock 读取此字段判定 realtime 状态）
     # 区分 direct（腾讯直接返回）与 derived（从其他数据推算），对 Trust Gate 和 QC 证据层分类至关重要

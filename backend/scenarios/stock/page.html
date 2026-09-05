@@ -777,7 +777,7 @@
     //   2. cache: no-store: 避免浏览器返回陈旧 304 / cached body
     //   3. explainError: 把 Failed to fetch / AbortError / NetworkError 转成可执行的中文提示
     //   4. showError + retryLast: 出错时给用户一个手动重试按钮,而不是只能重新输入
-    async function apiFetch(url, options = {}, { retries = 1, timeout = 90000 } = {}) {
+    async function apiFetch(url, options = {}, { retries = 1, timeout = 180000 } = {}) {
       const controller = new AbortController();
       const tid = setTimeout(() => controller.abort(), timeout);
       try {
@@ -869,7 +869,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ skill_type: 'stock', query })
-        }, { retries: 1, timeout: 90000 });
+        }, { retries: 1, timeout: 180000 });
 
         const data = await response.json().catch(() => ({}));
         if (response.status === 401) {
