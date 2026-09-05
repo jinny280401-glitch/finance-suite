@@ -6,6 +6,7 @@ Finance Suite 用户管理脚本
   python manage_users.py add <username> <password> <tier>  # 添加用户
   python manage_users.py reset <username> <password>       # 重置密码
   python manage_users.py delete <username>                 # 删除用户
+  python manage_users.py sync-defaults                      # 同步默认账号（可重复执行）
 """
 
 import sqlite3
@@ -14,6 +15,20 @@ import sys
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent.parent / "finance_suite.db"
+
+DEFAULT_USERS = [
+    ("linzuxi", "lzx123456", "vip"),
+    ("danny", "danny123456", "vip"),
+    ("ivan", "ivan123456", "vip"),
+    ("shengwei", "86869945", "vip"),
+    ("vanilla", "lemon123456", "vip"),
+    ("nanjian", "nj123456", "vip"),
+    ("fengzhijie", "fzj123456", "vip"),
+    ("lianghailin", "lhl123456", "vip"),
+    ("demo", "demo2026", "free"),
+    ("zhuanz", "zhuanz0405", "admin"),
+    ("hfzq", "hf1234", "vip"),
+]
 
 def hash_password(password: str) -> str:
     """使用 SHA256 哈希密码"""
@@ -76,6 +91,37 @@ def add_user(username: str, password: str, tier: str = "free"):
     finally:
         conn.close()
 
+def upsert_user(username: str, password: str, tier: str = "free"):
+    """新增或更新用户，适合部署时反复同步账号。"""
+    if tier not in ["free", "vip", "admin"]:
+        print(f"错误：权限必须是 free/vip/admin，当前值: {tier}")
+        return False
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO users (username, password_hash, tier)
+        VALUES (?, ?, ?)
+        ON CONFLICT(username) DO UPDATE SET
+            password_hash = excluded.password_hash,
+            tier = excluded.tier
+        """,
+        (username.strip().lower(), hash_password(password), tier),
+    )
+    conn.commit()
+    conn.close()
+    print(f"✓ 用户 {username} 已同步 (权限: {tier})")
+    return True
+
+
+def sync_default_users():
+    """同步内置账号清单，数据库为空或账号被删时可直接恢复。"""
+    ok = True
+    for username, password, tier in DEFAULT_USERS:
+        ok = upsert_user(username, password, tier) and ok
+    return ok
+
 def reset_password(username: str, new_password: str):
     """重置用户密码"""
     conn = sqlite3.connect(DB_PATH)
@@ -122,7 +168,15 @@ def main():
         if len(sys.argv) < 5:
             print("用法: python manage_users.py add <username> <password> <tier>")
             return
-        add_user(sys.argv[2], sys.argv[3], sys.argv[4])
+        add_user(sys.argv[2].strip().lower(), sys.argv[3], sys.argv[4])
+    elif command == "upsert":
+        if len(sys.argv) < 5:
+            print("用法: python manage_users.py upsert <username> <password> <tier>")
+            return
+        upsert_user(sys.argv[2].strip().lower(), sys.argv[3], sys.argv[4])
+    elif command == "sync-defaults":
+        sync_default_users()
+        list_users()
     elif command == "reset":
         if len(sys.argv) < 4:
             print("用法: python manage_users.py reset <username> <password>")

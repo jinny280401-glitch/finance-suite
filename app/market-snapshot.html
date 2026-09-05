@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>今日市场画像 - 投资Agent</title>
+  <style>
+    :root {
+      --bg: #eef2f5;
+      --panel: #ffffff;
+      --ink: #101318;
+      --muted: #69717d;
+      --line: rgba(16, 19, 24, 0.1);
+      --green: #0aa66a;
+      --green-soft: #e9f8f0;
+      --shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+      background: linear-gradient(135deg, #f7f8fb 0%, #e7edf3 100%);
+      color: var(--ink);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(380px, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+    .main-content { min-width: 0; }
+    .header {
+      background: white;
+      border-radius: 14px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+    .header-meta {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .header-title {
+      font-size: 42px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      background: var(--green-soft);
+      color: var(--green);
+    }
+    .header-summary {
+      font-size: 16px;
+      color: #364152;
+      line-height: 1.75;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+    .metric-card {
+      padding: 16px;
+      border-radius: 10px;
+      background: #f8f9fa;
+      border: 1px solid var(--line);
+    }
+    .metric-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+    .metric-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .sections-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .section-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+    }
+    .section-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      color: var(--ink);
+    }
+    .section-content {
+      font-size: 14px;
+      color: #596271;
+      line-height: 1.6;
+    }
+    .risk-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      border-left: 4px solid #ff9940;
+      box-shadow: var(--shadow);
+    }
+    .risk-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: #c77700;
+      margin-bottom: 12px;
+    }
+    .risk-content {
+      font-size: 14px;
+      color: #596271;
+      line-height: 1.7;
+    }
+
+    /* 估值热力面板 */
+    .heat-panel {
+      background: white;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+      position: sticky;
+      top: 32px;
+    }
+    .heat-header {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .heat-header h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .heat-header p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #fff4e7;
+      color: #c77700;
+    }
+    .heat-table {
+      padding: 12px;
+      max-height: calc(100vh - 200px);
+      overflow-y: auto;
+    }
+    .heat-empty {
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .heat-row {
+      display: grid;
+      grid-template-columns: minmax(100px, 1.2fr) 0.7fr 0.6fr 0.6fr 0.6fr;
+      gap: 8px;
+      align-items: center;
+      padding: 9px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    .heat-row.header {
+      background: #f6f7f9;
+      color: var(--muted);
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .heat-row.hot {
+      background: #12af72;
+      color: #061318;
+      font-weight: 700;
+    }
+    .heat-row.mid {
+      background: #ff9940;
+      color: #061318;
+      font-weight: 700;
+    }
+    .heat-row.cool {
+      background: #ff5448;
+      color: #061318;
+      font-weight: 700;
+    }
+    .heat-row span:not(:first-child) {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 32px 24px;
+      line-height: 1.6;
+    }
+    .loading {
+      text-align: center;
+      padding: 48px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 1024px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+      .heat-panel {
+        position: relative;
+        top: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="main-content">
+      <div id="content" class="loading">加载中...</div>
+    </div>
+
+    <aside class="heat-panel" aria-label="估值热力参考">
+      <div class="heat-header">
+        <h3>估值温度参考</h3>
+        <p>主要宽基/红利指数估值温度（东方财富自动接口）</p>
+        <span class="pill" data-valuation-source>手工截图 · 待核对</span>
+      </div>
+      <div class="heat-table">
+        <div class="heat-row header">
+          <span>指数</span>
+          <span>盈利收益率</span>
+          <span>市盈率</span>
+          <span>市净率</span>
+          <span>ROE</span>
+        </div>
+        <div data-valuation-rows></div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="./market-valuation-snapshot.js"></script>
+  <script src="./market-snapshot-valuation.js"></script>
+  <script>
+    // 先直接渲染静态内容，确保页面始终可见
+    (function renderStatic() {
+      var container = document.getElementById('content');
+      container.innerHTML = '';
+
+      // Header
+      var header = document.createElement('div');
+      header.className = 'header';
+
+      var meta = document.createElement('div');
+      meta.className = 'header-meta';
+      meta.textContent = '2026-06-30 · 集合竞价与午盘判研';
+
+      var title = document.createElement('h1');
+      title.className = 'header-title';
+
+      var titleText = document.createElement('span');
+      titleText.textContent = '今日市场画像';
+      title.appendChild(titleText);
+
+      var badge = document.createElement('span');
+      badge.className = 'status-badge';
+      badge.textContent = '静态快照 · 6月30日';
+      title.appendChild(badge);
+
+      var summary = document.createElement('div');
+      summary.className = 'header-summary';
+      summary.textContent = '今日涨停家数 90 只，最高连板 3 板（兴业股份）。半导体、光学光电与汽车零部件/机器人连续强势。昨日涨停反馈 48.6%，整体赚钱效应中性偏弱，但进攻意愿明确。短线风险集中在高位连板个股和封单不足品种。';
+
+      header.appendChild(meta);
+      header.appendChild(title);
+      header.appendChild(summary);
+      container.appendChild(header);
+
+      // Metrics
+      var grid = document.createElement('div');
+      grid.className = 'metrics-grid';
+      [
+        { label: '涨停数量', value: '90只', sub: '截至午盘，涨停池封死为主' },
+        { label: '连板高度', value: '3板', sub: '兴业股份为空间标杆' },
+        { label: '昨日涨停反馈', value: '48.6%', sub: '上涨样本占比，中性偏弱' },
+        { label: '风险偏好', value: '中高', sub: '进攻意愿明确' }
+      ].forEach(function(c) {
+        var card = document.createElement('div');
+        card.className = 'metric-card';
+        var l = document.createElement('div'); l.className = 'metric-label'; l.textContent = c.label;
+        var v = document.createElement('div'); v.className = 'metric-value'; v.textContent = c.value;
+        var s = document.createElement('div'); s.className = 'metric-subtitle'; s.textContent = c.sub;
+        card.appendChild(l); card.appendChild(v); card.appendChild(s);
+        grid.appendChild(card);
+      });
+      container.appendChild(grid);
+
+      // Sections
+      var secTitle = document.createElement('h2');
+      secTitle.style.cssText = 'font-size:22px;font-weight:600;margin-bottom:16px;padding-left:4px';
+      secTitle.textContent = '今天钱在哪';
+      container.appendChild(secTitle);
+
+      var secGrid = document.createElement('div');
+      secGrid.className = 'sections-grid';
+      [
+        { title: '半导体', content: '格科微、长光华芯、敏芯股份、金海通\n≥12只涨停' },
+        { title: '光学光电', content: '水晶光电、天禄科技、联得装备、深科达\n批量20cm涨停' },
+        { title: '汽车零部件 / 机器人', content: '兴业股份、长源东谷、德尔未来\n空间标杆 3连板' }
+      ].forEach(function(s) {
+        var card = document.createElement('div');
+        card.className = 'section-card';
+        var t = document.createElement('div'); t.className = 'section-title'; t.textContent = s.title;
+        var c = document.createElement('div'); c.className = 'section-content'; c.textContent = s.content;
+        card.appendChild(t); card.appendChild(c);
+        secGrid.appendChild(card);
+      });
+      container.appendChild(secGrid);
+
+      // Risk
+      var risk = document.createElement('div');
+      risk.className = 'risk-card';
+      var rt = document.createElement('div'); rt.className = 'risk-title'; rt.textContent = '短线风险提示';
+      var rc = document.createElement('div'); rc.className = 'risk-content';
+      rc.textContent = '高位连板个股（兴业股份）若无法缩量加速可能引发退潮。封单不足品种（济民健康、魅视科技）抗压能力待观察。缺乏板块联动的消息驱动首板持续性偏弱。';
+      risk.appendChild(rt); risk.appendChild(rc);
+      container.appendChild(risk);
+
+      // Footer
+      var footer = document.createElement('div');
+      footer.className = 'footer';
+      footer.innerHTML = '<div>市场画像：2026-06-30 静态快照 · 估值表：东方财富自动接口</div><div style="margin-top:4px">数据仅供参考 · 不构成投资建议</div>';
+      container.appendChild(footer);
+    })();
+
+    // 后台尝试用 API 数据升级（不影响已展示的静态内容）
+    fetch('/api/intel/market-context', { credentials: 'include' })
+      .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(function(data) {
+        // 仅更新时间戳
+        var meta = document.querySelector('.header-meta');
+        if (meta && data.timestamp) {
+          var d = new Date(data.timestamp);
+          meta.textContent = d.toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}) + ' ' +
+            d.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'}) + ' · 实时数据';
+        }
+        var badge = document.querySelector('.status-badge');
+        if (badge) badge.textContent = '实时数据';
+      })
+      .catch(function() { /* 静默降级，静态内容已展示 */ });
+  </script>
+</body>
+</html>

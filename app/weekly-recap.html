@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>本周市场复盘 - 投资Agent</title>
+  <style>
+    :root {
+      --bg: #f7f8fb; --panel: #fff; --ink: #101318; --muted: #69717d;
+      --line: rgba(16,19,24,0.08); --green: #0aa66a; --red: #db3b31;
+      --green-soft: #e9f8f0; --red-soft: #fff0ee;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+      background: linear-gradient(135deg, #f7f8fb 0%, #e7edf3 100%);
+      color: var(--ink); line-height:1.6; min-height:100vh;
+    }
+    .container { max-width: 1100px; margin:0 auto; padding:32px 24px; }
+
+    .page-header { margin-bottom: 32px; }
+    .page-header .eyebrow { font-size:12px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; }
+    .page-header h1 { font-size: 38px; font-weight:700; letter-spacing:-0.02em; margin-bottom:8px; }
+    .page-header .meta { font-size:13px; color:var(--muted); }
+    .page-header .tag { display:inline-block; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; background:var(--green-soft); color:var(--green); margin-left:12px; }
+
+    .card {
+      background: var(--panel); border-radius: 14px; padding: 24px;
+      border: 1px solid var(--line); margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.06);
+    }
+    .card h2 { font-size: 19px; font-weight:600; margin-bottom: 16px; letter-spacing:-0.01em; }
+
+    /* Index table */
+    .index-table { width:100%; border-collapse:collapse; font-size:14px; }
+    .index-table th { text-align:left; color:var(--muted); font-weight:600; padding:8px 12px; border-bottom:1px solid var(--line); font-size:12px; }
+    .index-table td { padding:10px 12px; border-bottom:1px solid rgba(16,19,24,0.04); }
+    .index-table .up { color: var(--red); font-weight:700; }
+    .index-table .down { color: var(--green); font-weight:700; }
+
+    /* Top/Bottom lists */
+    .stock-list { display:grid; gap:8px; }
+    .stock-row { display:grid; grid-template-columns:28px minmax(0,1fr) 80px 160px; gap:12px; align-items:center; padding:10px 12px; border-radius:10px; background:#f8f9fa; font-size:13px; }
+    .stock-row .rank { width:28px; height:28px; border-radius:8px; display:grid; place-items:center; font-weight:700; font-size:12px; }
+    .stock-row .rank.top { background:var(--red-soft); color:var(--red); }
+    .stock-row .rank.bottom { background:var(--green-soft); color:var(--green); }
+    .stock-row .name { font-weight:600; }
+    .stock-row .code { color:var(--muted); font-size:11px; }
+    .stock-row .change { font-weight:700; text-align:right; }
+    .stock-row .change.up { color:var(--red); }
+    .stock-row .change.down { color:var(--green); }
+    .stock-row .reason { color:var(--muted); font-size:12px; }
+
+    /* Flow */
+    .flow-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+    .flow-item { text-align:center; padding:16px; border-radius:10px; background:#f8f9fa; }
+    .flow-item .amount { font-size:28px; font-weight:700; letter-spacing:-0.02em; }
+    .flow-item .label { font-size:12px; color:var(--muted); margin-top:4px; }
+    .flow-item .amount.inflow { color:var(--red); }
+    .flow-item .amount.outflow { color:var(--green); }
+
+    /* Calendar */
+    .event-list { display:grid; gap:8px; }
+    .event-row { display:grid; grid-template-columns:100px minmax(0,1fr); gap:12px; padding:10px 12px; border-radius:10px; font-size:13px; }
+    .event-row .date { font-weight:700; color:var(--muted); }
+    .event-row.high { background:#fff8e7; }
+    .event-row .impact { font-size:11px; padding:2px 8px; border-radius:8px; font-weight:600; display:inline-block; margin-left:8px; }
+    .event-row .impact.high { background:#ff5448; color:white; }
+    .event-row .impact.mid { background:#ff9940; color:white; }
+
+    .empty-state { text-align:center; padding:48px 24px; color:var(--muted); }
+    .empty-state h3 { font-size:17px; color:var(--ink); margin-bottom:8px; }
+    .empty-state p { font-size:13px; line-height:1.6; }
+    .empty-state .schedule { display:inline-block; margin-top:12px; padding:8px 16px; border-radius:8px; background:#edf3ff; color:#2563eb; font-weight:600; font-size:13px; }
+
+    .footer { text-align:center; color:var(--muted); font-size:12px; padding:32px; }
+    .footer a { color:var(--muted); }
+
+    @media (max-width:720px) {
+      .flow-grid { grid-template-columns:1fr; }
+      .stock-row { grid-template-columns:24px minmax(0,1fr) 60px; }
+      .stock-row .reason { display:none; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="page-header">
+    <div class="eyebrow">Weekly Market Recap</div>
+    <h1>本周市场复盘 <span class="tag" data-week-tag>自动生成</span></h1>
+    <div class="meta" data-week-meta>每周五 16:00 自动更新 · 数据来源：东方财富 / AkShare</div>
+  </div>
+
+  <!-- Section 1: 指数涨跌 -->
+  <div class="card">
+    <h2>一、主要指数周表现</h2>
+    <div data-section="index">
+      <div class="empty-state">
+        <h3>等待数据生成</h3>
+        <p>每周五 16:00 自动抓取并更新指数周涨跌幅、走势分析和成交量。</p>
+        <div class="schedule">⏰ 下次更新：周五 16:00</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: 涨跌 TOP 10 -->
+  <div class="card">
+    <h2>二、本周涨跌 TOP 10</h2>
+    <div data-section="top10">
+      <div class="empty-state">
+        <h3>等待数据生成</h3>
+        <p>自动筛选本周涨幅前 10 和跌幅前 10 个股，附带原因分析。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: 北向资金 -->
+  <div class="card">
+    <h2>三、北向资金流向</h2>
+    <div data-section="flow">
+      <div class="empty-state">
+        <h3>等待数据生成</h3>
+        <p>本周北向资金累计净流入/流出、日均成交额、行业偏好。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: 下周事件日历 -->
+  <div class="card">
+    <h2>四、下周重要事件日历</h2>
+    <div data-section="calendar">
+      <div class="empty-state">
+        <h3>等待数据生成</h3>
+        <p>下周重要经济数据发布、财报披露、政策事件等。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    每周五 16:00 自动生成 · 数据仅供参考，不构成投资建议<br>
+    <a href="./market-snapshot.html">← 返回市场画像</a>
+  </div>
+
+</div>
+
+<script>
+// 尝试从服务器加载最新周报数据
+var weekMeta = document.querySelector('[data-week-meta]');
+var weekTag = document.querySelector('[data-week-tag]');
+
+function updateMeta(dateStr) {
+  if (weekMeta) weekMeta.textContent = '生成于 ' + dateStr + ' · 每周五 16:00 自动更新 · 数据来源：东方财富 / AkShare';
+  if (weekTag) weekTag.textContent = dateStr;
+}
+
+// 加载快照数据
+// 双路径兜底：本地/生产环境兼容
+var dataUrl = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+  ? './weekly-recap-latest.json'
+  : '/static/app/weekly-recap-latest.json';
+fetch(dataUrl)
+  .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+  .then(function(data) {
+    updateMeta(data.generated_at || '');
+    if (data.index_performance) renderIndex(data.index_performance);
+    if (data.top_movers) renderTopMovers(data.top_movers);
+    if (data.north_flow) renderNorthFlow(data.north_flow);
+    if (data.events_calendar) renderCalendar(data.events_calendar);
+  })
+  .catch(function() {
+    updateMeta('待生成');
+  });
+
+function renderIndex(data) {
+  var section = document.querySelector('[data-section="index"]');
+  if (!section) return;
+  var html = '<table class="index-table"><thead><tr><th>指数</th><th>周涨跌</th><th>周涨幅</th><th>周成交量</th><th>走势简述</th></tr></thead><tbody>';
+  data.forEach(function(item) {
+    var cls = item.change_pct >= 0 ? 'up' : 'down';
+    html += '<tr><td><strong>' + item.name + '</strong> <span style="color:var(--muted);font-size:11px">' + item.code + '</span></td>';
+    html += '<td class="' + cls + '">' + (item.change_pct >= 0 ? '+' : '') + item.change_pct + '%</td>';
+    html += '<td>' + (item.weekly_range || '--') + '</td>';
+    html += '<td>' + (item.volume || '--') + '</td>';
+    html += '<td style="font-size:12px;color:var(--muted)">' + (item.note || '--') + '</td></tr>';
+  });
+  html += '</tbody></table>';
+  section.innerHTML = html;
+}
+
+function renderTopMovers(data) {
+  var section = document.querySelector('[data-section="top10"]');
+  if (!section) return;
+  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">';
+
+  // Gainers
+  html += '<div><h3 style="font-size:15px;color:var(--red);margin-bottom:12px">📈 涨幅前十</h3><div class="stock-list">';
+  (data.gainers || []).forEach(function(s, i) {
+    html += '<div class="stock-row">';
+    html += '<div class="rank top">' + (i+1) + '</div>';
+    html += '<div><span class="name">' + s.name + '</span> <span class="code">' + s.code + '</span></div>';
+    html += '<div class="change up">+' + s.change_pct + '%</div>';
+    html += '<div class="reason">' + (s.reason || '--') + '</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  // Losers
+  html += '<div><h3 style="font-size:15px;color:var(--green);margin-bottom:12px">📉 跌幅前十</h3><div class="stock-list">';
+  (data.losers || []).forEach(function(s, i) {
+    html += '<div class="stock-row">';
+    html += '<div class="rank bottom">' + (i+1) + '</div>';
+    html += '<div><span class="name">' + s.name + '</span> <span class="code">' + s.code + '</span></div>';
+    html += '<div class="change down">' + s.change_pct + '%</div>';
+    html += '<div class="reason">' + (s.reason || '--') + '</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+
+  html += '</div>';
+  section.innerHTML = html;
+}
+
+function renderNorthFlow(data) {
+  var section = document.querySelector('[data-section="flow"]');
+  if (!section) return;
+  var html = '<div class="flow-grid">';
+  html += '<div class="flow-item"><div class="amount ' + (data.net_flow >= 0 ? 'inflow' : 'outflow') + '">' + (data.net_flow >= 0 ? '+' : '') + data.net_flow + '亿</div><div class="label">本周净流向</div></div>';
+  html += '<div class="flow-item"><div class="amount" style="color:var(--ink)">' + data.avg_daily + '亿</div><div class="label">日均成交额</div></div>';
+  html += '<div class="flow-item"><div class="amount" style="color:var(--ink)">' + (data.total_inflow || '--') + '亿</div><div class="label">累计买入</div></div>';
+  html += '</div>';
+  if (data.top_sectors && data.top_sectors.length) {
+    html += '<div style="margin-top:16px;font-size:13px;color:var(--muted)">偏好行业：';
+    html += data.top_sectors.map(function(s) { return '<span style="display:inline-block;padding:2px 10px;margin:2px;border-radius:10px;background:#edf3ff;color:#2563eb;font-weight:600">' + s + '</span>'; }).join(' ');
+    html += '</div>';
+  }
+  section.innerHTML = html;
+}
+
+function renderCalendar(data) {
+  var section = document.querySelector('[data-section="calendar"]');
+  if (!section) return;
+  var html = '<div class="event-list">';
+  data.forEach(function(e) {
+    var cls = e.impact === 'high' ? 'high' : '';
+    html += '<div class="event-row ' + cls + '">';
+    html += '<div class="date">' + e.date + '</div>';
+    html += '<div>' + e.event + (e.impact ? '<span class="impact ' + e.impact + '">' + (e.impact === 'high' ? '高' : '中') + '影响</span>' : '') + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  section.innerHTML = html;
+}
+</script>
+</body>
+</html>

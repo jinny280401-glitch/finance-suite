@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>D13 Close Brief — 2026-07-17</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  /* ===== Token system (FROZEN — same as morning brief) ===== */
+  :root {
+    --ink:       #0F1419;
+    --surface:   #1A1F2E;
+    --surface-2: #232938;
+    --rule:      #2D3447;
+    --text:      #E8E4D9;
+    --text-soft: #B8B4AB;
+    --muted:     #8B8680;
+    --amber:     #D4A574;
+    --amber-dim: #8C6E4E;
+    --caution:   #C97A6B;
+    --caution-dim: #7E4A40;
+    --positive:  #7FA968;
+    --positive-dim: #4A6A3C;
+    --serif:   'Fraunces', 'Songti SC', serif;
+    --sans:    'IBM Plex Sans', 'PingFang SC', sans-serif;
+    --mono:    'JetBrains Mono', 'SF Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #05070A;
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "tnum" 1, "ss01" 1;
+    line-height: 1.55;
+  }
+
+  .stage {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 48px 24px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 880px;
+    background: var(--ink);
+    border: 1px solid var(--rule);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 30px 80px -20px rgba(0,0,0,0.6),
+      0 10px 30px -10px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Top status bar */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 28px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .topbar .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--caution);
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .topbar-right { color: var(--text-soft); }
+  .topbar-right span + span::before { content: "·"; padding: 0 8px; color: var(--rule); }
+
+  /* Header */
+  .header {
+    padding: 36px 40px 28px;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  .header-eyebrow {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .header-eyebrow .brief-id { color: var(--amber); font-weight: 700; }
+  .header h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 44px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--text);
+    font-variation-settings: "opsz" 96;
+  }
+  .header h1 em {
+    font-style: italic;
+    color: var(--caution);
+    font-weight: 400;
+  }
+  .header-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 14px;
+    letter-spacing: 0.06em;
+  }
+  .signal-tags {
+    display: flex;
+    gap: 16px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+  }
+  .signal-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+    padding: 5px 10px;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  .signal-tag strong { color: var(--amber); font-weight: 500; }
+  .signal-tag .cross { color: var(--caution); margin-right: 6px; font-weight: 700; }
+
+  /* Verdict */
+  .verdict {
+    padding: 36px 40px 32px;
+    border-bottom: 1px solid var(--rule);
+    background: linear-gradient(180deg, rgba(201,122,107,0.04) 0%, transparent 100%);
+  }
+  .verdict-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--caution);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .verdict-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+  .verdict-text {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 28px;
+    line-height: 1.4;
+    color: var(--text);
+    letter-spacing: -0.005em;
+    font-variation-settings: "opsz" 60;
+  }
+  .verdict-text .accent { color: var(--caution); font-style: italic; }
+  .verdict-text .muted { color: var(--text-soft); }
+
+  /* Day summary paragraph */
+  .day-summary {
+    padding: 28px 40px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface);
+  }
+  .day-summary .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .day-summary .label strong { color: var(--text-soft); font-weight: 500; }
+  .day-summary p {
+    font-size: 14px;
+    color: var(--text-soft);
+    line-height: 1.7;
+  }
+  .day-summary p strong { color: var(--text); font-weight: 500; }
+
+  /* Comparison grid — 4 seats */
+  .comparisons {
+    padding: 28px 40px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .comparisons-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .comparisons-label strong { color: var(--text-soft); font-weight: 500; }
+  .comparisons-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border: 1px solid var(--rule);
+  }
+  .cmp {
+    padding: 20px 18px;
+    border-right: 1px solid var(--rule);
+    position: relative;
+  }
+  .cmp:last-child { border-right: 0; }
+  .cmp .badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    margin-bottom: 12px;
+  }
+  .badge.confirmed { color: var(--positive); border: 1px solid var(--positive-dim); background: rgba(127,169,104,0.08); }
+  .badge.deviated  { color: var(--caution); border: 1px solid var(--caution-dim); background: rgba(201,122,107,0.08); }
+  .cmp-key {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .cmp-expect {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .cmp-expect strong { color: var(--text-soft); font-weight: 400; }
+  .cmp-actual {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 10px;
+    font-variation-settings: "opsz" 40;
+  }
+  .cmp-reason {
+    font-size: 12px;
+    color: var(--text-soft);
+    line-height: 1.45;
+  }
+
+  /* Two-column: Calibration + Tomorrow */
+  .body-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .body-section {
+    padding: 32px 32px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .body-section:first-child { border-right: 1px solid var(--rule); }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .section-head .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .section-head .title {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 20px;
+    color: var(--text);
+    letter-spacing: -0.005em;
+  }
+  .section-head .bar { flex: 1; height: 1px; background: var(--rule); }
+
+  /* Calibration items */
+  .cal-list { display: flex; flex-direction: column; gap: 14px; }
+  .cal-item {
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .cal-item:last-child { border-bottom: 0; }
+  .cal-item .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    margin-bottom: 8px;
+  }
+  .tag.pattern { color: var(--positive); border: 1px solid var(--positive-dim); }
+  .tag.miss    { color: var(--caution); border: 1px solid var(--caution-dim); }
+  .tag.note    { color: var(--amber); border: 1px solid var(--amber-dim); }
+  .cal-item p {
+    font-size: 13px;
+    color: var(--text-soft);
+    line-height: 1.55;
+  }
+
+  /* Tomorrow context */
+  .tm-list { display: flex; flex-direction: column; gap: 0; }
+  .tm-item {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 0;
+    border-top: 1px solid var(--rule);
+  }
+  .tm-item:last-child { border-bottom: 1px solid var(--rule); }
+  .tm-item .ind {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1px solid var(--amber);
+    background: transparent;
+    margin-top: 4px;
+    box-shadow: 0 0 0 3px rgba(212,165,116,0.12);
+  }
+  .tm-item p {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* Ticker tape */
+  .ticker-wrap {
+    background: var(--ink);
+    border-top: 1px solid var(--rule);
+    overflow: hidden;
+    position: relative;
+  }
+  .ticker-wrap::before, .ticker-wrap::after {
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 60px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .ticker-wrap::before { left: 0;  background: linear-gradient(90deg, var(--ink), transparent); }
+  .ticker-wrap::after  { right: 0; background: linear-gradient(270deg, var(--ink), transparent); }
+  .ticker {
+    display: flex;
+    gap: 48px;
+    padding: 14px 0;
+    white-space: nowrap;
+    animation: scroll 40s linear infinite;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--text-soft);
+  }
+  .ticker .tk {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ticker .tk strong { color: var(--amber); font-weight: 500; }
+  @keyframes scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* Footer */
+  .footer {
+    padding: 18px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .footer .left { color: var(--text-soft); }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    .stage { padding: 0; }
+    .card { border: 0; }
+    .header { padding: 28px 22px; }
+    .header h1 { font-size: 30px; }
+    .verdict { padding: 24px 22px; }
+    .verdict-text { font-size: 21px; }
+    .comparisons { padding: 22px; }
+    .comparisons-grid { grid-template-columns: repeat(2, 1fr); }
+    .cmp:nth-child(2) { border-right: 0; }
+    .cmp:nth-child(1), .cmp:nth-child(2) { border-bottom: 1px solid var(--rule); }
+    .day-summary, .body-section { padding: 24px 22px; }
+    .body-grid { grid-template-columns: 1fr; }
+    .body-section:first-child { border-right: 0; }
+    .cmp-val { font-size: 30px; }
+    .footer { padding: 14px 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ticker { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <article class="card" role="article">
+
+    <!-- Top status bar -->
+    <div class="topbar">
+      <div><span class="dot"></span>CLOSED · A-SHARE DESK</div>
+      <div class="topbar-right">
+        <span>SESSION A · ASIA</span>
+        <span>16:15 CST · 自动化</span>
+        <span>2026-07-17</span>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-eyebrow">
+        <span class="brief-id">D13</span>
+        <span>CLOSE BRIEF</span>
+        <span>· 全天验证</span>
+      </div>
+      <h1>午后V型反弹<em>失败</em><br/>尾盘再走弱</h1>
+      <div class="header-sub">晨间 4 项预期验证：3 CONFIRMED · 1 DEVIATED — 防守未转为企稳</div>
+      <div class="signal-tags">
+        <span class="signal-tag"><strong>Confidence</strong>&nbsp;&nbsp;PARTIAL → COMPLETE</span>
+        <span class="signal-tag"><strong>Use</strong>&nbsp;&nbsp;宏观观察 + 反馈校准</span>
+        <span class="signal-tag"><span class="cross">×</span><strong>NOT</strong>&nbsp;&nbsp;交易建议</span>
+      </div>
+    </header>
+
+    <!-- Verdict -->
+    <section class="verdict">
+      <div class="verdict-label">Verdict · 全天判断</div>
+      <p class="verdict-text">A股全天低开低走，午后快速下探后短暂走V但尾盘再度走弱：<span class="accent">上证失守3800点（-3.05%），创业板跌7.15%创年内最大单日跌幅</span>，近5000只个股下跌。央行的4305亿净投放未能缓冲权益风险偏好——流动性宽松不等于交易拥挤解除。</p>
+    </section>
+
+    <!-- Day summary -->
+    <section class="day-summary">
+      <div class="label">DAY <strong>· 7-17 全天回顾</strong></div>
+      <p>A股全天低开低走，午后快速下探后虽有回升但尾盘再度走弱：<strong>上证指数3764.15（-3.05%）、深证成指13706.88（-5.40%）、创业板指3428.63（-7.15%）</strong>、北证50为1076.38（-2.31%），沪深北三市成交约2.67万亿元。近5000只股票下跌，近200股跌停，半导体、医药、有色、汽车、军工等大幅走低，仅电力和银行逆势上扬。隔夜海外半导体回撤与国内高拥挤科技链去杠杆共同放大风险偏好压力。宏观与政策端，二季度GDP同比4.3%、央行净投放4305亿元均获确认，但流动性未能形成可见的权益缓冲。USD/CNY中间价6.7934，在岸即期收盘6.7763，汇率保持有序。</p>
+    </section>
+
+    <!-- Expectation Comparison Grid -->
+    <section class="comparisons">
+      <div class="comparisons-label">EXPECTATION <strong>· 晨间预期 vs 收盘验证</strong></div>
+      <div class="comparisons-grid">
+        <div class="cmp">
+          <span class="badge confirmed">CONFIRMED</span>
+          <div class="cmp-key">GDP · 二季度</div>
+          <div class="cmp-expect">预期 <strong>4.3% · down</strong></div>
+          <div class="cmp-actual">4.3% · 上半年4.7%</div>
+          <div class="cmp-reason">同比增速较一季度5.0%放缓0.7pp，增长分化确认。</div>
+        </div>
+        <div class="cmp">
+          <span class="badge deviated">DEVIATED</span>
+          <div class="cmp-key">央行净投放 · 7-17</div>
+          <div class="cmp-expect">预期 <strong>4305亿 · up</strong></div>
+          <div class="cmp-actual">4305亿 · 权益未缓冲</div>
+          <div class="cmp-reason">金额兑现，但流动性未转换为权益支撑——高估了单日投放对风险偏好的缓冲能力。</div>
+        </div>
+        <div class="cmp">
+          <span class="badge confirmed">CONFIRMED</span>
+          <div class="cmp-key">USD/CNY 中间价</div>
+          <div class="cmp-expect">预期 <strong>6.7934 · down</strong></div>
+          <div class="cmp-actual">6.7934 · 即期6.7763</div>
+          <div class="cmp-reason">在岸即期保持在中间价强侧，汇率锚未失序。</div>
+        </div>
+        <div class="cmp">
+          <span class="badge confirmed">CONFIRMED</span>
+          <div class="cmp-key">上证指数 · 前收</div>
+          <div class="cmp-expect">预期 <strong>3882.41 · down</strong></div>
+          <div class="cmp-actual">3764.15 · -3.05%</div>
+          <div class="cmp-reason">方向符合下行判断，但跌幅和市场广度显著超出温和情景。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Two-column: Calibration + Tomorrow -->
+    <div class="body-grid">
+      <!-- Calibration -->
+      <section class="body-section">
+        <div class="section-head">
+          <span class="label">Calibration</span>
+          <span class="title">今日校准</span>
+          <span class="bar"></span>
+        </div>
+        <div class="cal-list">
+          <div class="cal-item">
+            <span class="tag pattern">Confirmed</span>
+            <p>增长放缓+隔夜科技回撤叠加时，高估值科技和半导体成为主要下跌源。电力、银行等防御方向相对抗跌。</p>
+          </div>
+          <div class="cal-item">
+            <span class="tag miss">Missed</span>
+            <p>高估了4305亿净投放对权益风险偏好的缓冲能力；低估了科技链去杠杆速度、跨板块扩散和尾部跌幅。</p>
+          </div>
+          <div class="cal-item">
+            <span class="tag note">Calibration</span>
+            <p>隔夜半导体显著回撤+国内科技链连跌时→提高左尾情景权重，单列市场广度和跌停阈值。央行净投放视为资金条件而非股市方向信号。</p>
+          </div>
+          <div class="cal-item">
+            <span class="tag note">Calibration</span>
+            <p>中间价方向与即期强弱分开表述，避免美元兑人民币数值上调误写为人民币走强。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tomorrow Context -->
+      <section class="body-section">
+        <div class="section-head">
+          <span class="label">Tomorrow</span>
+          <span class="title">明日关注</span>
+          <span class="bar"></span>
+        </div>
+        <div class="tm-list">
+          <div class="tm-item">
+            <div class="ind"></div>
+            <p>观察近5000只下跌、近200只跌停后的<strong>广度压力是否继续扩散</strong>，以及主要指数能否重新站回3800点附近。</p>
+          </div>
+          <div class="tm-item">
+            <div class="ind"></div>
+            <p>继续区分电力、银行的<strong>防御韧性</strong>与半导体、CPO、光刻机等拥挤科技方向的<strong>去杠杆风险</strong>。</p>
+          </div>
+          <div class="tm-item">
+            <div class="ind"></div>
+            <p>补核在岸人民币16:30收盘（已补：<strong>6.7763</strong>）、现金国债日终收益率和全球商品最终收盘，判断跨资产风险信号是否一致（<strong>已确认：信号孤立于权益</strong>）。</p>
+          </div>
+          <div class="tm-item">
+            <div class="ind"></div>
+            <p>关注<strong>世界人工智能大会</strong>后续政策与产业信息能否从事件催化转化为可验证的风险偏好修复。7月20日<strong>LPR报价</strong>若下调将构成额外催化。</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Ticker tape -->
+    <div class="ticker-wrap" aria-hidden="true">
+      <div class="ticker">
+        <span class="tk">上证 <strong>3764.15</strong> -3.05%</span>
+        <span class="tk">深证 <strong>13706.88</strong> -5.40%</span>
+        <span class="tk">创业板 <strong>3428.63</strong> -7.15%</span>
+        <span class="tk">科创50 <strong>跌超7%</strong></span>
+        <span class="tk">成交 <strong>2.65万亿</strong></span>
+        <span class="tk">USD/CNY <strong>6.7763</strong></span>
+        <span class="tk">WTI <strong>78.94</strong></span>
+        <span class="tk">Gold <strong>3996.8</strong></span>
+        <span class="tk">T2609 <strong>109.180</strong> -0.01%</span>
+        <span class="tk">↓5000+ <strong>下跌</strong></span>
+        <span class="tk">↓200 <strong>跌停</strong></span>
+        <!-- duplicate for seamless loop -->
+        <span class="tk">上证 <strong>3764.15</strong> -3.05%</span>
+        <span class="tk">深证 <strong>13706.88</strong> -5.40%</span>
+        <span class="tk">创业板 <strong>3428.63</strong> -7.15%</span>
+        <span class="tk">科创50 <strong>跌超7%</strong></span>
+        <span class="tk">成交 <strong>2.65万亿</strong></span>
+        <span class="tk">USD/CNY <strong>6.7763</strong></span>
+        <span class="tk">WTI <strong>78.94</strong></span>
+        <span class="tk">Gold <strong>3996.8</strong></span>
+        <span class="tk">T2609 <strong>109.180</strong> -0.01%</span>
+        <span class="tk">↓5000+ <strong>下跌</strong></span>
+        <span class="tk">↓200 <strong>跌停</strong></span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span class="left">DATA CONFIDENCE · COMPLETE（FX + Commodity 补核完成）</span>
+      <span>Allowed use · 宏观观察 + 反馈校准 · <span style="color:var(--caution);">不作交易建议</span></span>
+    </footer>
+
+  </article>
+</div>
+</body>
+</html>

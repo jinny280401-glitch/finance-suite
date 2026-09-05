@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>市场画像 fallback - Finance Suite</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --card: #fff;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --line: #e5e7eb;
+      --blue: #0b7cff;
+      --warn: #8a5200;
+      --warn-bg: #fff7e6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      height: 72px;
+      padding: 0 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 14px; font-size: 22px; font-weight: 700; }
+    .tag { color: var(--muted); background: #f0f1f4; border-radius: 10px; padding: 5px 12px; font-size: 15px; }
+    .back {
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 999px;
+      background: #f0f1f4;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    main { max-width: 1120px; margin: 0 auto; padding: 72px 28px; }
+    h1 { margin: 0; font-size: 52px; line-height: 1.08; letter-spacing: 0; }
+    .lede { margin: 22px 0 42px; color: var(--muted); font-size: 22px; line-height: 1.5; }
+    .panel {
+      margin-bottom: 24px;
+      padding: 30px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .fallback {
+      display: inline-flex;
+      align-items: center;
+      color: var(--warn);
+      background: var(--warn-bg);
+      border-radius: 8px;
+      padding: 9px 12px;
+      margin-bottom: 18px;
+      font-weight: 700;
+    }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .item { min-height: 112px; border: 1px solid var(--line); border-radius: 8px; padding: 18px; }
+    .item span { display: block; color: var(--muted); font-size: 14px; margin-bottom: 10px; }
+    .item strong { display: block; font-size: 19px; line-height: 1.35; }
+    pre {
+      overflow: auto;
+      margin: 0;
+      padding: 18px;
+      border-radius: 8px;
+      background: #111827;
+      color: #e5e7eb;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    button.refresh {
+      border: 0;
+      border-radius: 8px;
+      background: var(--blue);
+      color: #fff;
+      padding: 12px 18px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    @media (max-width: 760px) {
+      header { padding: 0 18px; }
+      main { padding: 42px 18px; }
+      h1 { font-size: 36px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">Finance Suite <span class="tag">市场画像 fallback</span></div>
+    <button class="back" type="button" aria-label="返回" onclick="history.back()">←</button>
+  </header>
+  <main>
+    <h1>市场画像 fallback</h1>
+    <p class="lede">这是 market_context 的占位入口。真实数据尚未接入，本页不展示实时数据，不提供交易建议。</p>
+
+    <section class="panel" id="summary">
+      <div class="fallback">加载 fallback 状态</div>
+    </section>
+
+    <section class="panel">
+      <h2>占位维度</h2>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section class="panel">
+      <button class="refresh" type="button" onclick="loadFallback()">刷新 fallback 状态</button>
+    </section>
+
+    <section class="panel">
+      <h2>API 返回</h2>
+      <pre id="raw">{}</pre>
+    </section>
+  </main>
+
+  <script>
+    const summary = document.getElementById('summary');
+    const grid = document.getElementById('grid');
+    const raw = document.getElementById('raw');
+
+    function valueOf(value) {
+      return value === undefined || value === null || value === '' ? '占位，真实数据未接入' : String(value);
+    }
+
+    function render(data) {
+      const qc = data._qc || {};
+      summary.innerHTML = `
+        <div class="fallback">${valueOf(data.status)} / ${valueOf(data.source)}</div>
+        <h2>${valueOf(data.title)}</h2>
+        <p>${valueOf(data.message)}</p>
+        <p><strong>${valueOf(data.conclusion)}</strong></p>
+        <p>${valueOf(data.disclaimer)}</p>
+      `;
+      const context = data.context || {};
+      const rows = [
+        ['市场偏好', context.market_preference],
+        ['主线集中度', context.theme_concentration],
+        ['市场广度', context.breadth],
+        ['领先板块', context.top_sector],
+      ];
+      grid.innerHTML = rows.map(([label, value]) => `
+        <div class="item"><span>${label}</span><strong>${valueOf(value)}</strong></div>
+      `).join('');
+      raw.textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function loadFallback() {
+      summary.innerHTML = '<div class="fallback">加载 fallback 状态</div>';
+      try {
+        const response = await fetch('/api/intel/market-context', { cache: 'no-store' });
+        render(await response.json());
+      } catch (error) {
+        render({
+          status: 'fallback',
+          source: 'static_fallback',
+          message: 'market_context real data not connected yet',
+          title: '市场画像 fallback',
+          conclusion: '接口暂不可用，真实数据尚未接入。',
+          disclaimer: '本页面为 fallback 占位，不包含实时数据、交易建议或投资建议。',
+          _qc: { status: 'fallback', source: 'static_fallback', error: String(error) },
+        });
+      }
+    }
+
+    loadFallback();
+  </script>
+</body>
+</html>

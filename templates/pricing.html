@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}定价 — Finance Suite{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <h1 class="section-title">选择适合你的方案</h1>
+        <p class="section-subtitle">灵活的定价，满足不同需求</p>
+
+        <div class="grid-3 pricing-grid">
+            <!-- Free -->
+            <div class="card pricing-card">
+                <h3 class="pricing-name">免费版</h3>
+                <div class="pricing-price">
+                    <span class="pricing-amount">¥0</span>
+                    <span class="pricing-period">/月</span>
+                </div>
+                <ul class="pricing-features">
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 5" stroke="#34c759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        每日 3 次分析
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 5" stroke="#34c759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        5 大技能模块
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 5" stroke="#34c759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        实时数据搜索
+                    </li>
+                </ul>
+                {% if current_user and current_user.tier == 'free' %}
+                <button class="btn btn-outline btn-block" disabled>当前方案</button>
+                {% else %}
+                <a href="/register" class="btn btn-outline btn-block">免费注册</a>
+                {% endif %}
+            </div>
+
+            <!-- VIP -->
+            <div class="card pricing-card pricing-card--featured">
+                <div class="pricing-badge">推荐</div>
+                <h3 class="pricing-name">VIP 会员</h3>
+                <div class="pricing-price">
+                    <span class="pricing-amount">¥99</span>
+                    <span class="pricing-period">/月</span>
+                </div>
+                <ul class="pricing-features">
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 5" stroke="#34c759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        无限次分析
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 5" stroke="#34c759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        5 大技能模块
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 5" stroke="#34c759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        优先响应速度
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 5" stroke="#34c759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        专属客服
+                    </li>
+                </ul>
+                <a href="/api/upgrade" class="btn btn-primary btn-block">升级 VIP</a>
+            </div>
+
+            <!-- Enterprise -->
+            <div class="card pricing-card">
+                <h3 class="pricing-name">企业版</h3>
+                <div class="pricing-price">
+                    <span class="pricing-amount">联系我们</span>
+                </div>
+                <ul class="pricing-features">
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 5" stroke="#34c759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        定制分析模块
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 5" stroke="#34c759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        API 接口
+                    </li>
+                    <li>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.5 3.5L13 5" stroke="#34c759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        团队管理
+                    </li>
+                </ul>
+                <a href="mailto:contact@openclaw.com" class="btn btn-outline btn-block">联系销售</a>
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="faq-section">
+            <h2 class="section-title">常见问题</h2>
+            <div class="faq-list">
+                <div class="faq-item card">
+                    <h3 class="faq-question">免费版有什么限制？</h3>
+                    <p class="faq-answer">免费版每天可使用 3 次分析，包含所有 5 大技能模块和实时数据搜索功能。</p>
+                </div>
+                <div class="faq-item card">
+                    <h3 class="faq-question">VIP 会员可以退款吗？</h3>
+                    <p class="faq-answer">订阅后 7 天内可申请无条件退款。</p>
+                </div>
+                <div class="faq-item card">
+                    <h3 class="faq-question">数据来源是什么？</h3>
+                    <p class="faq-answer">我们通过专业搜索引擎获取公开的财经数据、新闻和研究报告，每条数据都附带原始来源链接。</p>
+                </div>
+                <div class="faq-item card">
+                    <h3 class="faq-question">企业版有哪些定制选项？</h3>
+                    <p class="faq-answer">企业版支持定制分析模块、API 接口对接、团队权限管理等。请联系我们的销售团队获取详细方案。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

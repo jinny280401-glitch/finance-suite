@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}管理后台 — Finance Suite{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <h1 class="section-title" style="text-align:left">管理后台</h1>
+
+        <!-- Stats -->
+        <div class="grid-4 admin-stats" id="adminStats">
+            <div class="card stat-card">
+                <div class="stat-label">总用户数</div>
+                <div class="stat-value" id="statTotalUsers">--</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-label">今日活跃</div>
+                <div class="stat-value" id="statActiveToday">--</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-label">总分析次数</div>
+                <div class="stat-value" id="statTotalAnalyses">--</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-label">VIP 用户数</div>
+                <div class="stat-value" id="statVipUsers">--</div>
+            </div>
+        </div>
+
+        <!-- User Table -->
+        <div class="card admin-table-card">
+            <h2 class="admin-table-title">用户列表</h2>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户名</th>
+                            <th>邮箱</th>
+                            <th>等级</th>
+                            <th>注册时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody">
+                        <tr><td colspan="6" class="table-empty">加载中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadAdminData();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset=UTF-8>
+  <title>登录测试 - 2026-05-06</title>
+  <style>
+    body { font-family: sans-serif; max-width: 400px; margin: 100px auto; }
+    input { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; }
+    button { width: 100%; padding: 12px; background: #0071e3; color: white; border: none; cursor: pointer; }
+    .error { color: red; margin: 10px 0; }
+    .success { color: green; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h2>登录测试页面</h2>
+  <p>版本: 2026-05-06-v2</p>
+  <input id="user" type="text" placeholder="账号" value="hfzq">
+  <input id="pass" type="password" placeholder="密码" value="hf1234">
+  <button onclick="doLogin()">登录</button>
+  <div id="msg"></div>
+  
+  <script>
+    async function doLogin() {
+      const u = document.getElementById('user').value.trim();
+      const p = document.getElementById('pass').value;
+      const msg = document.getElementById('msg');
+      
+      msg.innerHTML = '登录中...';
+      
+      try {
+        const resp = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        
+        const data = await resp.json();
+        
+        if (data.success) {
+          msg.className = 'success';
+          msg.innerHTML = '✅ 登录成功！<br>用户: ' + data.username + '<br>权限: ' + data.tier;
+          localStorage.setItem('fs_auth', 'ok');
+          localStorage.setItem('fs_user', data.username);
+          localStorage.setItem('fs_tier', data.tier);
+        } else {
+          msg.className = 'error';
+          msg.innerHTML = '❌ ' + (data.message || '登录失败');
+        }
+      } catch (e) {
+        msg.className = 'error';
+        msg.innerHTML = '❌ 网络错误: ' + e.message;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Finance Suite — AI 金融分析平台{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=1774846797">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-inner container">
+            <a href="/" class="nav-logo">Finance Suite</a>
+            <button class="nav-toggle" id="navToggle" aria-label="菜单">
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <div class="nav-links" id="navLinks">
+                <a href="/">首页</a>
+                <a href="/#skills">功能</a>
+                <a href="/pricing">定价</a>
+            </div>
+            <div class="nav-actions" id="navActions">
+                {% if current_user %}
+                <a href="/dashboard" class="btn btn-outline btn-sm">仪表盘</a>
+                <a href="javascript:void(0)" onclick="logout()" class="btn btn-text btn-sm">退出</a>
+                {% else %}
+                <a href="/login" class="btn btn-text btn-sm">登录</a>
+                <a href="/register" class="btn btn-primary btn-sm">注册</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="main">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p class="footer-text">Finance Suite by OpenClaw — 本工具基于公开数据分析，不构成投资建议。</p>
+        </div>
+    </footer>
+
+    <div id="toastContainer"></div>
+
+    <script src="/static/js/app.js?v=1774846797"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

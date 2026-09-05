@@ -1,30 +1,45 @@
-# Finance Suite MCP backend dependencies
-#
-# Note:
-# - The code imports `from mcp.server.fastmcp import FastMCP`, which is provided by
-#   the PyPI package `mcp`.
-# - WindPy is installed with the Wind terminal/client, not through pip on Linux.
+# Finance Suite — unified dependencies (production + MCP)
+# Updated: 2026-09-05
 
-# MCP server core
-mcp>=1.27.0
-fastapi>=0.115.0
+# ── Web Framework (Production) ──
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+jinja2==3.1.4
+python-multipart==0.0.9
 flask>=3.0.0
-uvicorn>=0.30.0
 
-# Financial data sources
-jqdatasdk>=1.9.8
+# ── Database & Auth (Production) ──
+sqlalchemy==2.0.35
+pyjwt==2.9.0
+bcrypt==4.2.0
+
+# ── MCP Server Core ──
+mcp>=1.27.0
+
+# ── Financial Data Sources ──
 akshare>=1.18.0
 tushare>=1.4.0
+jqdatasdk>=1.9.8
 
-# Utilities
+# ── HTTP & Networking ──
+httpx==0.27.2
+requests>=2.32.0
+python-dotenv==1.0.1
+
+# ── Data Processing ──
 pandas>=2.2.0
 numpy>=1.26.0
-requests>=2.32.0
-httpx>=0.28.0
-python-dotenv>=1.0.0
+openpyxl>=3.1.0
 
-# Tests
+# ── PDF Export (Production) ──
+reportlab>=4.0.0
+weasyprint>=62.0
+
+# ── LLM & Search ──
+# (API key based, no pip package needed for Qwen/Tavily/Brave)
+
+# ── Tests ──
 pytest>=8.0.0
 
-# Optional video transcript helper
+# ── Optional ──
 youtube-transcript-api>=0.6.0

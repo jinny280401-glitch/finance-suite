@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}登录 — Finance Suite{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card card">
+        <h1 class="auth-title">登录</h1>
+        <div class="auth-error" id="authError" style="display:none"></div>
+        <form id="loginForm" onsubmit="login(event)">
+            <div class="form-group">
+                <label class="form-label" for="username">用户名 / 邮箱</label>
+                <input class="input" type="text" id="username" name="username" placeholder="请输入用户名或邮箱" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="password">密码</label>
+                <input class="input" type="password" id="password" name="password" placeholder="请输入密码" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="loginBtn">登录</button>
+        </form>
+        <p class="auth-switch">还没有账号？<a href="/register">立即注册</a></p>
+    </div>
+</section>
+{% endblock %}
