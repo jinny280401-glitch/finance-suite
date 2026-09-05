@@ -92,7 +92,7 @@
 → AI 输出一份 4000 字的 Markdown 分析报告
 ```
 
-**不同的分析场景 = 不同的 Prompt 模板。** 代码里 `skills.py` 那 640 行，本质上就是 7 套"写作模板"。
+**不同的分析场景 = 不同的 Prompt 模板。** 每个场景的 `scenarios/*/prompt.md` 就是独立的写作模板。
 
 ### 1.5 查质量的四层关卡
 
@@ -159,7 +159,7 @@ AI 报告
 
 | 技能 | 名称 | 数据源 | Prompt 模板 | 输出 |
 |------|------|--------|------------|------|
-| stock | 看票分析 | AkShare 5路 + Tavily 5维度 | 9章节报告 | 深度分析报告 |
+| stock | 看票分析 | AkShare 6维度 + Tavily 5维度 | 9章节报告 | 深度分析报告 |
 | macro | 宏观内参 | AkShare 5路 + Tavily(限定域) + 事件预检 | 4章节模板 | 宏观简报 |
 | auction | 集合竞价 | AkShare 6路涨停数据 | 5章节模板 | 盘面速览 |
 | industry | 行业报告 | AkShare板块 + Tavily | 6章节模板 | 行业研报 |
@@ -263,10 +263,9 @@ AI 报告
 |------|------|------|---------|
 | `finance_suite.db` | SQLite | users 表 + usages 表 | SQLAlchemy ORM |
 | `watchlist.json` | JSON 文件 | 自选股列表 | 直接文件读写 |
-| TTLCache (内存) | 内存缓存 | 分析结果缓存，50条/10min | cachetools 库 |
+| `engine/cache.py` (内存) | TTLCache | 分析结果缓存，50条，TTL 从 config 读取 | cachetools + 自定义封装 |
 | `_stock_cache` (内存) | 内存缓存 | 全市场行情快照，2h刷新 | 启动时加载 |
-| `fetch_receipts.jsonl` | JSONL 日志 | 每次AkShare调用记录 | 追加写入 |
-| `pool_instrument.log` | 文本日志 | DB连接池事件 | 追加写入 |
+| `logs/app.log` | 文件日志 | 应用运行日志，10MB×7轮转 | RotatingFileHandler |
 
 ---
 
@@ -283,12 +282,12 @@ AI 报告
   │
   ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│  ROUTER 层  (routers/api.py)                                           │
+│  ROUTER 层  (routers/api.py — 115行)                                   │
 │                                                                         │
-│  ① normalize_skill_type(skill_type)                                     │
+│  ① normalize_scenario_type(skill_type)                                  │
 │     "deep-research" → "industry"                                        │
 │                                                                         │
-│  ② get_skill(skill_type) → SKILLS[type]                                │
+│  ② ScenarioRegistry().get_metadata(skill_type)                          │
 │     不存在 → 400 "未知的分析技能"                                         │
 │                                                                         │
 │  ③ check_usage_allowed(db, user_id, tier)                               │
@@ -300,13 +299,13 @@ AI 报告
 │                                                                         │
 │  ④ get_cached_result(skill_type, query)                                │
 │     ┌──────────────────────────────────────────────┐                   │
-│     │ READ  TTLCache (内存)                         │                   │
+│     │ READ  engine/cache.py (TTLCache)              │                   │
 │     │ 命中 → 直接返回 (跳过数据采集+LLM)             │                   │
 │     │ 注: macro/auction 不缓存                      │                   │
 │     └──────────────────────────────────────────────┘                   │
 │                                                                         │
 │  ⑤ run_analysis(skill_type, query, extra_content)                      │
-│     → 进入 SERVICE 层                                                   │
+│     → 进入 SERVICE 层（内部自动加载 scenario_config 驱动编排）           │
 │                                                                         │
 │  ⑥ WRITE  finance_suite.db → usages 表 (记录用量)                      │
 │                                                                         │
@@ -324,7 +323,7 @@ run_analysis() 内部
   │   Step 1: 股票解析 resolve_stock_detail(query)                        │
   │   ┌────────────────────────────────────────────────────────────┐      │
   │   │ 优先级:                                                     │      │
-  │   │ 1. QUICK_MAP 硬编码 (40+ 常见股票名/代码)                   │      │
+  │   │ 1. QUICK_MAP 硬编码 (46 条常见股票名/代码)                   │      │
   │   │ 2. _stock_cache 内存缓存 → 精确匹配 → 模糊匹配             │      │
   │   │ 3. 都匹配不上 → None (用原始输入搜索)                       │      │
   │   │ 输出: {code, name, resolver_source}                        │      │
@@ -332,14 +331,14 @@ run_analysis() 内部
   │                                                                        │
   │   Step 2: 并发数据采集 (asyncio.gather)                               │
   │   ┌────────────────────────────────────────────────────────────┐      │
-  │   │  AkShare (线程池, 5路并发)          │  Tavily                │      │
-  │   │  ┌─ stock_zh_a_hist → K线30日       │  multi_search_stock    │      │
-  │   │  ├─ stock_financial_analysis → 财报  │  5维度并发:            │      │
-  │   │  ├─ stock_individual_fund_flow       │  ① 财报(中文源域名)    │      │
-  │   │  ├─ stock_news_em → 新闻8条          │  ② 资金面              │      │
-  │   │  └─ stock_history_dividend → 分红    │  ③ 估值对比            │      │
-  │   │  + realtime: 从_stock_cache取        │  ④ 新闻(Brave News)    │      │
-  │   │                                      │  ⑤ 管理层/分红         │      │
+  │   │  AkShare (线程池, 6路并发)          │  Tavily                │      │
+  │   │  ┌─ _fetch_financials → 财报        │  multi_search_stock    │      │
+  │   │  ├─ _fetch_price_history → K线30日   │  5维度并发:            │      │
+  │   │  ├─ _fetch_fund_flow → 资金流        │  ① 财报(中文源域名)    │      │
+  │   │  ├─ _fetch_news → 新闻8条            │  ② 资金面              │      │
+  │   │  ├─ _fetch_dividends → 分红          │  ③ 估值对比            │      │
+  │   │  └─ _fetch_valuation → 估值          │  ④ 新闻(Brave News)    │      │
+  │   │  + realtime: 从_stock_cache取        │  ⑤ 管理层/分红         │      │
   │   └────────────────────────────────────────────────────────────┘      │
   │                                                                        │
   │   输出: {search_results_text, sources[], kline_data[],                │
@@ -441,7 +440,7 @@ search_results_text + sources[] + has_structured
 ┌─────────────────────────────────────────────────────────────────────────┐
 │  质量检查层 (QC)                                                         │
 │                                                                         │
-│  ① QualityGate (quality_gate/core.py)                                  │
+│  ① QualityGate (engine/quality/core.py)                                │
 │     触发: skill_type ∈ {stock, macro, industry}                         │
 │     检查: completeness ≥ 0.8 + sources ≥ 2 + status ≠ "failure"        │
 │     输出: QualityResult{passed, score, reject_reasons}                  │
@@ -555,7 +554,7 @@ POST /remove → READ watchlist.json → 移除匹配项 → WRITE watchlist.jso
 
 | skill_type | 结构化数据源 (AkShare) | 搜索数据源 | 事件事实预检 | LLM |
 |------------|----------------------|-----------|-------------|-----|
-| **stock** | K线+财报+资金+新闻+分红 (5路并发) | Tavily×5维度 + Brave News | ✗ | ✅ |
+| **stock** | K线+财报+资金+新闻+分红+估值 (6路并发) | Tavily×5维度 + Brave News | ✗ | ✅ |
 | **macro** | GDP+CPI+PMI+M2+LPR (5路并发) | Tavily(news,限定域) + Brave(web) | ✅ | ✅ |
 | **auction** | 涨停池+强势股+昨日+异动+人气+连涨 | ✗ | ✗ | ⚠️ 条件 |
 | **industry** | 行业板块匹配 | Tavily(general) + Brave(web) | ✗ | ✅ |
@@ -572,113 +571,91 @@ POST /remove → READ watchlist.json → 移除匹配项 → WRITE watchlist.jso
 ```
 finance-suite/
 │
-├── engine/                       # 🟢 场景引擎（稳定层，新增场景不改此目录）
-│   ├── pipeline.py               # 核心分析管线：采集 → QC → LLM → 后处理
-│   ├── registry.py               # ScenarioRegistry + ProviderRegistry
-│   ├── cache.py                  # 引擎级缓存
-│   ├── data_access.py            # MCP 数据访问抽象层
-│   ├── providers/                # 可插拔数据源
-│   │   ├── akshare_provider.py   # AkShare（股票/宏观/竞价/行业）
-│   │   ├── search_provider.py    # 搜索引擎
-│   │   ├── video_provider.py     # 视频字幕
-│   │   └── user_input_provider.py # 用户输入（会议/麦肯锡）
-│   ├── quality/                  # 统一质量门控
-│   │   └── gate.py               # QC 规则引擎
-│   └── llm/                      # LLM 调用封装
-│       └── client.py             # 通义千问 API
+├── backend/
+│   ├── engine/                       # 场景引擎（稳定层，新增场景不改此目录）
+│   │   ├── registry.py               # ScenarioRegistry（场景注册 + 元数据）
+│   │   ├── cache.py                  # TTLCache 封装（支持自定义 TTL）
+│   │   ├── data_access.py            # MCP 数据访问抽象层
+│   │   ├── providers/                # 可插拔数据源
+│   │   │   ├── akshare_client.py     # AkShare 纯 API 封装
+│   │   │   ├── search_provider.py    # Tavily + Brave 多源搜索
+│   │   │   ├── wind_provider.py      # Wind 万得
+│   │   │   ├── tushare_provider.py   # Tushare Pro
+│   │   │   ├── ifind_provider.py     # 同花顺 iFinD
+│   │   │   ├── emquant_provider.py   # 东方财富 Choice
+│   │   │   └── provider_observability.py # Provider 调用日志
+│   │   ├── skills/                   # 业务编排层
+│   │   │   ├── stock_skill.py        # 个股 6 维度并发 + 降级链
+│   │   │   ├── macro_skill.py        # 宏观数据获取
+│   │   │   ├── auction_skill.py      # 竞价数据获取
+│   │   │   ├── video_skill.py        # 视频字幕提取
+│   │   │   ├── factor_skill.py       # 因子选股
+│   │   │   └── watchlist.py          # 自选股管理
+│   │   ├── quality/                  # 统一质量门控
+│   │   │   ├── core.py               # QualityGate 引擎
+│   │   │   └── rules.py              # 质检规则集
+│   │   └── llm/                      # LLM 调用封装
+│   │       └── client.py             # 通义千问 API
+│   │
+│   ├── scenarios/                    # 场景定义（每个场景 = 1 个目录，复制即新增）
+│   │   ├── stock/                    # config.yaml + prompt.md + qc_rules.yaml + page.html
+│   │   ├── macro/
+│   │   ├── auction/
+│   │   ├── industry/
+│   │   ├── meeting/
+│   │   ├── video/
+│   │   └── mckinsey/
+│   │
+│   ├── app/                          # Web 后端应用
+│   │   ├── main.py                   # FastAPI 入口 + lifespan + 日志初始化
+│   │   ├── config.py                 # 配置中心（Settings 类）
+│   │   ├── auth.py                   # JWT 认证
+│   │   ├── database.py               # SQLite ORM（User/Usage 模型）
+│   │   ├── logging_config.py         # 集中日志配置（[FLOW] + [PROVIDER]）
+│   │   ├── routers/                  # HTTP 路由层
+│   │   │   ├── api.py                # POST /api/analyze（115 行，薄路由）
+│   │   │   ├── pages.py              # 页面路由 + /app/* 前端文件服务
+│   │   │   ├── auth_routes.py        # 注册/登录/登出/鉴权
+│   │   │   ├── export.py             # PDF 导出
+│   │   │   ├── intel.py              # 市场情报（9 个端点）
+│   │   │   ├── watchlist.py          # 自选股 CRUD
+│   │   │   └── admin.py              # 管理后台
+│   │   └── services/                 # 业务编排层
+│   │       ├── analyze_service.py    # 核心编排（数据获取 → QC → LLM → Trust）
+│   │       ├── report_qc.py          # 报告质检 + Trust 合约 + 发布控制
+│   │       └── event_facts.py        # 宏观事件事实预检
+│   │
+│   ├── frontend/                     # 平台级前端（非场景页面 + 共享组件）
+│   │   ├── pages/                    # 平台页面（index/d13_*/market-*/xueqiu-hot 等）
+│   │   ├── scripts/                  # 独立 JS（图表/估值/温度等）
+│   │   ├── styles/                   # CSS
+│   │   ├── shared/                   # 共享组件（sidebar-registry.js）
+│   │   └── lib/                      # 第三方库（marked.min.js）
+│   │
+│   └── mcp_tools/                    # MCP 独立产品线（AI Agent 接口）
+│       ├── server.py                 # MCP 核心（FastMCP 实例）
+│       └── tools/                    # 18 个工具，按职责分组
+│           ├── analysis.py           # stock/macro/market_pulse
+│           ├── search.py             # 多源搜索
+│           ├── video.py              # 视频提取
+│           ├── watchlist.py          # 自选股管理
+│           ├── factor.py             # 因子选股
+│           ├── wind.py / jqdata.py / ths.py / emquant.py  # 专业数据源
+│           ├── social.py             # 雪球 + 知乎 + 新浪
+│           ├── barchart.py           # Barchart 期权
+│           ├── research.py           # 研报管理
+│           └── market_intel.py       # 市场情报聚合
 │
-├── scenarios/                    # 🟢 场景定义（每个场景 = 1 个目录，复制即新增）
-│   ├── stock/                    # config.yaml + prompt.md + qc_rules.yaml + page.html
-│   ├── macro/
-│   ├── auction/
-│   ├── industry/
-│   ├── meeting/
-│   ├── video/
-│   └── mckinsey/
-│
-├── app/                          # 🟢 Web 后端应用
-│   ├── main.py                   # FastAPI 入口 + lifespan
-│   ├── config.py                 # 配置中心（Settings 类）
-│   ├── auth.py                   # JWT 认证
-│   ├── database.py               # SQLite ORM（User/Usage 模型）
-│   ├── skills.py                 # 技能元数据定义
-│   ├── search.py                 # 搜索聚合（Tavily + Brave）
-│   ├── stock_data.py             # Web 端股票数据
-│   ├── macro_data.py             # Web 端宏观数据
-│   ├── auction_data.py           # Web 端竞价数据
-│   ├── video_data.py             # Web 端视频数据
-│   ├── llm.py                    # Web 端 LLM 调用
-│   ├── routers/                  # HTTP 路由层
-│   │   ├── pages.py              # 页面路由 + /app/* 前端文件服务
-│   │   ├── api.py                # POST /api/analyze
-│   │   ├── auth_routes.py        # 注册/登录/登出/鉴权
-│   │   ├── export.py             # PDF 导出
-│   │   ├── intel.py              # 市场情报（9 个端点）
-│   │   ├── watchlist.py          # 自选股 CRUD
-│   │   └── admin.py              # 管理后台
-│   ├── services/                 # 业务编排层
-│   │   ├── analyze_service.py    # 分析编排（数据获取 → LLM → QC → Trust）
-│   │   ├── report_qc.py          # 报告质检 + Trust 合约 + 发布控制
-│   │   └── event_facts.py        # 宏观事件事实预检
-│   └── quality_gate/             # 质量门控实现
-│       ├── core.py               # QualityGate 引擎
-│       └── rules.py              # 质检规则集
-│
-├── frontend/                     # 🟢 平台级前端（非场景页面 + 共享组件）
-│   ├── pages/                    # 9 个平台页面（index/d13_*/market-*/xueqiu-hot 等）
-│   ├── scripts/                  # 5 个独立 JS（图表/估值/温度等）
-│   ├── styles/                   # CSS
-│   ├── shared/                   # 共享组件（sidebar-registry.js）
-│   └── lib/                      # 第三方库（marked.min.js）
-│
-├── mcp_tools/                    # 🟢 MCP 独立产品线（AI Agent 接口）
-│   ├── server.py                 # MCP 核心（FastMCP 实例 + 工具函数）
-│   └── tools/                    # 18 个工具，按职责分组
-│       ├── analysis.py           # stock/macro/market_pulse（调用 engine.data_access）
-│       ├── search.py             # 多源搜索
-│       ├── video.py              # 视频提取
-│       ├── watchlist.py          # 自选股管理
-│       ├── factor.py             # 因子选股
-│       ├── wind.py               # Wind 万得
-│       ├── jqdata.py             # JQData 聚宽
-│       ├── ths.py                # 同花顺 iFinD
-│       ├── emquant.py            # 东方财富 Choice
-│       ├── social.py             # 雪球 + 知乎 + 新浪
-│       ├── barchart.py           # Barchart 期权
-│       ├── research.py           # 研报管理
-│       └── market_intel.py       # 市场情报聚合
-│
-├── scripts/                      # 🟢 MCP 数据源（10 个活跃文件）
-│   ├── stock_data.py             # 个股数据（Wind + AkShare + JQData 降级）
-│   ├── macro_data.py             # 宏观数据
-│   ├── auction_data.py           # 竞价数据
-│   ├── video_data.py             # 视频字幕
-│   ├── watchlist.py              # 自选股
-│   ├── factor_scan.py            # 因子扫描
-│   ├── wind_data.py              # Wind API
-│   ├── tushare_data.py           # Tushare API
-│   ├── emquant_data.py           # EmQuant API
-│   └── ifind_data.py             # iFinD API
-│
-├── templates/                    # Jinja2 服务端模板（8 个）
-├── tests/                        # 测试套件（150 用例）
-├── deploy/                       # 部署配置
-│   ├── nginx/                    # Nginx 配置 + 静态着陆页
-│   ├── deploy.sh                 # 前端部署脚本
-│   ├── deploy-backend.sh         # 后端部署脚本
-│   └── healthcheck.sh            # 健康检查
-├── docs/                         # 文档
-│   ├── SYSTEM_DESIGN.md          # 本文档
-│   ├── RESTRUCTURE_PLAN.md       # 重构方案（✅ 已完成）
-│   ├── MCP_TOOLS_GUIDE.md        # MCP 工具使用指南
-│   ├── guides/                   # 用户指南
-│   ├── deployment/               # 部署文档
-│   └── reviews/                  # 架构评审
-│
-├── mcp_server.py                 # MCP 瘦入口（12 行，委托 mcp_tools/server.py）
-├── requirements.txt              # Python 依赖
-├── pytest.ini                    # 测试配置
-└── .env.example                  # 环境变量模板
+├── templates/                        # Jinja2 服务端模板（8 个）
+├── tests/                            # 测试套件（150 用例）
+├── deploy/                           # 部署配置
+│   ├── nginx/                        # Nginx 配置
+│   ├── deploy.sh / deploy-backend.sh # 部署脚本
+│   └── healthcheck.sh                # 健康检查
+├── docs/                             # 文档
+├── mcp_server.py                     # MCP 瘦入口（12 行）
+├── requirements.txt                  # Python 依赖
+└── .env.example                      # 环境变量模板
 ```
 
 ### 5.2 架构分层
@@ -694,17 +671,15 @@ finance-suite/
 │  FastAPI + Jinja2        │     │  FastMCP + 18 个工具                  │
 │                          │     │                                      │
 │  routers/ → services/   │     │  tools/ → engine.data_access         │
-│  → app/*_data.py         │     │       → scripts/*                    │
+│  → engine/skills/       │     │       → engine/skills/               │
 └──────────┬───────────────┘     └──────────────┬───────────────────────┘
            │                                    │
            ▼                                    ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                     engine/  (场景引擎)                               │
+│                     engine/  (共享引擎)                               │
 │                                                                     │
-│  pipeline.py ──→ providers/ ──→ quality/ ──→ llm/                  │
-│  (管线编排)       (数据源)       (QC 质检)     (LLM 调用)            │
-│                                                                     │
-│  data_access.py ──→ scripts/ (MCP 数据源)                          │
+│  registry.py (场景注册)    providers/ (数据源)    skills/ (业务编排)  │
+│  cache.py (缓存)          quality/ (QC 质检)     llm/ (LLM 调用)    │
 └─────────────────────────────────────────────────────────────────────┘
            │
            ▼
@@ -720,20 +695,56 @@ finance-suite/
 
 | 原则 | 实现方式 |
 |------|----------|
+| **三层架构** | Provider（纯API）→ Skill（业务编排）→ Scenario（配置驱动） |
 | **场景引擎化** | 框架是发动机，场景是燃料盒。新增场景不改引擎代码 |
 | **前后端分离** | 前端在 `frontend/` + `scenarios/*/page.html`，后端在 `app/` |
 | **双入口统一引擎** | Web (`app/`) 和 MCP (`mcp_tools/`) 共享 `engine/` |
-| **数据源可插拔** | Provider 注册制，声明式配置，支持降级 |
 | **质量内建** | QC 贯穿全流程：数据 QC → 报告 QC → Trust 合约 → 发布控制 |
 
-### 5.4 重构成果
+### 5.4 配置驱动编排
+
+config.yaml 的每个字段都有明确的代码消费方：
+
+| 字段 | 消费方 | 作用 |
+|---|---|---|
+| `name/description/icon/color` | ScenarioRegistry → 前端 | 展示 |
+| `search_type` | analyze_service | 路由分支 |
+| `dimensions` | stock_skill.get_stock_full_data() | 控制获取哪些数据维度 |
+| `cache.ttl` | engine/cache.py cache_set() | 缓存有效期 |
+| `qc.dimensions.*.stale_days` | analyze_service build_report_qc() | 各维度时效阈值 |
+| `prompt.md` | LLM system prompt | 写作模板 |
+
+数据流中的配置驱动路径：
+```
+api.py → run_analysis(scenario_config=ScenarioRegistry().get(skill_type))
+  → analyze_service: scenario_config.dimensions → get_stock_full_data(dimensions=[...])
+  → analyze_service: scenario_config.qc.dimensions → stale_days 阈值
+  → analyze_service: scenario_config.cache.ttl → cache_set(ttl=...)
+  → analyze_service: scenario_config.prompt → LLM system_prompt
+```
+
+### 5.5 日志与可观测性
+
+| 日志标记 | 含义 | 示例 |
+|---|---|---|
+| `[FLOW]` | 数据流关键节点 | 请求入口 / 股票解析 / 数据采集 / LLM / 完成 |
+| `[PROVIDER]` | 数据源调用记录 | domain=capital_flow outcome=SUCCESS elapsed=0.5s |
+
+日志配置（`app/logging_config.py`）：
+- 统一格式：`时间 | 级别 | 模块 | 消息`
+- 控制台彩色输出（TTY 自动检测）
+- 文件轮转：`logs/app.log` 10MB × 7 份
+- 第三方库降噪：urllib3/akshare/httpx 降级到 WARNING
+- uvicorn 日志接管
+
+### 5.6 重构成果
 
 | 指标 | 重构前 | 重构后 |
 |------|--------|--------|
 | 新增场景改动文件数 | 3-5 个核心文件 | 1 个新目录（4 个文件） |
 | 引擎代码改动频率 | 每次新增场景都改 | 几乎不改 |
 | 前后端分离 | ❌ app/ 混杂 HTML/JS/CSS | ✅ 完全分离 |
-| 数据层重复 | ❌ scripts/ 与 app/ 4 组同名 | ✅ 职责清晰，scripts/ 服务 MCP |
+| 数据层重复 | ❌ scripts/ 与 app/ 4 组同名 | ✅ 职责清晰，engine/ 单一源头 |
 | 死代码 | ~4500 行 | 0 |
 | MCP Server | ❌ 1887 行单文件 | ✅ 模块化，18 个工具分 13 个文件 |
 | 测试用例 | 121 | 150 |
