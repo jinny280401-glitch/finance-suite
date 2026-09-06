@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>深度研究 — Finance Suite</title>
+  <script>
+    if (localStorage.getItem('fs_auth') !== 'ok') {
+      location.replace('/?redirect=/app/deep-research.html');
+    }
+  </script>
+  <style>
+    :root {
+      --white: #ffffff;
+      --surface: #f5f5f7;
+      --surface-2: #fafafa;
+      --text: #1d1d1f;
+      --text-secondary: #86868b;
+      --text-tertiary: #a1a1a6;
+      --accent: #0071e3;
+      --accent-hover: #0077ed;
+      --accent-soft: rgba(0,113,227,0.08);
+      --border: rgba(0,0,0,0.08);
+      --border-light: rgba(0,0,0,0.04);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
+      background: var(--surface);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      padding-top: 52px;
+    }
+
+    /* Header */
+    .site-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: rgba(255,255,255,0.78);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border-light);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+    }
+    .site-header__inner {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .site-header__brand {
+      font-size: 14px; font-weight: 600; color: var(--text);
+      text-decoration: none; letter-spacing: -0.01em;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .site-header__brand::after {
+      content: '深度研究';
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 3px 8px;
+      background: var(--surface);
+      border-radius: 6px;
+    }
+    .hdr-actions { display: flex; align-items: center; gap: 10px; }
+    .hdr-btn {
+      font-size: 13px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .hdr-btn--secondary {
+      background: var(--surface);
+      color: var(--text);
+    }
+    .hdr-btn--secondary:hover { background: var(--border); }
+
+    /* Main */
+    .main-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+    .page-head {
+      margin-bottom: 32px;
+    }
+    .page-head__title {
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .page-head__desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Input Form */
+    .analyze-form {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 28px;
+    }
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: block;
+    }
+    .form-input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 16px;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--surface-2);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 16px;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .form-input::placeholder { color: var(--text-tertiary); }
+    .form-submit {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s, transform 0.15s var(--ease);
+      width: 100%;
+    }
+    .form-submit:hover { background: var(--accent-hover); }
+    .form-submit:active { transform: scale(0.98); }
+    .form-submit:disabled {
+      background: var(--border);
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+    }
+
+    /* Result */
+    .result-container {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: none;
+    }
+    .result-container.show { display: block; }
+    .result-loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+    .loading-stage {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .loading-timeout-note {
+      display: none;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #92400e;
+    }
+    .loading-timeout-note.show { display: block; }
+    .result-loading__spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .result-content {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+    .result-content pre {
+      background: var(--surface);
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      overflow-x: auto;
+      font-size: 14px;
+      margin: 16px 0;
+    }
+    .result-error {
+      color: #d32f2f;
+      padding: 16px;
+      background: rgba(211, 47, 47, 0.08);
+      border-radius: var(--radius-sm);
+    }
+    .trust-panel {
+      margin: 0 0 18px 0;
+      padding: 16px 18px;
+      border: 1px solid #dbeafe;
+      border-radius: 10px;
+      background: #f8fbff;
+    }
+    .trust-panel__title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 8px;
+    }
+    .trust-panel__text {
+      font-size: 12px;
+      line-height: 1.7;
+      color: #374151;
+    }
+    .availability-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .availability-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+    .availability-item__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .availability-item__name {
+      font-weight: 700;
+      color: #111827;
+    }
+    .availability-status {
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #f3f4f6;
+      color: #4b5563;
+      white-space: nowrap;
+    }
+    .availability-status--complete { background: #dcfce7; color: #166534; }
+    .availability-status--partial { background: #fef3c7; color: #92400e; }
+    .availability-status--unavailable { background: #f3f4f6; color: #6b7280; }
+    .availability-detail {
+      color: #4b5563;
+      line-height: 1.6;
+      margin-top: 4px;
+    }
+    .section-data-note {
+      margin: 10px 0 14px;
+      padding: 10px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #fafafa;
+      font-size: 12px;
+      color: #374151;
+    }
+    .section-data-note__title {
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+    .trust-muted { color: #6b7280; }
+    .md-body h1,.md-body h2,.md-body h3,.md-body h4 {
+      margin: 20px 0 8px; font-weight: 600; color: var(--text);
+    }
+    .md-body h1 { font-size: 20px; }
+    .md-body h2 { font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    .md-body h3 { font-size: 16px; }
+    .md-body h4 { font-size: 15px; }
+    .md-body p  { margin: 10px 0; }
+    .md-body ul { margin: 8px 0 8px 20px; }
+    .md-body li { margin: 4px 0; }
+    .md-body hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .pdf-action-bar {
+      display: none;
+      justify-content: flex-end;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .pdf-action-bar.show { display: flex; }
+    .pdf-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--text);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .pdf-action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .pdf-action-btn:disabled {
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+      background: var(--surface-2);
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a href="/app/" class="site-header__brand">Finance Suite</a>
+      <div class="hdr-actions">
+        <a href="/app/" class="hdr-btn hdr-btn--secondary">← 返回工作台</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="page-head">
+      <h1 class="page-head__title">深度研究</h1>
+      <p class="page-head__desc">公司 + 行业双模式，10 节完整报告，含管理层言行一致追踪</p>
+    </div>
+
+    <form class="analyze-form" id="analyzeForm">
+      <label class="form-label" for="queryInput">输入公司名称或股票代码</label>
+      <input
+        type="text"
+        id="queryInput"
+        class="form-input"
+        placeholder="例如：宁德时代、比亚迪、新能源汽车行业"
+        required
+      >
+      <button type="submit" class="form-submit" id="submitBtn">开始分析</button>
+    </form>
+
+    <div class="result-container" id="resultContainer">
+      <div class="result-loading" id="resultLoading">
+        <div class="result-loading__spinner"></div>
+        <div class="loading-stage" id="loadingStage">正在匹配股票</div>
+        <div>请稍候，系统会优先生成已获取数据部分。</div>
+        <div class="loading-timeout-note" id="loadingTimeoutNote">部分数据获取较慢，系统将先生成可用部分。</div>
+      </div>
+      <div class="result-content" id="resultContent"></div>
+      <div class="pdf-action-bar" id="pdfActionBar">
+        <button class="pdf-action-btn" id="exportPdfBtn" type="button" onclick="exportToPdf()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          <span id="exportPdfBtnText">导出PDF</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById('analyzeForm');
+    const queryInput = document.getElementById('queryInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const resultContainer = document.getElementById('resultContainer');
+    const resultLoading = document.getElementById('resultLoading');
+    const loadingStage = document.getElementById('loadingStage');
+    const loadingTimeoutNote = document.getElementById('loadingTimeoutNote');
+    const resultContent = document.getElementById('resultContent');
+    const pdfActionBar = document.getElementById('pdfActionBar');
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const exportPdfBtnText = document.getElementById('exportPdfBtnText');
+
+    let inFlight = false;
+    let currentQuery = '';
+    let currentReportHtml = '';
+    let loadingStageTimer = null;
+    let loadingTimeoutTimer = null;
+    const loadingStages = [
+      '正在匹配股票',
+      '正在获取财报',
+      '正在获取资金流',
+      '正在分析新闻',
+      '正在生成报告'
+    ];
+
+    function startLoadingStages() {
+      stopLoadingStages();
+      let idx = 0;
+      loadingStage.textContent = loadingStages[idx];
+      loadingTimeoutNote.classList.remove('show');
+      loadingStageTimer = setInterval(() => {
+        idx = Math.min(idx + 1, loadingStages.length - 1);
+        loadingStage.textContent = loadingStages[idx];
+      }, 7000);
+      loadingTimeoutTimer = setTimeout(() => {
+        loadingTimeoutNote.classList.add('show');
+      }, 25000);
+    }
+
+    function stopLoadingStages() {
+      if (loadingStageTimer) clearInterval(loadingStageTimer);
+      if (loadingTimeoutTimer) clearTimeout(loadingTimeoutTimer);
+      loadingStageTimer = null;
+      loadingTimeoutTimer = null;
+    }
+
+    // ===== 网络层增强 (2026-06-19 移植自 stock.html) =====
+    async function apiFetch(url, options = {}, { retries = 1, timeout = 90000 } = {}) {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), timeout);
+      try {
+        return await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          credentials: 'include',
+          cache: 'no-store'
+        });
+      } catch (err) {
+        const msg = (err && err.message) || '';
+        const transient = err.name === 'AbortError'
+          || /Failed to fetch|NetworkError|network|ERR_/i.test(msg);
+        if (retries > 0 && transient) {
+          console.warn(`[apiFetch] ${url} 瞬时失败 (${err.name}: ${msg}),800ms 后重试...`);
+          await new Promise(r => setTimeout(r, 800));
+          return apiFetch(url, options, { retries: retries - 1, timeout });
+        }
+        throw err;
+      } finally {
+        clearTimeout(tid);
+      }
+    }
+
+    function explainError(err) {
+      const msg = (err && err.message) || String(err || '');
+      if (err && err.name === 'AbortError') {
+        return '请求超时(>90 秒),可能是后端繁忙或网络太慢,请稍后重试。';
+      }
+      if (/Failed to fetch/i.test(msg)) {
+        return [
+          '网络请求失败 (Failed to fetch)。常见原因:',
+          '1. 浏览器扩展/广告拦截/代理 (Clash/Tailscale/VPN) 拦截 — 试关闭后重试',
+          '2. 浏览器缓存了旧错误 — Mac ⌘⇧R / Win Ctrl+Shift+R 硬刷新',
+          '3. DNS 被劫持到假 IP — 终端 `dig www.touziagent.com +short` 应返回 119.28.156.125',
+          '4. 后端短暂卡顿 — 已自动重试 1 次仍失败,请等 30 秒再试'
+        ].join('\n');
+      }
+      if (/NetworkError|ERR_INTERNET|ERR_CONNECTION/i.test(msg)) {
+        return '网络连接中断,请检查网络后重试。';
+      }
+      if (/JSON/.test(msg)) {
+        return '返回数据不是合法 JSON: ' + msg;
+      }
+      return msg || '未知错误';
+    }
+
+    function showError(text) {
+      resultLoading.style.display = 'none';
+      resultContent.style.display = 'block';
+      resultContent.innerHTML =
+        '<div class="result-error">'
+        + '<div style="white-space:pre-wrap;margin-bottom:12px;">错误:' + text + '</div>'
+        + '<button type="button" onclick="retryLast()" style="font-size:13px;padding:6px 14px;border:1px solid #dc2626;color:#dc2626;background:#fff;border-radius:8px;cursor:pointer;font-family:inherit;">↻ 重试</button>'
+        + '</div>';
+    }
+
+    function retryLast() {
+      if (currentQuery) {
+        queryInput.value = currentQuery;
+        form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+      } else {
+        location.reload();
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const query = queryInput.value.trim();
+      if (!query) return;
+      if (inFlight) return;
+
+      currentQuery = query;
+      currentReportHtml = '';
+      inFlight = true;
+      pdfActionBar.classList.remove('show');
+      resultContainer.classList.add('show');
+      resultLoading.style.display = 'block';
+      resultContent.style.display = 'none';
+      submitBtn.disabled = true;
+      submitBtn.textContent = '分析中…';
+      startLoadingStages();
+
+      try {
+        const response = await apiFetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ skill_type: 'industry', query })
+        }, { retries: 1, timeout: 90000 });
+
+        const data = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          localStorage.removeItem('fs_auth');
+          alert('登录已过期，请重新登录');
+          location.replace('/?redirect=/app/deep-research.html');
+          return;
+        }
+        if (!response.ok) throw new Error(data.detail || data.message || '分析失败');
+
+        resultLoading.style.display = 'none';
+        resultContent.style.display = 'block';
+        renderResult(data);
+        currentReportHtml = resultContent.innerHTML;
+        pdfActionBar.classList.add('show');
+        console.log('[deep-research] success', {
+          status: response.status,
+          dataSuccess: data.success,
+          renderMode: resultContent.dataset.renderMode || 'unknown',
+          htmlLen: currentReportHtml.length,
+          pdfBarClass: pdfActionBar.className
+        });
+
+      } catch (error) {
+        console.error('[deep-research] error:', error);
+        showError(explainError(error));
+      } finally {
+        stopLoadingStages();
+        inFlight = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = '开始分析';
+      }
+    });
+
+    async function exportToPdf() {
+      if (!currentReportHtml) {
+        alert('请先完成分析后再导出PDF');
+        return;
+      }
+
+      exportPdfBtnText.textContent = '生成中…';
+      exportPdfBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/export-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: currentQuery,
+            html: currentReportHtml
+          }),
+          credentials: 'include'
+        });
+
+        if (!res.ok) {
+          let errMsg = `导出失败(${res.status})`;
+          try {
+            const ct = res.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+              const errData = await res.json();
+              errMsg = errData?.detail || errData?.message || errData?.error || errMsg;
+            } else {
+              const text = await res.text();
+              if (text) errMsg = text.slice(0, 200);
+            }
+          } catch (_) {}
+          throw new Error(errMsg);
+        }
+
+        const contentType = res.headers.get('content-type') || '';
+        if (!contentType.includes('application/pdf')) {
+          let body = '';
+          try { body = await res.text(); } catch (_) {}
+          throw new Error(`接口未返回PDF，content-type=${contentType}${body ? `，响应=${body.slice(0, 120)}` : ''}`);
+        }
+
+        const blob = await res.blob();
+        if (!blob || blob.size === 0) {
+          throw new Error('返回的PDF为空');
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentQuery}_深度研究报告.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        exportPdfBtnText.textContent = '导出成功';
+        setTimeout(() => {
+          exportPdfBtnText.textContent = '导出PDF';
+          exportPdfBtn.disabled = false;
+        }, 2000);
+      } catch (error) {
+        exportPdfBtnText.textContent = '导出PDF';
+        exportPdfBtn.disabled = false;
+        alert(error?.message || '导出PDF失败，请重试');
+      }
+    }
+
+    function renderResult(data) {
+      const html = formatResult(data);
+      resultContent.innerHTML = html;
+      return html;
+    }
+
+    function extractMarkdownResult(data) {
+      const candidates = [
+        data,
+        data?.result,
+        data?.data,
+        data?.data?.result,
+        data?.payload,
+        data?.payload?.result,
+        data?.response,
+        data?.response?.result,
+      ];
+
+      for (const candidate of candidates) {
+        if (typeof candidate === 'string' && candidate.trim()) {
+          const text = candidate.trim();
+          if (text.startsWith('{') || text.startsWith('[')) {
+            try {
+              const parsed = JSON.parse(text);
+              const nested = extractMarkdownResult(parsed);
+              if (nested) return nested;
+            } catch (_) {}
+          }
+          return text;
+        }
+
+        if (candidate && typeof candidate === 'object') {
+          for (const key of ['markdown', 'content', 'text', 'report', 'body']) {
+            if (typeof candidate[key] === 'string' && candidate[key].trim()) {
+              return candidate[key].trim();
+            }
+          }
+        }
+      }
+
+      return '';
+    }
+
+    function formatResult(data) {
+      // 优先渲染 markdown 报告，支持顶层 result 与生产常见嵌套包装；仅无报告文本时回退 raw JSON。
+      const raw = extractMarkdownResult(data);
+
+      // _qc 质检摘要（可选）
+      let qcBadge = '';
+      if (data && data._qc) {
+        const q = data._qc;
+        const status = q.status || '';
+        const completeness = q.completeness != null ? Math.round(q.completeness * 100) : null;
+        const risk = q.hallucination_risk || '';
+        const missing = Array.isArray(q.missing_dimensions) && q.missing_dimensions.length
+          ? q.missing_dimensions.join('、') : '';
+        const color = status === 'fallback' ? '#f59e0b'
+                    : status === 'success' ? '#16a34a'
+                    : status === 'partial' ? '#2563eb' : '#6b7280';
+        qcBadge = `<div style="margin-bottom:16px;padding:10px 14px;background:#f8f8f8;border-radius:8px;font-size:12px;color:#555;border-left:3px solid ${color}">` +
+          `<strong style="color:${color}">质检</strong>` +
+          (status ? ` · ${status}` : '') +
+          (completeness != null ? ` · 事实覆盖 ${completeness === 0 ? '100% LLM推断' : completeness + '%'}` : '') +
+          (risk ? ` · 幻觉风险 ${risk}` : '') +
+          (missing ? `<br>缺失维度: ${missing}` : '') +
+          (q.message ? `<br>${q.message}` : '') +
+          '</div>';
+      }
+
+      if (raw) {
+        resultContent.dataset.renderMode = 'markdown';
+        // 简单 markdown → HTML（粗体 / 标题 / 段落 / 分隔线）
+        const html = sanitizeTrustText(raw)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/^######\s+(.+)$/gm, '<h6>$1</h6>')
+          .replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>')
+          .replace(/^####\s+(.+)$/gm, '<h4>$1</h4>')
+          .replace(/^###\s+(.+)$/gm, '<h3>$1</h3>')
+          .replace(/^##\s+(.+)$/gm, '<h2>$1</h2>')
+          .replace(/^#\s+(.+)$/gm, '<h1>$1</h1>')
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.+?)\*/g, '<em>$1</em>')
+          .replace(/^---+$/gm, '<hr>')
+          .replace(/^- (.+)$/gm, '<li>$1</li>')
+          .replace(/(<li>.*<\/li>\n?)+/g, s => `<ul>${s}</ul>`)
+          .replace(/\n{2,}/g, '</p><p>')
+          .replace(/\n/g, '<br>');
+        const bodyHtml = '<p>' + sanitizeRenderedHtml(html) + '</p>';
+        return renderTrustPresentation(data) + qcBadge + '<div class="md-body">' + injectSectionDataNotes(bodyHtml, data) + '</div>';
+      }
+
+      // fallback: raw JSON（调试用）
+      resultContent.dataset.renderMode = 'json-fallback';
+      console.warn('[deep-research] formatResult fallback to raw JSON', {
+        success: data?.success,
+        keys: data && typeof data === 'object' ? Object.keys(data) : typeof data,
+        resultType: typeof data?.result,
+        nestedDataResultType: typeof data?.data?.result,
+        payloadResultType: typeof data?.payload?.result
+      });
+      return renderTrustPresentation(data) + qcBadge + `<pre style="font-size:12px;overflow-x:auto">${sanitizeTrustText(JSON.stringify(data, trustJsonReplacer, 2))}</pre>`;
+    }
+
+    function trustJsonReplacer(key, value) {
+      return normalizeDisplayValue(value);
+    }
+
+    function normalizeDisplayValue(value) {
+      if (value === null || value === undefined) return '暂不可用';
+      if (typeof value === 'number' && Number.isNaN(value)) return '暂不可用';
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed || /^(nan|null|none|n\/a)$/i.test(trimmed)) return '暂不可用';
+      }
+      return value;
+    }
+
+    function sanitizeTrustText(text) {
+      return String(text ?? '暂不可用')
+        .replace(/\b(?:nan|null|none|n\/a)\b/gi, '暂不可用');
+    }
+
+    function sanitizeRenderedHtml(html) {
+      return String(html)
+        .replace(/>\s*(?:nan|null|None|N\/A)\s*</g, '>暂不可用<')
+        .replace(/<td>\s*<\/td>/g, '<td>暂不可用</td>');
+    }
+
+    function getTrustMeta(data) {
+      if (!data || typeof data !== 'object') return {};
+      return data.trust_presentation || data.presentation || data.data_availability || data._qc?.data_availability || {};
+    }
+
+    function normalizeAvailabilityItems(meta) {
+      const source = meta?.data_availability || meta?.availability || meta;
+      if (!source || typeof source !== 'object' || Array.isArray(source)) return [];
+      return Object.keys(source).map((key) => {
+        const raw = source[key] || {};
+        if (typeof raw === 'string') return { key, label: key, status: raw };
+        return {
+          key,
+          label: raw.label || raw.name || key,
+          status: raw.status || raw.availability || 'unknown',
+          available: Array.isArray(raw.available) ? raw.available : [],
+          missing: Array.isArray(raw.missing) ? raw.missing : [],
+          note: raw.note || raw.message || ''
+        };
+      });
+    }
+
+    function renderTrustPresentation(data) {
+      const meta = getTrustMeta(data);
+      const items = normalizeAvailabilityItems(meta);
+      const body = items.length
+        ? `<div class="availability-grid">${items.map(renderAvailabilityItem).join('')}</div>`
+        : '<div class="trust-muted">数据完整性状态暂未提供。报告正文仅展示已返回内容，不由界面推导数据状态。</div>';
+
+      return `
+        <div class="trust-panel">
+          <div class="trust-panel__title">可信度说明</div>
+          <div class="trust-panel__text">
+            本报告仅基于已获取的数据生成。暂不可用的数据不会参与任何分析结论。
+            部分章节基于不完整数据生成，请结合其他信息综合判断。
+          </div>
+        </div>
+        <div class="trust-panel">
+          <div class="trust-panel__title">数据完整性摘要</div>
+          ${body}
+        </div>`;
+    }
+
+    function renderAvailabilityItem(item) {
+      const status = String(item.status || 'unknown').toLowerCase();
+      const statusText = status === 'complete' ? 'Complete'
+        : status === 'partial' ? 'Partial'
+        : status === 'unavailable' ? '暂不可用'
+        : '状态暂未提供';
+      const statusClass = status === 'complete' ? 'availability-status--complete'
+        : status === 'partial' ? 'availability-status--partial'
+        : status === 'unavailable' ? 'availability-status--unavailable'
+        : '';
+      return `<div class="availability-item">
+        <div class="availability-item__head">
+          <span class="availability-item__name">${escapeHtml(item.label)}</span>
+          <span class="availability-status ${statusClass}">${escapeHtml(statusText)}</span>
+        </div>
+        ${item.available.length ? `<div class="availability-detail">已获取：${item.available.map(escapeHtml).join('、')}</div>` : ''}
+        ${item.missing.length ? `<div class="availability-detail">暂不可用：${item.missing.map(escapeHtml).join('、')}</div>` : ''}
+        ${item.note ? `<div class="availability-detail">${escapeHtml(item.note)}</div>` : ''}
+      </div>`;
+    }
+
+    function getSectionUsage(data) {
+      const meta = getTrustMeta(data);
+      return meta.section_data_usage || data?.section_data_usage || data?._qc?.section_data_usage || {};
+    }
+
+    function injectSectionDataNotes(html, data) {
+      const usage = getSectionUsage(data);
+      if (!usage || typeof usage !== 'object' || !Object.keys(usage).length) return html;
+      return html.replace(/<h([1-3])>(.*?)<\/h\1>/g, (match, level, title) => {
+        const key = stripHtml(title).trim();
+        const entry = usage[key] || usage[normalizeSectionKey(key)];
+        if (!entry) return match;
+        return match + renderSectionDataNote(entry);
+      });
+    }
+
+    function renderSectionDataNote(entry) {
+      const used = Array.isArray(entry.used) ? entry.used : [];
+      const missing = Array.isArray(entry.missing) ? entry.missing : [];
+      if (!used.length && !missing.length) return '';
+      return `<div class="section-data-note">
+        <div class="section-data-note__title">本章节使用的数据</div>
+        ${used.map(item => `<div>✓ ${escapeHtml(item)}</div>`).join('')}
+        ${missing.map(item => `<div>✗ ${escapeHtml(item)}</div>`).join('')}
+      </div>`;
+    }
+
+    function stripHtml(value) {
+      return String(value).replace(/<[^>]+>/g, '');
+    }
+
+    function normalizeSectionKey(value) {
+      return String(value).replace(/[一二三四五六七八九十、.．\s]/g, '');
+    }
+
+    function escapeHtml(value) {
+      return sanitizeTrustText(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Pre-fill from URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const preQuery = urlParams.get('q');
+    if (preQuery) {
+      queryInput.value = preQuery;
+    }
+  </script>
+</body>
+</html>
