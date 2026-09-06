@@ -521,6 +521,8 @@ async def run_analysis(
     event_summary = None
     final_dispatch_trace = None
     has_structured = False
+    dimension_status = {}
+    stale_data = []
 
     # ---- Data fetching by skill type ----
     if search_type:
