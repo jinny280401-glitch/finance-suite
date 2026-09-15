@@ -10,7 +10,7 @@ from backend.mcp_tools.server import (
     _check_incremental,
     logger,
 )
-from engine import data_access
+from backend.engine import data_access
 
 
 # Tool 1: 个股全维度数据（自动增量）

@@ -8,7 +8,7 @@ from backend.mcp_tools.server import (
     mcp, _wrap_response, _make_error_response,
     logger,
 )
-from engine import data_access
+from backend.engine import data_access
 
 
 # Tool 5: 视频内容提取

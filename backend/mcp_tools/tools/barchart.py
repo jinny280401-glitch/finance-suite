@@ -1,4 +1,6 @@
 """MCP tools: barchart_fetch"""
+import json
+
 from backend.mcp_tools.server import (
     mcp, _wrap_response, _make_error_response,
     _qc_stock, _qc_macro, _qc_auction,

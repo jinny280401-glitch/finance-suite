@@ -58,7 +58,15 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env"))
 
-# scripts/ 已迁移至 engine/skills/ 和 engine/providers/，不再需要 sys.path hack
+# scripts/ 下研究/情报实现模块（research_digest/market_intel/research_reports/joinquant_data 等）
+# 仍被 tools/ 的 tool 体以 bare import 引用，需把 scripts/ 加回 sys.path。
+sys.path.insert(
+    0,
+    os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        "scripts",
+    ),
+)
 
 from mcp.server.fastmcp import FastMCP
 
