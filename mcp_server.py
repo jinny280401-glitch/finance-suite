@@ -365,12 +365,17 @@ def _check_incremental(code: str) -> dict | None:
 # Tool 1: 个股全维度数据（自动增量）
 # ============================================================
 @mcp.tool()
-async def stock_analysis(query: str) -> str:
+async def stock_analysis(query: str, requested_use: str | None = None) -> str:
     """获取 A 股个股全维度数据：实时行情、财报指标、资金流向、K线、新闻、分红。
     支持股票名称或代码，如"比亚迪"、"002594"。
     数据源：Wind（优先）+ AkShare（降级）+ JQData（兜底）。
     自动比对自选股历史研究记录，返回增量信息。
-    返回结构化 _qc 质检 JSON + 正文数据。"""
+    返回结构化 _qc 质检 JSON + 正文数据。
+
+    requested_use: 调用方对本次数据的用途声明（如 "fundamental_overview"）。
+    用于 Task Authorization 边界：requested_use 必须在 Evidence Admission
+    产出的 allowed_use 内，否则 fail-closed 拒绝。缺省（None）时无法安全
+    确定用途，边界将拒绝。"""
     try:
         import stock_data
 
@@ -453,10 +458,20 @@ async def stock_analysis(query: str) -> str:
         data["_symbol"] = code
         from scripts.stock_data import _admit_for_stock_analysis, format_stock_analysis_from_bundle
         from research_runtime.evidence_bundle import BlockedEvidence
+        from research_runtime.task_authorization import authorize_task
         bundle = _admit_for_stock_analysis(data, qc=qc)
         if isinstance(bundle, BlockedEvidence):
             return _make_error_response(
                 f"trust_gate_blocked: {bundle.reason} (blocked_fields={bundle.blocked_fields})",
+                fallback_source=qc.get("fallback_source"),
+            )
+        # Task Authorization boundary: after Evidence Admission, before the
+        # LLM-facing consumer. Fail closed when requested_use is undetermined
+        # (None/empty) or exceeds allowed_use.
+        if not authorize_task(requested_use, bundle.allowed_use):
+            return _make_error_response(
+                f"task_authorization_blocked: requested_use={requested_use!r} "
+                f"not in allowed_use={sorted(bundle.allowed_use)}",
                 fallback_source=qc.get("fallback_source"),
             )
         formatted = format_stock_analysis_from_bundle(
