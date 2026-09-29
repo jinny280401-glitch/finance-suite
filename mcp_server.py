@@ -446,7 +446,22 @@ async def stock_analysis(query: str) -> str:
             except Exception as jq_err:
                 logger.warning(f"stock_analysis JQData fallback failed: {jq_err}")
 
-        formatted = stock_data.format_stock_data(data, stock_name=name, stock_code=code)
+        # Unit 1 raw-bypass closure: route raw data through the shared
+        # admission primitive (build_evidence_bundle) and the typed
+        # EvidenceBundle/BlockedEvidence formatter. Do NOT call
+        # format_stock_data() from production paths.
+        data["_symbol"] = code
+        from scripts.stock_data import _admit_for_stock_analysis, format_stock_analysis_from_bundle
+        from research_runtime.evidence_bundle import BlockedEvidence
+        bundle = _admit_for_stock_analysis(data, qc=qc)
+        if isinstance(bundle, BlockedEvidence):
+            return _make_error_response(
+                f"trust_gate_blocked: {bundle.reason} (blocked_fields={bundle.blocked_fields})",
+                fallback_source=qc.get("fallback_source"),
+            )
+        formatted = format_stock_analysis_from_bundle(
+            bundle, stock_name=name, stock_code=code,
+        )
         return _wrap_response(qc, formatted, incremental)
 
     except Exception as e:

@@ -157,28 +157,68 @@ def _strip_blocked_fields(data: dict[str, Any], blocked_fields: list[str]) -> di
     return evidence
 
 
-def build_evidence_bundle(gateway_response: dict[str, Any]) -> EvidenceBundle:
-    """Convert a Gateway response into an LLM-facing evidence bundle."""
+def build_evidence_bundle(gateway_response: dict[str, Any]) -> "EvidenceBundle | BlockedEvidence":
+    """Convert a Gateway response into an LLM-facing evidence bundle.
+
+    FROZEN REASON PRECEDENCE (P1 > P2 > P3):
+        P1  qc.status == "failure"             -> reason = bundle.reason or "qc_failure"
+        P2  status != "failure" + allowed_use == []
+                                                -> reason = "no_allowed_use"
+        P3  status != "failure" + allowed_use != [] + evidence_after_stripping == {}
+                                                -> reason = "no_admitted_evidence"
+    P3 is the terminal structural guard — it does NOT overwrite a stronger
+    upstream P1/P2 reason. Empty evidence is a structural guardrail, not a
+    replacement for more specific upstream failure semantics.
+
+    Returns EvidenceBundle when evidence_after_stripping != {}.
+    Returns BlockedEvidence when evidence_after_stripping == {}.
+    Both _run_trust_gate (workflow path) and stock_analysis (MCP path)
+    inherit this primitive unchanged. SINGLE_ADMISSION_AUTHORITY = YES.
+    """
     data_type = str(gateway_response.get("data_type") or "unknown")
     trust_status = _status(gateway_response)
     blocked_fields = _runtime_blocked_fields(gateway_response, data_type)
     allowed_use = _allowed_use(gateway_response, data_type)
     raw_data = gateway_response.get("data") if isinstance(gateway_response.get("data"), dict) else {}
+    reason = _reason(gateway_response)
+    source = {
+        "symbol": gateway_response.get("symbol"),
+        "data_type": data_type,
+        "provider": gateway_response.get("provider"),
+        "provider_tier": gateway_response.get("provider_tier"),
+        "freshness": gateway_response.get("freshness"),
+        "as_of": gateway_response.get("as_of"),
+    }
+    evidence = _strip_blocked_fields(raw_data, blocked_fields)
+
+    # FROZEN REASON PRECEDENCE: P1 (qc_failure) > P2 (no_allowed_use) > P3 (no_admitted_evidence)
+    if trust_status == "failure":
+        effective_reason = reason or "qc_failure"
+    elif not allowed_use:
+        effective_reason = "no_allowed_use"
+    elif not evidence:
+        # P3: terminal structural guard. Empty evidence after stripping.
+        effective_reason = "no_admitted_evidence"
+    else:
+        effective_reason = reason
+
+    if not evidence:
+        # F1 invariant: empty admitted evidence MUST fail closed.
+        return BlockedEvidence(
+            gate_status="blocked",
+            reason=effective_reason,
+            blocked_fields=["all"],
+            source=source,
+            trust_status=trust_status,
+        )
 
     return EvidenceBundle(
-        evidence=_strip_blocked_fields(raw_data, blocked_fields),
+        evidence=evidence,
         allowed_use=allowed_use,
         blocked_fields=blocked_fields,
         trust_status=trust_status,
-        reason=_reason(gateway_response),
-        source={
-            "symbol": gateway_response.get("symbol"),
-            "data_type": data_type,
-            "provider": gateway_response.get("provider"),
-            "provider_tier": gateway_response.get("provider_tier"),
-            "freshness": gateway_response.get("freshness"),
-            "as_of": gateway_response.get("as_of"),
-        },
+        reason=effective_reason,
+        source=source,
     )
 
 
@@ -256,8 +296,22 @@ def _run_trust_gate(raw_evidence: list[dict[str, Any]]) -> TrustGateResult:
 
         bundle = build_evidence_bundle(payload)
 
-        # Block if failure or empty allowed_use
-        if bundle.trust_status == "failure" or not bundle.allowed_use:
+        # F1 invariant (v0.3): build_evidence_bundle may return BlockedEvidence
+        # directly when admitted evidence is empty. Recognize it first; do not
+        # re-derive admission policy here.
+        if isinstance(bundle, BlockedEvidence):
+            result.blocked_items.append(bundle)
+            result.gate_events.append({
+                "type": "evidence_blocked",
+                "message": f"Evidence blocked (no admitted evidence): {bundle.source.get('symbol')} {bundle.source.get('data_type')}",
+                "payload": {
+                    "reason": bundle.reason,
+                    "trust_status": bundle.trust_status,
+                    "symbol": bundle.source.get("symbol"),
+                    "data_type": bundle.source.get("data_type"),
+                },
+            })
+        elif bundle.trust_status == "failure" or not bundle.allowed_use:
             blocked = BlockedEvidence(
                 gate_status="blocked",
                 reason=bundle.reason or "qc_failure" if bundle.trust_status == "failure" else "no_allowed_use",

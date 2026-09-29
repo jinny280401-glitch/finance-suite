@@ -338,7 +338,16 @@ async def get_stock_full_data(code: str) -> dict:
 # ---- 格式化 ----
 
 def format_stock_data(data: dict, stock_name: str = "", stock_code: str = "") -> str:
-    """格式化为LLM可读文本"""
+    """Legacy raw-dict formatter.
+
+    NON-ADMITTED: do NOT call from any LLM-facing production path.
+    Production consumers must use format_stock_analysis_from_bundle(),
+    which requires an EvidenceBundle from research_runtime.evidence_bundle.
+    Retained for CLI (__main__ below) and back-compat tests only.
+
+    PRODUCTION_RAW_FORMATTER_REACHABLE = NO is enforced via grep oracle T7d:
+    mcp_server.py production paths must NOT reference this function.
+    """
     parts = []
     parts.append(f"=== {stock_name}({stock_code}) 东方财富结构化数据 ===")
     parts.append(f"数据获取时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
@@ -401,6 +410,173 @@ def format_stock_data(data: dict, stock_name: str = "", stock_code: str = "") ->
 
     # 分红
     div = data.get("dividends")
+    if div:
+        parts.append("【历史分红记录】")
+        for row in div:
+            parts.append(f"  {row}")
+        parts.append("")
+
+    if len(parts) <= 3:
+        parts.append("未获取到结构化数据。")
+
+    return "\n".join(parts)
+
+
+def _admit_for_stock_analysis(raw_data: dict, *, qc: dict | None = None) -> "EvidenceBundle | BlockedEvidence":
+    """Adapt a raw get_stock_full_data() result into the canonical evidence shape
+    and admit it through build_evidence_bundle.
+
+    This is the SINGLE admission boundary for stock_analysis. It maps raw dimension
+    keys (realtime/financials/...) onto the canonical evidence schema, and applies
+    the shared Trust Gate primitive (with F1 empty-evidence invariant).
+    """
+    import sys as _sys
+    _scripts_dir = os.path.dirname(os.path.abspath(__file__))
+    if _scripts_dir not in _sys.path:
+        _sys.path.insert(0, _scripts_dir)
+    from research_runtime.evidence_bundle import build_evidence_bundle
+
+    qc = qc or {"status": "success", "completeness": 1.0, "missing_dimensions": [], "stale_data": []}
+    status = qc.get("status", "success")
+    missing = list(qc.get("missing_dimensions") or [])
+    sources = list(qc.get("sources") or ["wind" if status != "failure" else None])
+    sources = [s for s in sources if s]
+
+    canonical_data = {
+        "realtime": raw_data.get("realtime"),
+        "financials": raw_data.get("financials"),
+        "fund_flow": raw_data.get("fund_flow"),
+        "price_history": raw_data.get("price_history"),
+        "news": raw_data.get("news"),
+        "dividends": raw_data.get("dividends"),
+    }
+
+    gateway_response = {
+        "ok": status != "failure",
+        "symbol": raw_data.get("_symbol") or "",
+        "data_type": "stock_analysis",
+        "provider": (sources[0] if sources else None),
+        "provider_tier": 1 if sources and sources[0] in ("wind", "ifind") else 2,
+        "freshness": "realtime" if status == "success" else ("stale" if status == "partial" else "unavailable"),
+        "as_of": raw_data.get("_as_of") or "",
+        "data": canonical_data,
+        "_qc": {
+            "status": status,
+            "reason": qc.get("reason"),
+            "missing_fields": missing,
+            "missing_dimensions": missing,
+            "sources": sources,
+        },
+    }
+    return build_evidence_bundle(gateway_response)
+
+
+def format_stock_analysis_from_bundle(
+    bundle,
+    *,
+    stock_name: str = "",
+    stock_code: str = "",
+) -> str:
+    """Canonical LLM-facing formatter for stock_analysis.
+
+    Accepts ONLY EvidenceBundle or BlockedEvidence from
+    research_runtime.evidence_bundle. Raises TypeError on any other input
+    (raw dict, None, etc.) — raw data MUST go through build_evidence_bundle
+    first.
+
+    Returns a fail-closed _make_error_response-shaped string when bundle is
+    BlockedEvidence (defense-in-depth; primary fail-closed is in mcp_server
+    before this function is reached).
+    """
+    import sys as _sys
+    _scripts_dir = os.path.dirname(os.path.abspath(__file__))
+    if _scripts_dir not in _sys.path:
+        _sys.path.insert(0, _scripts_dir)
+    from research_runtime.evidence_bundle import EvidenceBundle, BlockedEvidence
+
+    if not isinstance(bundle, (EvidenceBundle, BlockedEvidence)):
+        raise TypeError(
+            f"format_stock_analysis_from_bundle requires EvidenceBundle or "
+            f"BlockedEvidence; got {type(bundle).__name__}. Raw data MUST "
+            f"go through research_runtime.evidence_bundle.build_evidence_bundle() first."
+        )
+
+    if isinstance(bundle, BlockedEvidence):
+        return (
+            f"=== {stock_name}({stock_code}) ===\n"
+            f"admission=blocked reason={bundle.reason} blocked_fields={bundle.blocked_fields}\n"
+            "未生成分析：Trust Gate 拒绝本条证据。\n"
+        )
+
+    if not bundle.allowed_use:
+        raise ValueError(
+            "format_stock_analysis_from_bundle: empty allowed_use; "
+            "consumer should never be reached when bundle is blocked. "
+            "This is a defense-in-depth check; primary fail-closed is upstream."
+        )
+
+    ev = bundle.evidence
+    parts = []
+    parts.append(f"=== {stock_name}({stock_code}) 东方财富结构化数据 ===")
+    parts.append(f"数据获取时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    parts.append(f"admission: trust_status={bundle.trust_status} allowed_use={bundle.allowed_use}")
+    parts.append("")
+
+    rt = ev.get("realtime")
+    if rt and isinstance(rt, dict):
+        parts.append("【实时行情】")
+        parts.append(f"最新价：{rt.get('price', 'N/A')} 元")
+        parts.append(f"涨跌幅：{rt.get('change', 'N/A')}%")
+        parts.append(f"市盈率(动态)：{rt.get('pe', 'N/A')} 倍")
+        parts.append(f"市净率：{rt.get('pb', 'N/A')} 倍")
+        parts.append(f"总市值：{rt.get('mv', 'N/A')}")
+        parts.append("")
+
+    fin = ev.get("financials")
+    if fin:
+        parts.append("【财报主要指标（近4期）】")
+        for row in fin:
+            period = row.get("日期") or row.get("date") or "未知期"
+            parts.append(f"\n--- 报告期：{period} ---")
+            for key, val in row.items():
+                if key not in ("日期", "date") and val is not None and str(val).strip():
+                    parts.append(f"  {key}：{val}")
+        parts.append("")
+
+    if "fund_flow" in ev.get("_blocked_keys_excluded", []):
+        parts.append("【个股资金流向】已由 Trust Gate 屏蔽（fund_flow 列为 TRADING_DECISION_FIELDS）")
+    else:
+        ff = ev.get("fund_flow")
+        if ff:
+            parts.append("【个股资金流向（近期）】")
+            for row in ff[-5:]:
+                date = row.get("日期", "")
+                main_in = row.get("主力净流入-净额", "N/A")
+                main_pct = row.get("主力净流入-净占比", "N/A")
+                big_in = row.get("超大单净流入-净额", "N/A")
+                parts.append(f"  {date}：主力净流入{main_in}（占比{main_pct}%），超大单{big_in}")
+            parts.append("")
+
+    ph = ev.get("price_history")
+    if ph:
+        parts.append("【近期K线（近10日）】")
+        for row in ph[-10:]:
+            parts.append(f"  {row.get('日期','')}：开{row.get('开盘','')} 收{row.get('收盘','')} "
+                         f"涨跌幅{row.get('涨跌幅','')}% 成交量{row.get('成交量','')} 换手率{row.get('换手率','')}%")
+        parts.append("")
+
+    news = ev.get("news")
+    if news:
+        parts.append("【个股新闻（东方财富）】")
+        for i, n in enumerate(news[:5], 1):
+            parts.append(f"  {i}. {n.get('title', '')} ({n.get('time', '')})")
+            parts.append(f"     来源：{n.get('source', '')} | 链接：{n.get('url', '')}")
+            content = n.get('content', '')
+            if content:
+                parts.append(f"     摘要：{content[:150]}")
+        parts.append("")
+
+    div = ev.get("dividends")
     if div:
         parts.append("【历史分红记录】")
         for row in div:

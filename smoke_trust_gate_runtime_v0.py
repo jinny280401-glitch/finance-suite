@@ -3,7 +3,11 @@ from __future__ import annotations
 
 import sys
 
-from research_runtime.evidence_bundle import build_evidence_bundle, generate_section_body
+from research_runtime.evidence_bundle import (
+    BlockedEvidence,
+    build_evidence_bundle,
+    generate_section_body,
+)
 
 
 def _gateway_response(status: str, *, data_type: str = "quote", reason: str | None = None, data: dict | None = None, missing_fields: list[str] | None = None) -> dict:
@@ -48,14 +52,28 @@ def test_partial_quote() -> None:
 
 
 def test_failure_blocks_all() -> None:
+    """F1 (v0.3): failure + empty evidence → BlockedEvidence (no_admitted_evidence).
+
+    Frozen reason precedence: P1 qc_failure > P2 no_allowed_use > P3 no_admitted_evidence.
+    For status="failure", the upstream failure reason wins; here it surfaces as
+    "qc_failure" (or bundle.reason from _qc.reason). BlockedEvidence is the
+    canonical admission class — equivalent to the prior EvidenceBundle(empty=...)
+    contract but with the new semantics.
+    """
     bundle = build_evidence_bundle(_gateway_response(
         "failure",
         reason="all_providers_failed",
         data={"price": 123.4},
     ))
-    assert bundle.allowed_use == []
+    assert isinstance(bundle, BlockedEvidence), (
+        f"Expected BlockedEvidence for status=failure + empty evidence; "
+        f"got {type(bundle).__name__}"
+    )
+    assert bundle.gate_status == "blocked"
+    assert bundle.trust_status == "failure"
     assert bundle.blocked_fields == ["all"]
-    assert bundle.evidence == {}
+    # Reason precedence: P1 wins because trust_status=failure
+    assert bundle.reason == "all_providers_failed"
 
 
 def test_stock_analysis_partial_blocks_trading_decisions() -> None:
