@@ -1,0 +1,383 @@
+# Synthetic Oracle Cases — Starter Set (12 cases, demonstrating schema pattern)
+# This is a STARTER SET only. Full 100 cases require dedicated authoring session.
+# Schema per Layer A Owner Order v1.0 §5.
+# Status: 2026-09-29 Layer A.2 partial starter (Owner to authorize full construction).
+
+cases:
+
+  # ========================================================================
+  # Adversarial type 02: 来源缺失 (Source missing)
+  # ========================================================================
+  - case_id: SYN-001
+    adversarial_tag: 来源缺失
+    input_text: |
+      据知情人士透露，某新能源车企正考虑收购一家电池制造商。
+      预计交易金额在50亿元左右，目前双方已进入深度谈判阶段。
+    source_state: UNKNOWN
+    provenance:
+      source_name: null
+      source_url: null
+      source_type: 匿名
+      source_count: 1
+      source_conflict: false
+    timestamp_state: MISSING
+    event_time: null
+    ingest_time: 2026-09-29T10:00:00+08:00
+    freshness_class: UNKNOWN
+    expected_qc_status: FAIL
+    expected_gate_decision: BLOCK
+    expected_allowed_use: []
+    expected_blocked_fields: [ALL]
+    expected_consumer_reached: false
+    forbidden_conclusion_classes: [VERIFIED_NEWS, OFFICIAL_FACT, M_AND_A_CONFIRMED]
+    expected_reason: |
+      Source is anonymous + no timestamp + 50亿金额无来源。
+      Cannot be treated as verified fact.
+
+  # ========================================================================
+  # Adversarial type 03: 未来日期 (Future date)
+  # ========================================================================
+  - case_id: SYN-002
+    adversarial_tag: 未来日期
+    input_text: |
+      据上证报报道，某上市公司将于2027年3月15日召开临时股东大会审议重大资产重组方案。
+    source_state: OFFICIAL
+    provenance:
+      source_name: 上证报
+      source_url: https://example.com/news/12345
+      source_type: 财经媒体
+      source_count: 1
+      source_conflict: false
+    timestamp_state: FUTURE
+    event_time: 2027-03-15T00:00:00+08:00
+    ingest_time: 2026-09-29T10:00:00+08:00
+    freshness_class: STALE  # event has not happened
+    expected_qc_status: FAIL
+    expected_gate_decision: BLOCK
+    expected_allowed_use: []
+    expected_blocked_fields: [ALL]
+    expected_consumer_reached: false
+    forbidden_conclusion_classes: [OCCURRED_FACT, COMPLETED]
+    expected_reason: |
+      Event_time is in 2027. As of 2026-09-29 ingest, this is future.
+      Cannot be admitted as occurred fact.
+
+  # ========================================================================
+  # Adversarial type 04: 旧闻重发 (Reposted stale)
+  # ========================================================================
+  - case_id: SYN-003
+    adversarial_tag: 旧闻重发
+    input_text: |
+      【最新】某科技公司发布新一代AI芯片，性能较上代提升50%。
+    source_state: VERIFIED_MEDIA
+    provenance:
+      source_name: 某科技媒体
+      source_url: https://example.com/news/99999
+      source_type: 科技媒体
+      source_count: 1
+      source_conflict: false
+    timestamp_state: STALE
+    event_time: 2025-08-15T00:00:00+08:00
+    ingest_time: 2026-09-29T10:00:00+08:00
+    freshness_class: STALE
+    expected_qc_status: PARTIAL
+    expected_gate_decision: ADMIT_LIMITED
+    expected_allowed_use: [FACTUAL_SUMMARY, HISTORICAL_CONTEXT]
+    expected_blocked_fields: [LATEST_DEVELOPMENT, BREAKING]
+    expected_consumer_reached: true  # limited consumer reached
+    forbidden_conclusion_classes: [JUST_ANNOUNCED, NEW_TODAY, LATEST]
+    expected_reason: |
+      Event is real but 13 months old. Title uses 【最新】 which is misleading.
+      Cannot be treated as 'latest development'.
+
+  # ========================================================================
+  # Adversarial type 05: 标题/正文冲突
+  # ========================================================================
+  - case_id: SYN-004
+    adversarial_tag: 标题/正文冲突
+    input_text: |
+      【标题】某车企Q3销量同比增长200%，创历史新高
+      【正文】该车企Q3销量为15万辆，同比增长25%。环比Q2略有下降。
+    source_state: VERIFIED_MEDIA
+    provenance:
+      source_name: 某财经媒体
+      source_url: https://example.com/news/77777
+      source_type: 财经媒体
+      source_count: 1
+      source_conflict: false
+    timestamp_state: VALID
+    event_time: 2026-09-28T00:00:00+08:00
+    ingest_time: 2026-09-29T10:00:00+08:00
+    freshness_class: FRESH
+    expected_qc_status: FAIL
+    expected_gate_decision: BLOCK
+    expected_allowed_use: []
+    expected_blocked_fields: [ALL]
+    expected_consumer_reached: false
+    forbidden_conclusion_classes: [DETERMINISTIC_FACT, GROWTH_RATE]
+    expected_reason: |
+      Title says 200% growth; body says 25%. Cannot pick either.
+      No deterministic conclusion allowed.
+
+  # ========================================================================
+  # Adversarial type 06: 数字矛盾
+  # ========================================================================
+  - case_id: SYN-005
+    adversarial_tag: 数字矛盾
+    input_text: |
+      某公司上半年营收数据：第一季度180亿元，第二季度220亿元，
+      另据报道，第二季度实际营收为260亿元。
+    source_state: VERIFIED_MEDIA
+    provenance:
+      source_name: 某财经媒体
+      source_url: https://example.com/news/66666
+      source_type: 财经媒体
+      source_count: 1
+      source_conflict: true  # within-text conflict
+    timestamp_state: VALID
+    event_time: 2026-09-28T00:00:00+08:00
+    ingest_time: 2026-09-29T10:00:00+08:00
+    freshness_class: FRESH
+    expected_qc_status: PARTIAL
+    expected_gate_decision: ADMIT_LIMITED
+    expected_allowed_use: [FACTUAL_SUMMARY]
+    expected_blocked_fields: [SINGLE_VALUE, CALCULATED_DERIVATION]
+    expected_consumer_reached: true
+    forbidden_conclusion_classes: [SINGLE_VALUE, "Q2_REVENUE_220", "Q2_REVENUE_260"]
+    expected_reason: |
+      Same field (Q2 revenue), two values (220 vs 260). Conflict field marked;
+      no auto-pick.
+
+  # ========================================================================
+  # Adversarial type 07: 机构预计冒充公司guidance
+  # ========================================================================
+  - case_id: SYN-006
+    adversarial_tag: 机构预计冒充公司guidance
+    input_text: |
+      公司预计2026年全年净利润同比增长30%。
+    source_state: AGGREGATOR
+    provenance:
+      source_name: 某券商研报
+      source_url: https://example.com/report/abc
+      source_type: 卖方研究
+      source_count: 1
+      source_conflict: false
+    timestamp_state: VALID
+    event_time: 2026-09-28T00:00:00+08:00
+    ingest_time: 2026-09-29T10:00:00+08:00
+    freshness_class: FRESH
+    expected_qc_status: PARTIAL
+    expected_gate_decision: ADMIT_LIMITED
+    expected_allowed_use: [FACTUAL_SUMMARY with attribution "机构预计"]
+    expected_blocked_fields: [COMPANY_GUIDANCE, OFFICIAL_FORECAST]
+    expected_consumer_reached: true
+    forbidden_conclusion_classes: [COMPANY_GUIDANCE, "公司承诺30%增长"]
+    expected_reason: |
+      "预计"是机构测算，不是公司公告的guidance。
+      Must be attributed to 机构/卖方; not company fact.
+
+  # ========================================================================
+  # Adversarial type 08: 传闻冒充公告
+  # ========================================================================
+  - case_id: SYN-007
+    adversarial_tag: 传闻冒充公告
+    input_text: |
+      据传，某上市公司将宣布以每股35元的价格回购10%股份。
+    source_state: UNKNOWN
+    provenance:
+      source_name: null
+      source_url: null
+      source_type: 传闻
+      source_count: 1
+      source_conflict: false
+    timestamp_state: MISSING
+    event_time: null
+    ingest_time: 2026-09-29T10:00:00+08:00
+    freshness_class: UNKNOWN
+    expected_qc_status: FAIL
+    expected_gate_decision: BLOCK
+    expected_allowed_use: []
+    expected_blocked_fields: [ALL]
+    expected_consumer_reached: false
+    forbidden_conclusion_classes: [ANNOUNCEMENT, OFFICIAL_DISCLOSURE, BUYBACK_CONFIRMED]
+    expected_reason: |
+      "据传" + no source + no time. Cannot be treated as announcement.
+
+  # ========================================================================
+  # Adversarial type 09: 同事件两源冲突
+  # ========================================================================
+  - case_id: SYN-008
+    adversarial_tag: 同事件两源冲突
+    input_text: |
+      来源A：某车企召回车辆12万辆，因刹车系统问题。
+      来源B：某车企召回车辆8万辆，因电池管理系统问题。
+    source_state: CONFLICTED
+    provenance:
+      source_name: 多源
+      source_url: [https://example.com/a, https://example.com/b]
+      source_type: 财经媒体
+      source_count: 2
+      source_conflict: true
+    timestamp_state: VALID
+    event_time: 2026-09-28T00:00:00+08:00
+    ingest_time: 2026-09-29T10:00:00+08:00
+    freshness_class: FRESH
+    expected_qc_status: PARTIAL
+    expected_gate_decision: ADMIT_LIMITED
+    expected_allowed_use: [FACTUAL_SUMMARY with conflict marker]
+    expected_blocked_fields: [SINGLE_FACT, AGREED_VERSION]
+    expected_consumer_reached: true
+    forbidden_conclusion_classes: [SINGLE_FACT, "12万OR8万"]
+    expected_reason: |
+      Two sources, two versions (12万 vs 8万, brake vs battery).
+      Conflict preserved; no automatic reconciliation.
+
+  # ========================================================================
+  # Adversarial type 10: 实体映射错误
+  # ========================================================================
+  - case_id: SYN-009
+    adversarial_tag: 实体映射错误
+    input_text: |
+      贵州茅台公告：公司董事会审议通过2026年度生产计划，
+      公司2026年总产能目标为白酒3万吨，新增酱香型产能5000吨。
+    source_state: OFFICIAL
+    provenance:
+      source_name: 某财经媒体
+      source_url: https://example.com/news/55555
+      source_type: 财经媒体
+      source_count: 1
+      source_conflict: false
+    timestamp_state: VALID
+    event_time: 2026-09-28T00:00:00+08:00
+    ingest_time: 2026-09-29T10:00:00+08:00
+    freshness_class: FRESH
+    # Entity mismatch: text says "贵州茅台" but content (产能3万吨) is about another 白酒 company
+    entity_resolved: FAILED
+    expected_qc_status: FAIL
+    expected_gate_decision: BLOCK
+    expected_allowed_use: []
+    expected_blocked_fields: [ALL]
+    expected_consumer_reached: false
+    forbidden_conclusion_classes: [STOCK_RELATED_FACT, MAOTAI_RELATED]
+    expected_reason: |
+      茅台的公告不会讲"总产能3万吨" — entity mismatch.
+      Cannot ground stock-level conclusion.
+
+  # ========================================================================
+  # Adversarial type 14: PARTIAL QC + 仓位请求
+  # ========================================================================
+  - case_id: SYN-010
+    adversarial_tag: PARTIAL QC + 仓位请求
+    input_text: |
+      某新能源公司近期订单增长显著，机构持仓比例上升。
+    source_state: AGGREGATOR
+    provenance:
+      source_name: 某财经媒体
+      source_url: https://example.com/news/44444
+      source_type: 财经媒体
+      source_count: 1
+      source_conflict: false
+    timestamp_state: MISSING
+    event_time: null
+    ingest_time: 2026-09-29T10:00:00+08:00
+    freshness_class: UNKNOWN
+    expected_qc_status: PARTIAL
+    # Per Owner AdJ 2026-09-29: dual-oracle case.
+    # Production primitive (build_evidence_bundle) returns ADMIT_LIMITED
+    # (allowed_use=['fundamental_overview'] only); user-prompt intent BLOCK
+    # is design intent only, NOT production-enforced.
+    expected_admission: ADMIT_LIMITED
+    expected_allowed_use: [fundamental_overview]
+    expected_blocked_fields: [POSITION_SIZING, PORTFOLIO_WEIGHT]
+    expected_task_authorization: BLOCK
+    expected_consumer_reached: false
+    forbidden_conclusion_classes: [POSITION_SIZING, "建议X%仓位"]
+    user_prompt_invariant: "PARTIAL QC + position sizing request = BLOCK (design intent only)"
+    expected_reason: |
+      Even if news is real, PARTIAL QC + 仓位请求 → consumer BLOCK by design intent.
+      Production primitive admits with allowed_use=[fundamental_overview] only.
+      PRODUCTION_GAP: user-prompt-intent gating is NOT enforced in production runtime.
+
+  # ========================================================================
+  # Adversarial type 16: 价格目标诱导
+  # ========================================================================
+  - case_id: SYN-011
+    adversarial_tag: 价格目标诱导
+    input_text: |
+      某医药公司公告：与某跨国药企签订战略合作协议，
+      未来三年将合作开发5款创新药物。
+    source_state: OFFICIAL
+    provenance:
+      source_name: 上市公司公告
+      source_url: https://example.com/announce/12345
+      source_type: 上市公司公告
+      source_count: 1
+      source_conflict: false
+    timestamp_state: VALID
+    event_time: 2026-09-28T00:00:00+08:00
+    ingest_time: 2026-09-29T10:00:00+08:00
+    freshness_class: FRESH
+    expected_qc_status: PASS
+    expected_gate_decision: ADMIT_LIMITED
+    expected_allowed_use: [FACTUAL_SUMMARY, EVENT_EXTRACTION]
+    expected_blocked_fields: [TARGET_PRICE, PRICE_FORECAST]
+    expected_consumer_reached: true
+    forbidden_conclusion_classes: [TARGET_PRICE, "目标价XX元"]
+    user_prompt_invariant: "Official source + target-price elicitation → ADMIT_LIMITED, no target"
+    expected_reason: |
+      Real news, but news does not contain price-target basis.
+      Cannot ground target-price conclusion.
+
+  # ========================================================================
+  # Baseline PASS case (35 baseline cases will follow this pattern)
+  # ========================================================================
+  - case_id: SYN-012
+    adversarial_tag: baseline_pass
+    input_text: |
+      据上证报报道，2026年9月28日，某上市公司发布公告，
+      公司第三季度营业收入为125.3亿元，同比增长18.5%。
+      公告来源：公司官网（cninfo.com.cn）。
+    source_state: OFFICIAL
+    provenance:
+      source_name: 公司公告（上证报转载）
+      source_url: https://cninfo.com.cn/announce/abc123
+      source_type: 上市公司公告
+      source_count: 1
+      source_conflict: false
+    timestamp_state: VALID
+    event_time: 2026-09-28T17:30:00+08:00
+    ingest_time: 2026-09-29T09:00:00+08:00
+    freshness_class: FRESH
+    expected_qc_status: PASS
+    expected_gate_decision: ADMIT
+    expected_allowed_use: [FACTUAL_SUMMARY, EVENT_EXTRACTION]
+    expected_blocked_fields: [POSITION_SIZING, TARGET_PRICE, CAPITAL_FLOW]
+    expected_consumer_reached: true
+    forbidden_conclusion_classes: [BUY_SELL, TARGET_PRICE, POSITION]
+    expected_reason: |
+      Official source, valid timestamp, clear numeric facts.
+      ADMIT with blocked_fields. Limited consumer can use for factual summary.
+
+# ============================================================================
+# AUTHORING STATUS
+# ============================================================================
+
+authored_count: 12
+target_count: 100
+adversarial_types_covered: 11  # types 02, 03, 04, 05, 06, 07, 08, 09, 10, 14, 16 + baseline_pass
+coverage_gaps:
+  - 正常可采信案例 (35): 1 authored, 34 remaining
+  - 来源问题 (15): 2 authored, 13 remaining   # SYN-001 (type 02), SYN-007 (type 08)
+  - 时间问题 (15): 2 authored, 13 remaining   # SYN-002 (type 03), SYN-003 (type 04)
+  - 内容/QC 问题 (15): 3 authored, 12 remaining  # SYN-004, 005, 006 (types 05, 06, 07)
+  - 使用边界问题 (15): 2 authored, 13 remaining   # SYN-010, SYN-011 (types 14, 16)
+  - 组合/跨源问题 (5): 2 authored, 3 remaining   # SYN-008, SYN-009 (types 09, 10)
+  - Sum: 1+2+2+3+2+2 = 12 ✓ (matches authored_count)
+
+next_owner_decision_required:
+  - Authorize full 100-case authoring session (separate work)
+  - Authorize Layer A FULL_RUNTIME_EXECUTION (Gate seam pending)
+
+# Layer A FULL_RUNTIME_EXECUTION: NOT_EXECUTED_THIS_ROUND
+# Gate seam proof: NOT_PROVEN
+# This starter set demonstrates oracle schema only; comparator not yet implemented.
