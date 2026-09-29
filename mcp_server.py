@@ -513,38 +513,11 @@ async def search(query: str, search_type: str = "stock") -> str:
             results = await search_mod.multi_search_stock(query)
             formatted = search_mod.format_search_results_grouped(results)
         elif search_type == "news":
-            import news_providers
-
-            results, provider_results = await news_providers.unified_news_search_v2(query)
+            # news_providers was introduced by an unbundled runtime experiment.
+            # Keep the supported news path in the packaged search module instead
+            # of importing a module that is not part of this distribution.
+            results = await search_mod.unified_search(query, "news")
             formatted = search_mod.format_search_results(results)
-
-            runtime_detail = [
-                {
-                    "provider": result.provider,
-                    "runtime_state": result.runtime_state.value,
-                    "reason": result.reason,
-                    "elapsed_ms": result.elapsed_ms,
-                }
-                for result in provider_results
-            ]
-            qc = {
-                "search_type": search_type,
-                "query": query,
-                "sources": [result.provider for result in provider_results],
-                "runtime_detail": runtime_detail,
-                "unavailable_providers": [
-                    result.provider
-                    for result in provider_results
-                    if result.runtime_state.value == "unavailable"
-                ],
-                "mock_providers": [
-                    result.provider
-                    for result in provider_results
-                    if result.runtime_state.value == "mock"
-                ],
-                "result_count": len(results) if results else 0,
-            }
-            return _wrap_response(qc, formatted)
         else:
             results = await search_mod.unified_search(query, search_type)
             formatted = search_mod.format_search_results(results)
