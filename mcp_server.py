@@ -52,6 +52,8 @@ import os
 import time
 import logging
 from datetime import datetime
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 from dotenv import load_dotenv
 
@@ -1228,17 +1230,35 @@ def _autocli_run(platform: str, subcmd: list[str], timeout: int = 30) -> tuple[b
         return False, None, f"JSON 解析失败: {e}"
 
 
+def _fetch_sinafinance_news(limit: int, timeout: float = 10.0) -> list[dict]:
+    """Fetch Sina's public rolling-news endpoint without browser automation."""
+    safe_limit = max(1, min(int(limit), 50))
+    params = urlencode({"pageid": 153, "lid": 2516, "k": "", "num": safe_limit, "page": 1})
+    request = Request(
+        f"https://feed.mix.sina.com.cn/api/roll/get?{params}",
+        headers={"User-Agent": "Mozilla/5.0 (FinanceSuite/1.0)", "Accept": "application/json"},
+    )
+    with urlopen(request, timeout=timeout) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+
+    rows = payload.get("result", {}).get("data", [])
+    if not isinstance(rows, list):
+        raise ValueError("新浪接口返回的 data 不是列表")
+    return rows[:safe_limit]
+
+
 # ============================================================
 # Tool 11: 新浪财经实时快讯
 # ============================================================
 @mcp.tool()
 def sinafinance_fetch(limit: int = 20) -> str:
-    """抓取新浪财经 7x24 小时实时快讯。无需登录，直接调用 API。
+    """抓取新浪财经 7x24 小时实时快讯。无需登录，直接调用公开 API。
     返回最新财经新闻，包含时间、内容、阅读量。
     返回结构化 _qc 质检 JSON。"""
-    ok, data, err = _autocli_run("sinafinance", ["news", "--limit", str(limit)])
-    if not ok:
-        return _make_error_response(f"sinafinance_fetch 失败: {err}")
+    try:
+        data = _fetch_sinafinance_news(limit)
+    except Exception as exc:
+        return _make_error_response(f"sinafinance_fetch 失败: 新浪公开接口请求失败: {exc}")
     has_data = bool(data)
     qc = {
         "status": "success" if has_data else "partial",
