@@ -666,12 +666,83 @@ def watchlist_manage(
 # ============================================================
 # Tool 7: 因子选股信号
 # ============================================================
+
+# A3 Admission Gate Helper Functions
+def _generate_attempt_id() -> str:
+    """Generate unique attempt_id: YYYYMMDD_HHMMSS_microseconds"""
+    return datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+
+
+class AttemptInvalid(Exception):
+    """Raised when attempts contract validation fails"""
+    pass
+
+
+class AttemptWinnerMissing(Exception):
+    """Raised when winner_attempt_id not found in attempts"""
+    pass
+
+
+def _validate_attempts_contract(attempts: list, winner_id: str, signals: list) -> None:
+    """Validate A3 attempts contract - raise on failure
+
+    Args:
+        attempts: List of attempt records
+        winner_id: The winning attempt_id
+        signals: The signals list from data payload
+
+    Raises:
+        AttemptInvalid: If attempts structure is invalid
+        AttemptWinnerMissing: If winner_id not in attempts
+        ValueError: If signals is not a list
+    """
+    if not attempts:
+        raise AttemptInvalid("attempts[] is empty")
+
+    if not winner_id:
+        raise AttemptInvalid("winner_attempt_id is None or empty")
+
+    # Check all attempts have required fields
+    attempt_ids_seen = set()
+    valid_outcomes = {"success", "empty", "error", "synthetic_approx", "synthetic_no_model"}
+
+    for att in attempts:
+        if not isinstance(att, dict):
+            raise AttemptInvalid(f"attempt is not dict: {att}")
+
+        # Validate attempt_id
+        if "attempt_id" not in att or not att["attempt_id"]:
+            raise AttemptInvalid(f"attempt missing attempt_id: {att}")
+        if att["attempt_id"] in attempt_ids_seen:
+            raise AttemptInvalid(f"duplicate attempt_id: {att['attempt_id']}")
+        attempt_ids_seen.add(att["attempt_id"])
+
+        # Validate provider
+        if "provider" not in att or not att["provider"]:
+            raise AttemptInvalid(f"attempt missing provider: {att}")
+
+        # Validate outcome
+        if "outcome" not in att:
+            raise AttemptInvalid(f"attempt missing outcome: {att}")
+        if att["outcome"] not in valid_outcomes:
+            raise AttemptInvalid(f"invalid outcome '{att['outcome']}' not in {valid_outcomes}")
+
+    # Validate winner_id exists in attempts
+    if winner_id not in attempt_ids_seen:
+        raise AttemptWinnerMissing(f"winner_attempt_id '{winner_id}' not found in attempts")
+
+    # Validate signals contract (separate from attempts but checked together)
+    if not isinstance(signals, list):
+        raise ValueError(f"signals must be list, got {type(signals)}")
+
+
 @mcp.tool()
 def factor_scan(date: str = "") -> str:
     """执行量化因子选股扫描，返回命中股票及评分。
     优先级：trading-system → JoinQuant → Wind → Tushare → AkShare。
     扫描可能需要 1-3 分钟。date 格式 YYYY-MM-DD，留空默认今天。
     返回结构化 _qc 质检 JSON。"""
+    attempts = []  # A3 admission gate: record all provider attempts
     try:
         import factor_scan as fs
         import joinquant_data
@@ -679,27 +750,53 @@ def factor_scan(date: str = "") -> str:
         import tushare_data
 
         scan_date = date or None
-        data = fs.get_factor_signals(scan_date)
-        has_error = "error" in data
+
+        # Attempt 1: trading_system
+        attempt_id_1 = _generate_attempt_id()
+        try:
+            data = fs.get_factor_signals(scan_date)
+            has_error = "error" in data
+            if has_error:
+                outcome_1 = "error"
+            elif bool(data.get("signals")):
+                outcome_1 = "success"
+            else:
+                outcome_1 = "empty"
+        except Exception as e:
+            data = {"error": str(e)}
+            has_error = True
+            outcome_1 = "error"
+
+        attempts.append({"attempt_id": attempt_id_1, "provider": "trading_system", "outcome": outcome_1})
         source_used = data.get("source_used", "trading_system")
         logger.info(f"factor_scan start date={scan_date or 'today'} source=trading_system status={'error' if has_error else 'ok'}")
 
         # 第二层：JoinQuant
         if has_error:
+            attempt_id_2 = _generate_attempt_id()
             try:
                 jq_data = joinquant_data.get_factor_signals(scan_date)
                 if jq_data and "signals" in jq_data and "error" not in jq_data:
+                    if bool(jq_data["signals"]):
+                        outcome_2 = "success"
+                    else:
+                        outcome_2 = "empty"
                     data = jq_data
                     has_error = False
                     source_used = "joinquant"
                     logger.info("factor_scan fallback success source=joinquant")
                 else:
+                    outcome_2 = "error"
                     logger.warning("factor_scan fallback source=joinquant returned empty/error")
             except Exception as e:
+                outcome_2 = "error"
                 logger.warning(f"factor_scan fallback source=joinquant failed: {e}")
+
+            attempts.append({"attempt_id": attempt_id_2, "provider": "joinquant", "outcome": outcome_2})
 
         # 第三层：Wind（以估值/快照近似筛选信号）
         if has_error:
+            attempt_id_3 = _generate_attempt_id()
             try:
                 universe = ["600519.SH", "000858.SZ", "600036.SH", "601318.SH", "000333.SZ"]
                 signals = []
@@ -718,15 +815,24 @@ def factor_scan(date: str = "") -> str:
                         continue
                     if 10 <= pe_f <= 30 and roe_f > 15 and 50 <= mv_f <= 500:
                         signals.append({"code": code, "name": code, "pe": pe_f, "roe": roe_f, "market_cap": mv_f})
+
+                if len(signals) > 0:
+                    outcome_3 = "synthetic_approx"
+                else:
+                    outcome_3 = "empty"
                 data = {"signals": signals, "scan_date": datetime.now().strftime("%Y-%m-%d")}
                 has_error = False
                 source_used = "wind"
                 logger.info("factor_scan fallback success source=wind")
             except Exception as e:
+                outcome_3 = "error"
                 logger.warning(f"factor_scan fallback source=wind failed: {e}")
+
+            attempts.append({"attempt_id": attempt_id_3, "provider": "wind", "outcome": outcome_3})
 
         # 第四层：Tushare（以快照近似筛选信号）
         if has_error:
+            attempt_id_4 = _generate_attempt_id()
             try:
                 universe = ["600519.SH", "000858.SZ", "600036.SH", "601318.SH", "000333.SZ"]
                 signals = []
@@ -745,39 +851,55 @@ def factor_scan(date: str = "") -> str:
                         continue
                     if 10 <= pe_f <= 30 and roe_f > 15 and 50 <= mv_f <= 500:
                         signals.append({"code": code, "name": code, "pe": pe_f, "roe": roe_f, "market_cap": mv_f})
+
+                if len(signals) > 0:
+                    outcome_4 = "synthetic_approx"
+                else:
+                    outcome_4 = "empty"
                 data = {"signals": signals, "scan_date": datetime.now().strftime("%Y-%m-%d")}
                 has_error = False
                 source_used = "tushare"
                 logger.info("factor_scan fallback success source=tushare")
             except Exception as e:
+                outcome_4 = "error"
                 logger.warning(f"factor_scan fallback source=tushare failed: {e}")
+
+            attempts.append({"attempt_id": attempt_id_4, "provider": "tushare", "outcome": outcome_4})
 
         # 第五层：AkShare（兜底为空结果，不抛错）
         if has_error:
+            attempt_id_5 = _generate_attempt_id()
+            outcome_5 = "synthetic_no_model"
             data = {"signals": [], "scan_date": datetime.now().strftime("%Y-%m-%d"), "note": "AkShare fallback: no factor model"}
             has_error = False
             source_used = "akshare"
+            attempts.append({"attempt_id": attempt_id_5, "provider": "akshare", "outcome": outcome_5})
             logger.warning("factor_scan fallback source=akshare used")
+
+        # Bind winner_attempt_id: last non-error attempt
+        winner_attempt_id = next(
+            (att["attempt_id"] for att in reversed(attempts) if att["outcome"] in ("success", "empty", "synthetic_approx", "synthetic_no_model")),
+            attempts[-1]["attempt_id"] if attempts else None
+        )
 
         has_signals = bool(data.get("signals"))
         market_env = data.get("market_env") or {}
         if isinstance(data, dict) and isinstance(data.get("_qc"), dict):
             qc = data["_qc"]
         else:
-            fallback_triggered = source_used != "trading_system"
-            attempted_sources = ["trading_system"] if not fallback_triggered else ["trading_system", source_used]
+            # OLD inference code DELETED - now using attempts[] structure
             qc = {
                 "status": "success" if has_signals else "partial",
                 "completeness": 1.0 if has_signals else (0.5 if market_env else 0.3),
-                "sources": attempted_sources,
-                "fallback_source": source_used if fallback_triggered else None,
+                "sources": [att["provider"] for att in attempts],
+                "fallback_source": attempts[-1]["provider"] if len(attempts) > 1 else None,
                 "missing_dimensions": [] if has_signals else (["候选信号"] if market_env else ["候选信号", "市场环境"]),
                 "stale_data": _joinquant_stale_entries(data) if source_used == "joinquant" else [],
             }
             data["_qc"] = qc
         data.setdefault("source_used", source_used)
         data.setdefault("fallback_chain", ["trading_system", "joinquant", "wind", "tushare", "akshare"])
-        data.setdefault("fallback_triggered", source_used != "trading_system")
+        data.setdefault("fallback_triggered", len(attempts) > 1)
         logger.info(
             f"factor_scan success scan_date={data.get('scan_date', scan_date or 'today')} "
             f"source={data.get('source_used')} fallback_triggered={data.get('fallback_triggered')} "
@@ -793,6 +915,24 @@ def factor_scan(date: str = "") -> str:
             )
         else:
             formatted = json.dumps({"source": source_used, "data": data}, ensure_ascii=False, indent=2)
+
+        # A3 Admission Gate - validate attempts contract
+        try:
+            _validate_attempts_contract(attempts, winner_attempt_id, data.get("signals", []))
+        except (AttemptInvalid, AttemptWinnerMissing, ValueError) as admission_error:
+            logger.error(f"A3 admission gate blocked: {admission_error}")
+            fail_qc = {
+                "status": "failure",
+                "completeness": 0.0,
+                "sources": [],
+                "allowed_use": [],
+                "error": str(admission_error)
+            }
+            fail_payload = json.dumps({
+                "error": "Admission gate validation failed",
+                "detail": str(admission_error)
+            }, ensure_ascii=False)
+            return _wrap_response(fail_qc, fail_payload)
 
         return _wrap_response(qc, formatted)
 
