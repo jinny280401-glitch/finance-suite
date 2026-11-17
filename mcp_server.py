@@ -279,6 +279,18 @@ def _qc_stock(data: dict, source: str, realtime_stale: bool = False) -> dict:
     else:
         status = "failure"
 
+    # OD-4/OD-5 fix: derived valuation must NOT upgrade QC status to "success".
+    # When valuation is computed from raw financials/price (not from a real
+    # provider), the data quality is lower than a real provider response.
+    # Cap status at "partial" so that allowed_use cannot be broadened.
+    # Applies to both top-level valuation dict and nested valuation_source.
+    _valuation = data.get("valuation")
+    if isinstance(_valuation, dict):
+        _vsource = _valuation.get("valuation_source") or {}
+        if isinstance(_vsource, dict) and _vsource.get("type") == "derived":
+            if status == "success":
+                status = "partial"
+
     return {
         "status": status,
         "completeness": completeness,
