@@ -26,7 +26,6 @@ Wind API → Tushare Pro → JoinQuant → AkShare
   - watchlist_manage      自选股管理（增删改查/监控/研究记录）
   - factor_scan          因子选股信号（量化扫描）
   - wind_query           Wind 数据查询（快照/财报/一致预期/同行/估值/股东/日历）
-  - xueqiu_fetch         雪球数据抓取（热门帖子/热门股票/个股行情/自选股/关注动态）
   - zhihu_fetch          知乎数据抓取（热榜/搜索/问题详情）
   - sinafinance_fetch    新浪财经数据抓取（7x24实时快讯）
   - barchart_fetch       Barchart数据抓取（美股行情/期权链/Greeks/异常期权流）
@@ -64,7 +63,121 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "scr
 
 from mcp.server.fastmcp import FastMCP
 
+# Trust Gate choke point — fail-closed if gate module unavailable.
+# GAP-1: every wind_query data return path routes through _enforce_trust_gate_or_block.
+try:
+    from trust_gate.enforcer import enforce_wind_query, format_trust_gate_envelope
+    _TRUST_GATE_AVAILABLE = True
+except Exception as _gate_import_exc:  # noqa: F841
+    _TRUST_GATE_AVAILABLE = False
+    logger.warning("trust_gate module unavailable; wind_query will fail-closed: %s", _gate_import_exc)
+
 logger = logging.getLogger("finance-suite.mcp")
+
+
+# ============================================================
+# Trust Gate 统一入口 — GAP-1
+# ============================================================
+
+def _enforce_trust_gate_or_block(
+    action: str,
+    code: str,
+    result: dict | None,
+    source_used: str,
+    raw_response: str,
+    chain: list[str] | None = None,
+    retrieved_at: str | None = None,
+) -> str:
+    """wind_query 的 Trust Gate 唯一入口。
+
+    gate available → enforce_wind_query + format_trust_gate_envelope
+    gate unavailable → 合成 GATE_UNAVAILABLE BLOCK 决策记录，不泄漏 provider 数据。
+
+    任何异常 → fail-closed BLOCK（不抛给调用方）。
+    Provider 数据不得在 BLOCK 路径中泄漏。
+    """
+    import uuid
+    from datetime import datetime, timezone
+
+    if _TRUST_GATE_AVAILABLE:
+        try:
+            decision = enforce_wind_query(
+                action=action,
+                code=code,
+                result=result,
+                source_used=source_used,
+                chain=chain,
+                retrieved_at=retrieved_at,
+            )
+            return format_trust_gate_envelope(decision, raw_response)
+        except Exception as exc:
+            logger.error("_enforce_trust_gate_or_block: enforcement error (fail-closed): %s", exc)
+            # fall through to GATE_UNAVAILABLE synthesis below
+
+    # Gate unavailable or enforcement error — synthesize BLOCK from allowlist,
+    # never from raw_response (provider data must not leak).
+    import json
+    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
+    suffix = uuid.uuid4().hex[:8]
+    decision_id = f"tg-wind_query-GATE_UNAVAILABLE-{ts}-{suffix}"
+
+    # Reconstruct only safe _qc metadata from the original envelope (allowlist).
+    try:
+        parts = raw_response.split("\n\n", 1)
+        original_envelope = json.loads(parts[0])
+        original_qc = original_envelope.get("_qc") if isinstance(original_envelope.get("_qc"), dict) else {}
+    except Exception:
+        original_qc = {}
+
+    safe_qc: dict = {}
+    for key in ("status", "completeness", "sources", "fallback_source",
+                "missing_dimensions", "stale_data", "source_chain", "source_type"):
+        if key in original_qc:
+            safe_qc[key] = original_qc[key]
+
+    # Ensure required QC fields for C-02 field parity — fill defaults for any missing allowlist field.
+    safe_qc.setdefault("status", "failure")
+    safe_qc.setdefault("completeness", 0)
+    safe_qc.setdefault("sources", [source_used] if source_used else [])
+    safe_qc.setdefault("fallback_source", None)
+    safe_qc.setdefault("missing_dimensions", [])
+    safe_qc.setdefault("stale_data", [])
+    if "source_chain" not in safe_qc:
+        safe_qc["source_chain"] = {
+            "primary": chain[0] if chain else source_used or "",
+            "attempted": chain or ([source_used] if source_used else []),
+            "failed": chain or ([source_used] if source_used else []),
+            "winner": source_used or "",
+        }
+    if "source_type" not in safe_qc:
+        safe_qc["source_type"] = "unavailable"
+
+    boundary = {
+        "boundary_id": "GATE",
+        "boundary_label": "Trust Gate Enforcement",
+        "verdict": "BLOCK",
+        "reason_code": "GATE_UNAVAILABLE",
+        "detail": "Trust Gate module unavailable — fail-closed BLOCK",
+        "evidence": {"action": action, "code": code},
+        "evaluated_at": now_iso,
+    }
+    tg_dict = {
+        "gate_version": "v0.1-phase1a",
+        "decision_id": decision_id,
+        "decided_at": now_iso,
+        "tool": "wind_query",
+        "action": action,
+        "code": code,
+        "source_used": source_used,
+        "retrieved_at": retrieved_at or now_iso,
+        "overall_verdict": "BLOCK",
+        "blocked_boundaries": ["GATE"],
+        "boundaries": [boundary],
+    }
+    block_envelope = json.dumps({"_qc": safe_qc, "_trust_gate": tg_dict}, ensure_ascii=False)
+    return block_envelope + f"\n\n数据不可用 (Trust Gate BLOCK): GATE: Trust Gate module unavailable — fail-closed BLOCK"
+
 
 mcp = FastMCP(
     "finance-suite",
@@ -1049,7 +1162,7 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
                 "missing_dimensions": [],
                 "stale_data": [],
             }
-            result = {
+            conn_result = {
                 "connected": wind_status.get("connected", False),
                 "wind": wind_status.get("connected", False),
                 "tushare": tushare_status.get("connected", False),
@@ -1058,7 +1171,13 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
                 "priority": "Wind → Tushare → JoinQuant → AkShare",
                 "joinquant_detail": jq_status,
             }
-            return _wrap_response(qc, json.dumps(result, ensure_ascii=False, indent=2))
+            # B1: connect — route through gate (G3_CONNECT_EXEMPT for freshness,
+            # G2 checks "connect" action dimensions which include source keys).
+            raw_b1 = _wrap_response(qc, json.dumps(conn_result, ensure_ascii=False, indent=2))
+            return _enforce_trust_gate_or_block(
+                action="connect", code="", result=conn_result,
+                source_used="", raw_response=raw_b1,
+            )
 
         if not code:
             return _make_error_response(f"action={action} 需要提供 code 参数", fallback_source="tushare/akshare")
@@ -1158,7 +1277,12 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
                 "stale_data": [],
                 "error": f"{action} 多源查询失败（Wind/Tushare/JoinQuant/AkShare）",
             }
-            return _wrap_response(qc, "")
+            # B3: empty result — route through gate (G2_NO_RESULT → BLOCK, fail-closed).
+            raw_b3 = _wrap_response(qc, "")
+            return _enforce_trust_gate_or_block(
+                action=action, code=code, result=None,
+                source_used="", raw_response=raw_b3, chain=chain,
+            )
 
         fallback_map = {"wind": "tushare", "tushare": "joinquant", "joinquant": "akshare", "akshare": None}
         qc = {
@@ -1172,7 +1296,12 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
         formatted = json.dumps({
             "source": source_used, "code": code, "action": action, "data": result,
         }, ensure_ascii=False, indent=2, default=str)
-        return _wrap_response(qc, formatted)
+        # B4: success — route through gate (G2 field integrity + G3 freshness).
+        raw_b4 = _wrap_response(qc, formatted)
+        return _enforce_trust_gate_or_block(
+            action=action, code=code, result=result,
+            source_used=source_used, raw_response=raw_b4, chain=chain,
+        )
 
     except Exception as e:
         logger.exception(f"wind_query fatal error action={action} code={code}: {e}")
@@ -1180,103 +1309,7 @@ def wind_query(action: str, code: str = "", max_peers: int = 10) -> str:
 
 
 # ============================================================
-# Tool 9: 雪球数据抓取（通过 autocli）
-# ============================================================
-@mcp.tool()
-def xueqiu_fetch(command: str, symbol: str = "", limit: int = 10) -> str:
-    """通过 autocli 抓取雪球数据（复用 Chrome 登录状态）。
-
-    command 可选值：
-    - hot: 雪球热门动态（大V观点、市场讨论）
-    - hot-stock: 雪球热门股票榜（人气排行）
-    - stock: 个股实时行情（需提供 symbol，如 SH600519）
-    - watchlist: 自选股列表（需登录）
-    - feed: 关注动态（需登录）
-    - search: 搜索股票（需提供 symbol 作为关键词）
-    - earnings-date: 财报发布日期（需提供 symbol）
-
-    返回结构化 _qc 质检 JSON + JSON 格式数据。
-    """
-    try:
-        import subprocess
-
-        # 构建 autocli 命令
-        autocli_path = os.path.expanduser("~/bin/autocli")
-        if not os.path.exists(autocli_path):
-            return _make_error_response("autocli 未安装，请先安装: curl -fsSL https://raw.githubusercontent.com/nashsu/AutoCLI/main/scripts/install.sh | sh")
-
-        cmd = [autocli_path, "xueqiu", command]
-
-        # 根据命令类型添加参数
-        if command in ("stock", "earnings-date"):
-            if not symbol:
-                return _make_error_response(f"command={command} 需要提供 symbol 参数（如 SH600519）")
-            cmd.append(symbol)
-        elif command == "search":
-            if not symbol:
-                return _make_error_response("command=search 需要提供 symbol 参数作为搜索关键词")
-            cmd.extend(["--query", symbol])
-
-        # 添加通用参数
-        if command not in ("stock", "earnings-date"):
-            cmd.extend(["--limit", str(limit)])
-        cmd.extend(["--format", "json"])
-
-        # 设置环境变量（绕过代理）
-        env = os.environ.copy()
-        env["NO_PROXY"] = "localhost,127.0.0.1"
-        env["no_proxy"] = "localhost,127.0.0.1"
-
-        # 执行命令（某些命令如 hot-stock 可能需要更长时间）
-        timeout_seconds = 60 if command in ("hot-stock", "feed") else 30
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=timeout_seconds,
-            env=env
-        )
-
-        if result.returncode != 0:
-            error_msg = result.stderr.strip() or result.stdout.strip()
-            if "Not logged in" in error_msg or "HTTP 400" in error_msg:
-                return _make_error_response(f"雪球未登录，请在 Chrome 中登录 xueqiu.com 后重试")
-            elif "timeout" in error_msg.lower():
-                return _make_error_response(f"autocli daemon 超时，请检查 Chrome 扩展是否已加载")
-            else:
-                return _make_error_response(f"autocli 执行失败: {error_msg}")
-
-        # 解析 JSON 输出
-        output = result.stdout.strip()
-        if not output:
-            return _make_error_response("autocli 返回空数据")
-
-        try:
-            data = json.loads(output)
-        except json.JSONDecodeError:
-            return _make_error_response(f"autocli 返回非 JSON 数据: {output[:200]}")
-
-        # 质检
-        has_data = bool(data) and (isinstance(data, list) and len(data) > 0 or isinstance(data, dict))
-        qc = {
-            "status": "success" if has_data else "partial",
-            "completeness": 1.0 if has_data else 0.5,
-            "sources": ["xueqiu_autocli"],
-            "fallback_source": None,
-            "missing_dimensions": [] if has_data else ["数据为空"],
-            "stale_data": [],
-        }
-
-        return _wrap_response(qc, json.dumps(data, ensure_ascii=False, indent=2))
-
-    except subprocess.TimeoutExpired:
-        return _make_error_response("autocli 执行超时（30秒），请检查网络或 Chrome 扩展状态")
-    except Exception as e:
-        return _make_error_response(f"xueqiu_fetch 异常: {e}")
-
-
-# ============================================================
-# Tool 10: 知乎数据抓取（通过 autocli）
+# Tool 9: 知乎数据抓取（通过 autocli）
 # ============================================================
 @mcp.tool()
 def zhihu_fetch(command: str, query: str = "", question_id: str = "", limit: int = 10) -> str:
